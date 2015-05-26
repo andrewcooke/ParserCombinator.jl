@@ -32,7 +32,7 @@ Consider the matcher `Example`:
 
 ```
 immutable Example<:Matcher
-  # values needed for evaluation (sub-matchers, repeat counts, etc)
+  # values needed for evaluation (child matchers, repeat counts, etc)
 end
 
 function match(m::Example, source, isource)
