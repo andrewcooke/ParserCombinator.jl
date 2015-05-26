@@ -68,4 +68,4 @@ protocol](http://julia.readthedocs.org/en/latest/stdlib/collections/?highlight=i
 
 [![Build
 Status](https://travis-ci.org/andrewcooke/SimpleParser.jl.png)](https://travis-ci.org/andrewcooke/SimpleParser.jl)
-Julia 0.3 (trunk).
+Julia 0.3 and 0.4 (trunk).
