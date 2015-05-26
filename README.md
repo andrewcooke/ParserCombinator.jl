@@ -1,7 +1,7 @@
 # SimpleParser
 
 This is a simple-to-use parser that tries to be reasonably efficient, without
-burdening the end-user with too many type annotations, similar to parse
+burdening the end-user with too many type annotations, similar to parser
 combinator libraries in other languages (eg Haskell's Parsec).
 
 **EXAMPLE HERE**
@@ -14,15 +14,15 @@ Julia does not support tail call recursion, and is not lazy, so a naive
 combinator library would be limited by recursion depth and poor efficiency.
 Instead, the "combinators" in SimpleParser construct a tree that describes the
 grammar, and which is "interpreted" during parsing, by dispatching functions
-on the tree nodes.  The traversal over the tree (a depth first search) is
-implemented via trampolining, with an optional (adjustable) cache to avoid
-repeated evaluation and detect left-recursive grammars.
+on the tree nodes.  The traversal over the tree (effectvely a depth first
+search) is implemented via trampolining, with an optional (adjustable) cache
+to avoid repeated evaluation and detect left-recursive grammars.
 
 The advantages of this approch are:
 
   * Recursion is avoided
 
-  * Caching can be isolated within the trampoline
+  * Caching can be isolated to within the trampoline
 
   * Method dispatch on node types leads to idiomatic Julia code
 
