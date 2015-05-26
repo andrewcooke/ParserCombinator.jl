@@ -47,12 +47,12 @@ end
 
 function resume(m::Example, source, isource, state)
   # called when the child match has failed
-  # return Failure or a new Bounce
+  # return Success (unlikely here), Failure or a new Bounce
 end
 
 function resume(m::Example, source, isource, state, result)
   # called when a child match has succeeded
-  # return Failure or a new Bounce
+  # return Success, Failure (unlikely here) or a new Bounce
 end
 ```
 
