@@ -46,12 +46,12 @@ end
 # resume() methods are called only if match() returns Bounce
 
 function resume(m::Example, source, isource, state)
-  # called when a sub-matcher has failed
+  # called when the child match has failed
   # return Failure or a new Bounce
 end
 
 function resume(m::Example, source, isource, state, result)
-  # called when a sub-matcher has succeeded
+  # called when a child match has succeeded
   # return Failure or a new Bounce
 end
 ```
