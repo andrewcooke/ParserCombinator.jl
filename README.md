@@ -6,6 +6,10 @@ parser combinator libraries in other languages (eg Haskell's Parsec).
 
 **EXAMPLE HERE**
 
+For large parsing tasks (eg parsing source code for a compiler) it would
+probably be better to use a wrapper around an existing, very efficient parser,
+like Anltr.
+
 ## Design
 
 ### Overview
