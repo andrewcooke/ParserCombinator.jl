@@ -6,7 +6,7 @@ import Base: start
 
 export parse, ParseException, Equal, Repeat
 
-abstract AST
+abstract Matcher
 
 abstract Return
 immutable Failure<:Return
@@ -17,11 +17,11 @@ immutable Success<:Return
 end
 immutable Bounce<:Return
     isource
-    ast
+    m
     state
 end
 
-type Equal<:AST
+immutable Equal<:Matcher
     string
 end
 
@@ -29,8 +29,8 @@ immutable ParseException<:Exception
     msg
 end
 
-function match(ast::Equal, source, isource)
-    for c in ast.string
+function match(m::Equal, source, isource)
+    for c in m.string
         if done(source, isource)
             return Failure()
         end
@@ -39,55 +39,54 @@ function match(ast::Equal, source, isource)
             return Failure()
         end
     end
-    return Success(isource, ast.string)
+    return Success(isource, m.string)
 end
 
-type Repeat<:AST
-    ast::AST
+immutable Repeat<:Matcher
+    m::Matcher
     n
 end
 
-function match(ast::Repeat, source, isource)
-    return Bounce(isource, ast.ast, (1, Array{Any,1}()))
+function match(m::Repeat, source, isource)
+    return Bounce(isource, m.m, (1, Array{Any,1}()))
 end
 
-function resume(ast::Repeat, source, isource, state) 
+function resume(m::Repeat, source, isource, state) 
    return Failure()
 end
 
-function resume(ast::Repeat, source, isource, state, result)
+function resume(m::Repeat, source, isource, state, result)
     count, array = state
     push!(array, result)
-    if count == ast.n
+    if count == m.n
         return Success(isource, array)
     else
-        return Bounce(isource, ast.ast, (count+1, array))
+        return Bounce(isource, m.m, (count+1, array))
     end
 end
 
-
-function parse(source, ast::AST)
+function parse(source, m::Matcher)
     stack = Stack(Any)
     isource = start(source)
-    ret = match(ast, source, isource)
+    ret = match(m, source, isource)
     while true
         if typeof(ret) == Success
             if isempty(stack)
                 return ret.result
             else
-                (ast, state, isource) = pop!(stack)
-                ret = resume(ast, source, ret.isource, state, ret.result)
+                (m, state, isource) = pop!(stack)
+                ret = resume(m, source, ret.isource, state, ret.result)
             end
         elseif typeof(ret) == Failure
             if isempty(stack)
                 throw(ParseException("failed to parse"))
             else
-                (ast, state, isource) = pop!(stack)
-                ret = resume(ast, source, isource, state)
+                (m, state, isource) = pop!(stack)
+                ret = resume(m, source, isource, state)
             end
         elseif typeof(ret) == Bounce
-            push!(stack, (ast, ret.state, ret.isource))
-            ret = match(ret.ast, source, ret.isource)
+            push!(stack, (m, ret.state, ret.isource))
+            ret = match(ret.m, source, ret.isource)
         else
             error("unexpected return $ret from $ast")
         end
