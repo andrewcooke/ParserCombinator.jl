@@ -65,3 +65,7 @@ end
 
 The source is read using the [standard Julia iterator
 protocol](http://julia.readthedocs.org/en/latest/stdlib/collections/?highlight=iterator).
+
+[![Build
+Status](https://travis-ci.org/andrewcooke/SimpleParser.jl.png)](https://travis-ci.org/andrewcooke/SimpleParser.jl)
+Julia 0.3 (trunk).
