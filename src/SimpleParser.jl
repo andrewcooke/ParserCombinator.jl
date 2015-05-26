@@ -2,6 +2,7 @@
 module SimpleParser
 
 using DataStructures.Stack
+using Compat
 import Base: start
 
 export parse, ParseException, Equal, Repeat
@@ -48,7 +49,7 @@ immutable Repeat<:Matcher
 end
 
 function match(m::Repeat, source, isource)
-    return Bounce(isource, m.m, (1, Array{Any,1}()))
+    return Bounce(isource, m.m, (1, Array(Any, 0)))
 end
 
 function resume(m::Repeat, source, isource, state) 
