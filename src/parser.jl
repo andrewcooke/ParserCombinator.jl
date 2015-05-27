@@ -1,29 +1,22 @@
 
-function parse(source, m::Matcher)
-    stack = Stack(Any)
-    isource = start(source)
-    ret = match(m, source, isource)
+function parse(source, matcher::Matcher)
+
+    to::Hdr = Hdr(matcher, CLEAN)
+    from::Hdr = Hdr(ROOT, CLEAN)
+    body::Body = Call(start(source))
+
     while true
-        if typeof(ret) == Success
-            if isempty(stack)
-                return ret.result
+
+        to, from, body = match(to, from, body, source)
+#        print("$from -> $to:\n  $body\n")
+
+        if to.matcher == ROOT
+            if typeof(body) == Success
+                return body.result
             else
-                (m, state, isource) = pop!(stack)
-                ret = resume(m, source, ret.isource, state, ret.result)
+                throw(ParseException("cannot parse"))
             end
-        elseif typeof(ret) == Failure
-            if isempty(stack)
-                throw(ParseException("failed to parse"))
-            else
-                (m, state, isource) = pop!(stack)
-                ret = resume(m, source, isource, state)
-            end
-        elseif typeof(ret) == Bounce
-            push!(stack, (m, ret.state, ret.isource))
-            ret = match(ret.m, source, ret.isource)
-        else
-            error("unexpected return $ret from $ast")
         end
+
     end
 end
-
