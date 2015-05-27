@@ -30,7 +30,7 @@ immutable Dirty<:State end
 DIRTY = Dirty()
 dirty{M<:Matcher,S<:State}(h::Hdr{M,S}) = Hdr(h.matcher, DIRTY)
 
-replace{M<:Matcher,S<:State}(h::Hdr{M,Clean}, state::S) = Hdr(h.matcher, state)
+replace{M<:Matcher,S1<:State,S2<:State}(h::Hdr{M,S1}, state::S2) = Hdr(h.matcher, state)
 
 immutable Root<:Matcher end
 ROOT = Root()

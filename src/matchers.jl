@@ -30,8 +30,8 @@ end
 
 immutable Repeat<:Matcher
     matcher::Matcher
-    lo::Integer
-    hi::Integer
+    a::Integer
+    b::Integer
 end
 
 abstract RepeatState<:State
@@ -56,40 +56,47 @@ Lazy(from::Hdr) = Lazy(Array(Any, 0), -1, CLEAN, from)
 
 # when first called, create base state and re-call
 function match(to::Hdr{Repeat,Clean}, from::Hdr, call::Call, _)
-    if to.matcher.hi > to.matcher.lo
-        match(replace(to, Lazy(from)), from, call, s)
+    if to.matcher.b > to.matcher.a
+        replace(to, Lazy(from)), from, call
     else
-        match(replace(to, Greedy(from)), from, call, s)
+        replace(to, Greedy(from)), from, call
     end
 end
 
-# called with valid state, so call child
-function match{S<:RepeatState}(to::Hdr{Repeat,S}, from::Hdr, call::Call, _)
-    Hdr(to.matcher.matcher, to.state.child_state), to, call
+# for greedy, call child repeatedly until we have all the matches we need,
+# or the child fails.  then jump to fail handler which also handles 
+# backtracking via prev_count
+
+work_to_do(h::Hdr{Repeat,Greedy}) = h.matcher.a > length(h.state.matches)
+
+function match(to::Hdr{Repeat,Greedy}, from::Hdr, call::Call, _)
+    if work_to_do(to)
+        Hdr(to.matcher.matcher, to.state.child_state), to, call
+    else
+        to, from, Fail(call.iter)
+    end
 end
 
-# child matcher failed, so return what we have, if it is new
+function match(to::Hdr{Repeat,Greedy}, from::Hdr, success::Success, _)
+    to = replace(to, Greedy(to.state, vcat(to.state.matches, success.result)))
+    if work_to_do(to)
+        # reset state to CLEAN because this is a new iter (presumably?)
+        clean(from), to, Call(success.iter)
+    else
+        to, from, Fail(success.iter)
+    end
+end
+
 function match(to::Hdr{Repeat,Greedy}, from::Hdr, fail::Fail, _)
     s, m = to.state, to.matcher
-    count = length(s.matches)
-    if count != s.prev_count && count >= m.lo && count <= m.hi
-        s.from, Hdr(m, Greedy(s, count)), Success(fail.iter, s.matches)
-    elseif count > m.lo  # we can match less
+    c = length(s.matches)
+    if c != s.prev_count && c >= m.b && c <= m.a
+        s.from, replace(to, Greedy(s, c)), Success(fail.iter, s.matches)
+    elseif c > m.b  # we can match less
         matches = s.matches[1:end-1]
-        s.from, Hdr(m, Greedy(s, matches)), Success(fail.iter, matches)
+        s.from, replace(to, Greedy(s, matches)), Success(fail.iter, matches)
     else
         s.from, dirty(to), fail
     end
 end
 
-# child matcher succeeded, to extend matches and recall
-function match(to::Hdr{Repeat,Greedy}, from::Hdr, success::Success, _)
-    s = Greedy(to.state, vcat(to.state.matches, success.result))
-    if length(s.matches) < to.matcher.hi
-        # reset state to CLEAN because this is a new iter (presumably?)
-        clean(from), Hdr(to.matcher, s), Call(success.iter)
-    else
-        # block further calls (not needed?)
-        Hdr(to.matcher, s), dirty(from), Fail(success.iter)
-    end
-end
