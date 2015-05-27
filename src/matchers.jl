@@ -74,7 +74,7 @@ function match(to::Hdr{Repeat,Greedy}, from::Hdr, fail::Fail, _)
     count = length(s.matches)
     if count != s.prev_count && count >= m.lo && count <= m.hi
         s.from, Hdr(m, Greedy(s, count)), Success(fail.iter, s.matches)
-    elseif count > m.lo
+    elseif count > m.lo  # we can match less
         matches = s.matches[1:end-1]
         s.from, Hdr(m, Greedy(s, matches)), Success(fail.iter, matches)
     else
@@ -84,7 +84,12 @@ end
 
 # child matcher succeeded, to extend matches and recall
 function match(to::Hdr{Repeat,Greedy}, from::Hdr, success::Success, _)
-    s, m = to.state, to.matcher
-    # reset state to CLEAN because this is a new iter (presumably?)
-    clean(from), Hdr(m, Greedy(s, vcat(s.matches, success.result))), Call(success.iter)
+    s = Greedy(to.state, vcat(to.state.matches, success.result))
+    if length(s.matches) < to.matcher.hi
+        # reset state to CLEAN because this is a new iter (presumably?)
+        clean(from), Hdr(to.matcher, s), Call(success.iter)
+    else
+        # block further calls (not needed?)
+        Hdr(to.matcher, s), dirty(from), Fail(success.iter)
+    end
 end
