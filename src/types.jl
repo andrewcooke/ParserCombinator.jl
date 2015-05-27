@@ -36,6 +36,6 @@ immutable Root<:Matcher end
 ROOT = Root()
 
 
-immutable ParseException<:Exception
+immutable ParserException<:Exception
     msg
 end

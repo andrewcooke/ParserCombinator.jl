@@ -5,7 +5,7 @@ using DataStructures.Stack
 using Compat
 import Base: start
 
-export parse, ParseException, Equal, Repeat
+export parse, parse_all, ParserException, Equal, Repeat, And
 
 include("types.jl")
 include("matchers.jl")

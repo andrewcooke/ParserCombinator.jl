@@ -2,9 +2,13 @@
 importall SimpleParser
 using Base.Test
 
-@test_throws ParseException parse("x", Equal("a")) 
+print(collect(parse_all("aaa", 
+                        And(Repeat(Equal("a"), 3, 0),
+                            Repeat(Equal("a"), 3, 0)))))
+
+@test_throws ParserException parse("x", Equal("a")) 
 @test parse("a", Equal("a")) == "a"
-@test_throws ParseException parse("a", Repeat(Equal("a"), 2, 2))
+@test_throws ParserException parse("a", Repeat(Equal("a"), 2, 2))
 @test parse("aa", Repeat(Equal("a"), 2, 2)) == ["a", "a"]
 @test parse("aa", Repeat(Equal("a"), 2, 1)) == ["a", "a"]
 
@@ -17,8 +21,14 @@ for i in 1:10
     m = match(r, s)
     println("$lo $hi $s $r")
     if m == nothing
-        @test_throws ParseException parse(s, Repeat(Equal("a"), hi, lo))
+        @test_throws ParserException parse(s, Repeat(Equal("a"), hi, lo))
     else
         @test length(m.match) == length(parse(s, Repeat(Equal("a"), hi, lo)))
     end
 end
+
+@test parse("ab", And(Equal("a"),Equal("b"))) == ("a", "b")
+@test collect(parse_all("aaa", 
+                        And(Repeat(Equal("a"), 3, 0),
+                            Repeat(Equal("a"), 3, 0)))) == []
+

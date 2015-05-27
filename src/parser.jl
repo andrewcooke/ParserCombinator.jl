@@ -1,5 +1,5 @@
 
-function parse(source, matcher::Matcher)
+function producer(source, matcher::Matcher)
 
     to::Hdr = Hdr(matcher, CLEAN)
     from::Hdr = Hdr(ROOT, CLEAN)
@@ -12,11 +12,25 @@ function parse(source, matcher::Matcher)
 
         if to.matcher == ROOT
             if typeof(body) == Success
-                return body.result
+                produce(body.result)
             else
-                throw(ParseException("cannot parse"))
+                return
             end
         end
 
+    end
+end
+
+function parse_all(source, matcher::Matcher)
+    Task(() -> producer(source, matcher))
+end
+
+function parse(source, matcher::Matcher)
+    task = parse_all(source, matcher)
+    result = consume(task)
+    if task.state == :done
+        throw(ParserException("cannot parse"))
+    else
+        return result
     end
 end

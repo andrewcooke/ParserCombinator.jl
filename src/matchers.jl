@@ -37,17 +37,17 @@ end
 abstract RepeatState<:State
 
 immutable Greedy<:RepeatState
-    matches::Array{Any,1}
+    results::Array{Any,1}
     prev_count::Int
     child_state::State
     from::Hdr
 end
 Greedy(from::Hdr) = Greedy(Array(Any, 0), typemax(Int), CLEAN, from)
-Greedy(g::Greedy, count::Int) = Greedy(g.matches, count, g.child_state, g.from)
-Greedy(g::Greedy, matches::Array) = Greedy(matches, g.prev_count, g.child_state, g.from)
+Greedy(g::Greedy, count::Int) = Greedy(g.results, count, g.child_state, g.from)
+Greedy(g::Greedy, results::Array) = Greedy(results, g.prev_count, g.child_state, g.from)
 
 immutable Lazy<:RepeatState
-    matches::Array{Any,1}
+    results::Array{Any,1}
     prev_count::Int
     child_state::State
     from::Hdr
@@ -63,11 +63,11 @@ function match(to::Hdr{Repeat,Clean}, from::Hdr, call::Call, _)
     end
 end
 
-# for greedy, call child repeatedly until we have all the matches we need,
+# for greedy, call child repeatedly until we have all the results we need,
 # or the child fails.  then jump to fail handler which also handles 
 # backtracking via prev_count
 
-work_to_do(h::Hdr{Repeat,Greedy}) = h.matcher.a > length(h.state.matches)
+work_to_do(h::Hdr{Repeat,Greedy}) = h.matcher.a > length(h.state.results)
 
 function match(to::Hdr{Repeat,Greedy}, from::Hdr, call::Call, _)
     if work_to_do(to)
@@ -78,7 +78,7 @@ function match(to::Hdr{Repeat,Greedy}, from::Hdr, call::Call, _)
 end
 
 function match(to::Hdr{Repeat,Greedy}, from::Hdr, success::Success, _)
-    to = replace(to, Greedy(to.state, vcat(to.state.matches, success.result)))
+    to = replace(to, Greedy(to.state, vcat(to.state.results, success.result)))
     if work_to_do(to)
         # reset state to CLEAN because this is a new iter (presumably?)
         clean(from), to, Call(success.iter)
@@ -89,14 +89,78 @@ end
 
 function match(to::Hdr{Repeat,Greedy}, from::Hdr, fail::Fail, _)
     s, m = to.state, to.matcher
-    c = length(s.matches)
+    c = length(s.results)
     if c != s.prev_count && c >= m.b && c <= m.a
-        s.from, replace(to, Greedy(s, c)), Success(fail.iter, s.matches)
+        s.from, replace(to, Greedy(s, c)), Success(fail.iter, s.results)
     elseif c > m.b  # we can match less
-        matches = s.matches[1:end-1]
-        s.from, replace(to, Greedy(s, matches)), Success(fail.iter, matches)
+        results = s.results[1:end-1]
+        s.from, replace(to, Greedy(s, results)), Success(fail.iter, results)
     else
         s.from, dirty(to), fail
     end
 end
 
+
+immutable And<:Matcher
+    left::Matcher
+    right::Matcher
+end
+
+abstract AndState<:State
+
+immutable Left<:AndState
+    iter
+    from::Hdr
+end
+
+immutable Right<:AndState
+    iter
+    from::Hdr
+    left::State
+    result
+end
+
+immutable Both<:AndState
+    iter
+    from::Hdr
+    left::State
+    result
+    right::State
+end
+
+# TODO - constructors to simplify building from prev state
+
+# on initial entry, save iter and from, then call left
+function match(to::Hdr{And,Clean}, from::Hdr, call::Call, _)
+    s, m = to.state, to.matcher
+    Hdr(m.left, CLEAN), replace(to, Left(call.iter, from)), call
+end
+
+# if left couldn't match, then we're done
+function match(to::Hdr{And,Left}, from::Hdr, fail::Fail, _)
+    to.state.from, dirty(to), fail
+end
+
+# if left did match, then save everything and match the right
+function match(to::Hdr{And,Left}, from::Hdr, success::Success, _)
+    s, m = to.state, to.matcher
+    Hdr(m.right, CLEAN), replace(to, Right(s.iter, s.from, from.state, success.result)), Call(success.iter)
+end
+
+# if right couldn't match, then try again with left
+function match(to::Hdr{And,Right}, from::Hdr, fail::Fail, _)
+    s, m = to.state, to.matcher
+    Hdr(m.left, s.left), replace(to, Left(s.iter, s.from)), Call(s.iter)
+end
+
+# if right did match, then save everything and return
+function match(to::Hdr{And,Right}, from::Hdr, success::Success, _)
+    s, m = to.state, to.matcher
+    s.from, replace(to, Both(s.iter, s.from, s.left, s.result, from.state)), Success(success.iter, (s.result, success.result))
+end
+
+# if we're called with Both state, we need to backtrack on the right
+function match(to::Hdr{And,Both}, from::Hdr, call::Call, _)
+    s, m = to.state, to.matcher
+    Hdr(m.right, s.right), replace(to, Right(s.iter, s.from, s.left, s.result)), call
+end
