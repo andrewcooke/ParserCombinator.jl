@@ -24,7 +24,7 @@ for i in 1:10
     end
 end
 
-@test parse_one("ab", And(Equal("a"),Equal("b"))) == ("a", "b")
+@test parse_one("ab", And(Equal("a"), Equal("b"))) == ("a", "b")
 @test collect(parse_all("aaa", 
                         And(Repeat(Equal("a"), 3, 0),
                             Repeat(Equal("a"), 3, 0)))) == 
