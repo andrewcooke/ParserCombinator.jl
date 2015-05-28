@@ -81,7 +81,7 @@ function execute(m::Repeat, s::Clean, i, src)
     if m.b > m.a
         execute(m, Lazy(), i, src)
     else
-        execute(m, Slurp(Array{Any,1}(), [i], Any[s]), i, src)
+        execute(m, Slurp(Array(Any, 0), [i], Any[s]), i, src)
     end
 end
 
