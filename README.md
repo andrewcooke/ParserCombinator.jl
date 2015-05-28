@@ -58,9 +58,9 @@ world = Child("world")
 hello_world_grammar = Parent(hello, world)
 ```
 
-Typically, each matcher has some associated types that store state (the
-matchers themselves describe only the *static* grammar; the state describes
-the associated state during matching and backtracking).
+In addition, typically, each matcher has some associated types that store
+state (the matchers themselves describe only the *static* grammar; the state
+describes the associated state during matching and backtracking).
 
 Methods are then associated with combinations of matchers and state.
 Transitions between these methods implement a state machine.
