@@ -60,9 +60,9 @@ hello_world_grammar = Parent(hello, world)
 
 In addition, typically, each matcher has some associated types that store
 state (the matchers themselves describe only the *static* grammar; the state
-describes the associated state during matching and backtracking).  Two states
-- `CLEAN` and `DIRTY` - and used globally to indicate that a matcher is
-uncalled, or has exhausted all matches, respectively.
+describes the associated state during matching and backtracking).  Two states,
+`CLEAN` and `DIRTY`, are used globally to indicate that a matcher is uncalled,
+or has exhausted all matches, respectively.
 
 Methods are then associated with combinations of matchers and state.
 Transitions between these methods implement a state machine.
