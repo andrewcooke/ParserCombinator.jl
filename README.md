@@ -78,7 +78,7 @@ function execute(p::Parent, s::ParentState, iter, source)
 end
 
 function execute(c::Child, s::ChildStateStart, iter, source)
-  # the above will call here
+  # the above will call here, where we check if the text matches
   if compare(c.text, source[iter:])
     Success(c, ChildStateSucceeded(), iter, c.text)
   else
