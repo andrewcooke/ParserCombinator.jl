@@ -204,5 +204,8 @@ function execute(m::And, s::Both, i, src)
 end
 
 
+
+# a dummy matcher used by the parser
+
 immutable Root<:Matcher end
 ROOT = Root()

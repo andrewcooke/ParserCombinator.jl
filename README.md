@@ -1,9 +1,9 @@
 # SimpleParser
 
-This is a simple-to-use parser for Julia that tries t strike a balance between
-being both (moderately) efficient and simple (both for the end-user and the
-maintainer).  It is similar to parser combinator libraries in other languages
-(eg Haskell's Parsec).
+This is a parser for Julia that tries to strike a balance between being both
+(moderately) efficient and simple (for the end-user and the maintainer).  It
+is similar to parser combinator libraries in other languages (eg Haskell's
+Parsec).
 
 **EXAMPLE HERE**
 
@@ -94,6 +94,13 @@ function success(p::Parent, s::ParentState, c::Child, cs::ChildState, iter, sour
   Execute(p, s, p.child2, ChildStateStart(), iter)
 end
 ```
+
+Finally, to simplify caching in the trampoline, it is important that the
+different matchers appear as simple calls and responses.  So internal
+transitions between states in the same matcher are *not* made by messages, but
+by direct calls.  This explains why, for example, you see both `Execute(...)`
+and `execute(...)` in the source - the latter is an internal transition to the
+given method.
 
 ### Source (Input Text) Protocol
 
