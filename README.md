@@ -1,7 +1,7 @@
 # SimpleParser
 
-This is a simple-to-use parser for Julia that tries to be reasonably
-efficient, while remaining fairly simple (both for the end-user and the
+This is a simple-to-use parser for Julia that tries t strike a balance between
+being both (moderately) efficient and simple (both for the end-user and the
 maintainer).  It is similar to parser combinator libraries in other languages
 (eg Haskell's Parsec).
 
