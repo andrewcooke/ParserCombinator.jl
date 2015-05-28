@@ -1,6 +1,12 @@
 
 function producer(source, matcher::Matcher)
 
+    function match{S<:State}(to::Hdr{Root,S}, from::Hdr, success::Success, _)
+        from, to, Call(start(source))
+    end
+
+    match(args...) = (global match; match(args...))
+
     to::Hdr = Hdr(matcher, CLEAN)
     from::Hdr = Hdr(ROOT, CLEAN)
     body::Body = Call(start(source))

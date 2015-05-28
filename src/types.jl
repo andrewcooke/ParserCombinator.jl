@@ -32,9 +32,6 @@ dirty{M<:Matcher,S<:State}(h::Hdr{M,S}) = Hdr(h.matcher, DIRTY)
 
 replace{M<:Matcher,S1<:State,S2<:State}(h::Hdr{M,S1}, state::S2) = Hdr(h.matcher, state)
 
-immutable Root<:Matcher end
-ROOT = Root()
-
 
 immutable ParserException<:Exception
     msg
