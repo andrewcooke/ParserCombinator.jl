@@ -1,38 +1,48 @@
 
 abstract Matcher
-abstract Body
+abstract Message
 abstract State
 
-immutable Hdr{M<:Matcher, S<:State}
-    matcher::M
-    state::S
-end
 
-immutable Fail<:Body
+# parent and state_paprent are popped from the stack.  call is made to
+# failure(parent, state_parent, child, state_child, iter, source)
+immutable Failure{C<:Matcher,SC<:State}<:Message
+    child::C
+    state_child::SC
     iter
 end
 
-immutable Success<:Body
+# parent and state_paprent are popped from the stack.  call is made to
+# success(parent, state_parent, child, state_child, iter, source, result)
+immutable Success{C<:Matcher,SC<:State}<:Message
+    child::C
+    state_child::SC
     iter
     result
 end
 
-immutable Call<:Body
+# parent and state_parent are pushed to the stack.  call is made to
+# execute(child, state_child, iter, source)
+immutable Execute{P<:Matcher,SP<:State,C<:Matcher,SC<:State}<:Message
+    parent::P
+    state_parent::SP
+    child::C
+    state_child::SC
     iter
 end
 
 
+# the state used on first call
 immutable Clean<:State end
 CLEAN = Clean()
-clean{M<:Matcher,S<:State}(h::Hdr{M,S}) = Hdr(h.matcher, CLEAN)
 
+# the state used when no further calls should be made
 immutable Dirty<:State end
 DIRTY = Dirty()
-dirty{M<:Matcher,S<:State}(h::Hdr{M,S}) = Hdr(h.matcher, DIRTY)
-
-replace{M<:Matcher,S1<:State,S2<:State}(h::Hdr{M,S1}, state::S2) = Hdr(h.matcher, state)
 
 
+# user-generated errors (ie bad input, etc).
+# internal errors in the library (bugs) may raise Error
 immutable ParserException<:Exception
     msg
 end

@@ -1,11 +1,20 @@
 
 
-function match(to::Hdr, from::Hdr, body::Body, source)
-    error("$to did not expect to receive $body from $from")
+function call(m, s, i, _)
+    error("$m did not expect to be called with $s")
 end
 
-function match{M<:Matcher}(to::Hdr{M,Dirty}, from::Hdr, call::Call, s)
-    return from, to, Fail(call.iter)
+function success(m, s, c, t, i, _, r)
+    error("$m did not expect to receive $s from success of $c")
+end
+
+function failure(m, s, c, t, i, _)
+    error("$m did not expect to receive $s from failure of $c")
+end
+
+
+function execute(m, s::Dirty, i, _)
+    Failure(m, s, i)
 end
 
 
@@ -13,18 +22,17 @@ immutable Equal<:Matcher
     string
 end
 
-function match(to::Hdr{Equal,Clean}, from::Hdr, call::Call, s)
-    iter = call.iter
-    for c in to.matcher.string
-        if done(s, iter)
-            return from, dirty(to), Fail(iter)
+function execute(m::Equal, s::Clean, i, src)
+    for x in m.string
+        if done(src, i)
+            return Failure(m, DIRTY, i)
         end
-        s, iter = next(s, iter)
-        if s != c
-            return from, dirty(to), Fail(iter)
+        y, i = next(src, i)
+        if x != y
+            return Failure(m, DIRTY, i)
         end
     end
-    from, dirty(to), Success(iter, to.matcher.string)
+    Success(m, DIRTY, i, m.string)
 end
 
 
@@ -38,75 +46,94 @@ abstract RepeatState<:State
 
 abstract Greedy<:RepeatState
 
-immutable Slurp<:RepeatState
-    results::Array{Any,1}
-    iters::Array{Any,1}
-    from::Hdr
+immutable Slurp<:Greedy
+    # there's a mismatch in lengths here because the empty results is
+    # associated with an iter and state
+    results::Array{Any,1}  # accumulated during slurp
+    iters::Array{Any,1}    # at the end of the associated result
+    states::Array{Any,1}   # at the end of the associated result
 end
 
-immutable Retreat<:RepeatState
+immutable Yield<:Greedy
     results::Array{Any,1}
     iters::Array{Any,1}
+    states::Array{Any,1}
+end
+
+immutable Backtrack<:Greedy
+    results::Array{Any,1}
+    iters::Array{Any,1}
+    states::Array{Any,1}
 end
 
 immutable Lazy<:RepeatState
 end
-Lazy(from::Hdr) = Lazy()
 
-# when first called, create base state and re-call
-function match(to::Hdr{Repeat,Clean}, from::Hdr, call::Call, _)
-    if to.matcher.b > to.matcher.a
-        replace(to, Lazy(from)), from, call
+# when first called, create base state and make internal transition
+
+function execute(m::Repeat, s::Clean, i, src)
+    if m.b > m.a
+        execute(m, Lazy(), i, src)
     else
-        replace(to, Slurp(Array{Any,1}(), [call.iter], from)), from, call
+        execute(m, Slurp(Array{Any,1}(), [i], Any[s]), i, src)
     end
 end
 
-work_to_do(matcher::Repeat, results) = matcher.a > length(results)
+# match until complete
 
-function match(to::Hdr{Repeat,Slurp}, from::Hdr, call::Call, _)
-    if work_to_do(to.matcher, to.state.results)
-        println("repeat: match")
-        Hdr(to.matcher.matcher, CLEAN), to, call
+work_to_do(m::Repeat, results) = m.a > length(results)
+
+function execute(m::Repeat, s::Slurp, i, src)
+    if work_to_do(m, s.results)
+        Execute(m, s, m.matcher, CLEAN, i)
     else
-        println("no need to match")
-        s = to.state
-        replace(to, Retreat(s.results, s.iters)), s.from, call
+        execute(m, Yield(s.results, s.iters, s.states), i, src)
     end
 end
 
-function match(to::Hdr{Repeat,Slurp}, from::Hdr, success::Success, _)
-    results = vcat(to.state.results, success.result)
-    iters = vcat(to.state.iters, success.iter)
-    if work_to_do(to.matcher, results)
-        println("match another")
-        # reset state to CLEAN because this is a new iter (presumably?)
-        clean(from), replace(to, Slurp(results, iters, to.state.from)), Call(success.iter)
+function success(m::Repeat, s::Slurp, c, t, i, src, r)
+    results = vcat(s.results, r)
+    iters = vcat(s.iters, i)
+    states = vcat(s.states, t)
+    if work_to_do(m, results)
+        Execute(m, Slurp(results, iters, states), c, CLEAN, i)
     else
-        println("all matched $results")
-        replace(to, Retreat(results, iters)), to.state.from, Call(success.iter)
+        execute(m, Yield(results, iters, states), i, src)
     end
 end
 
-function match(to::Hdr{Repeat,Slurp}, from::Hdr, fail::Fail, _)
-    s = to.state
-    replace(to, Retreat(s.results, s.iters)), s.from, Call(fail.iter)
+function failure(m::Repeat, s::Slurp, c, t, i, src)
+    execute(m, Yield(s.results, s.iters, s.states), i, src)
 end
 
-function match(to::Hdr{Repeat,Retreat}, from::Hdr, call::Call, _)
-    s, m = to.state, to.matcher
-    c = length(s.results)
-    if c >= m.b
-        if c > 0
-            println("trimming $(s.results) $(s.iters)")
-            results, iters = s.results[1:end-1], s.iters[1:end-1]
-            from, replace(to, Retreat(results, iters)), Success(s.iters[end], s.results)
-        else
-            from, dirty(to), Success(s.iters[end], s.results)
-        end
+# yield a result
+
+function execute(m::Repeat, s::Yield, i, src)
+    n = length(s.results)
+    if n >= m.b
+        Success(m, Backtrack(s.results, s.iters, s.states), s.iters[end], s.results)
     else
-        from, dirty(to), Fail(call.iter)
+        Failure(m, DIRTY, i)
     end
+end
+
+# another result is required, so discard and then advance if possible
+
+function execute(m::Repeat, s::Backtrack, i, src)
+    if length(s.results) == 0
+        Failure(m, DIRTY, i)
+    else
+        # we need the iter from *before* the result
+        Execute(m, Backtrack(s.results[1:end-1], s.iters[1:end-1], s.states[1:end-1]), m.matcher, s.states[end], s.iters[end-1])
+    end
+end
+
+function success(m::Repeat, s::Backtrack, c, t, i, src, r)
+    execute(m, Slurp(vcat(s.results, r), vcat(s.iters, i), vcat(s.states, t)), i, src)
+end
+
+function failure(m::Repeat, s::Backtrack, c, t, i, src)
+    execute(m, Yield(s.results, s.iters, s.states), i, src)
 end
 
 
@@ -118,12 +145,10 @@ end
 abstract AndState<:State
 
 immutable Left<:AndState
-    from::Hdr
     left_iter
 end
 
 immutable Right<:AndState
-    from::Hdr
     left_iter
     left_state::State
     right_iter
@@ -131,7 +156,6 @@ immutable Right<:AndState
 end
 
 immutable Both<:AndState
-    from::Hdr
     left_iter
     left_state::State
     right_iter
@@ -139,47 +163,35 @@ immutable Both<:AndState
     result
 end
 
-# TODO - constructors to simplify building from prev state
 
-# on initial entry, save iter and from, then call left
-function match(to::Hdr{And,Clean}, from::Hdr, call::Call, _)
-    s, m = to.state, to.matcher
-    println("and: match on left")
-    Hdr(m.left, CLEAN), replace(to, Left(from, call.iter)), call
+# on initial entry, save iter then call left
+function execute(m::And, s::Clean, i, src)
+    Execute(m, Left(i), m.left, CLEAN, i)
 end
 
 # if left couldn't match, then we're done
-function match(to::Hdr{And,Left}, from::Hdr, fail::Fail, _)
-    println("and: give up")
-    to.state.from, dirty(to), fail
+function failure(m::And, s::Left, c, t, i, src)
+    Failure(m, DIRTY, i)
 end
 
 # if left did match, then save everything and match the right
-function match(to::Hdr{And,Left}, from::Hdr, success::Success, _)
-    s, m = to.state, to.matcher
-    println("and: match on right from $(success.iter)")
-    Hdr(m.right, CLEAN), replace(to, Right(s.from, success.iter, from.state, success.iter, success.result)), Call(success.iter)
+function success(m::And, s::Left, c, t, i, src, r)
+    Execute(m, Right(s.left_iter, t, i, r), m.right, CLEAN, i)
 end
 
 # if right couldn't match, then try again with left
-function match(to::Hdr{And,Right}, from::Hdr, fail::Fail, _)
-    s, m = to.state, to.matcher
-    println("and: backtrack on left")
-    Hdr(m.left, s.left_state), replace(to, Left(s.from, s.left_iter)), Call(s.left_iter)
+function failure(m::And, s::Right, c, t, i, src)
+    Execute(m, Left(s.left_iter), m.left, s.left_state, s.left_iter)
 end
 
 # if right did match, then save everything and return
-function match(to::Hdr{And,Right}, from::Hdr, success::Success, _)
-    s, m = to.state, to.matcher
-    println("and: result $(s.result) $(success.result)")
-    s.from, replace(to, Both(s.from, s.left_iter, s.left_state, success.iter, from.state, s.result)), Success(success.iter, (s.result, success.result))
+function success(m::And, s::Right, c, t, i, src, r)
+    Success(m, Both(s.left_iter, s.left_state, s.right_iter, t, s.result), i, (s.result, r))
 end
 
 # if we're called with Both state, we need to backtrack on the right
-function match(to::Hdr{And,Both}, from::Hdr, call::Call, _)
-    s, m = to.state, to.matcher
-    println("and: backtrack on right")
-    Hdr(m.right, s.right_state), replace(to, Right(s.from, s.left_iter, s.left_state, s.right_iter, s.result)), Call(s.right_iter)
+function execute(m::And, s::Both, i, src)
+    Execute(m, Right(s.left_iter, s.left_state, s.right_iter, s.result), m.right, s.right_state, s.right_iter)
 end
 
 

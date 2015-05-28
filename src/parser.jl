@@ -1,42 +1,56 @@
 
-function producer(source, matcher::Matcher)
+function no_caching_producer(source, matcher::Matcher)
 
-    function match{S<:State}(to::Hdr{Root,S}, from::Hdr, success::Success, _)
-        from, to, Call(start(source))
+    stack = Stack(Tuple{Matcher,State})
+
+    msg::Message = Execute(ROOT, CLEAN, matcher, CLEAN, start(source))
+
+    function dispatch(e::Execute)
+        push!(stack, (e.parent, e.state_parent))
+        execute(e.child, e.state_child, e.iter, source)
     end
 
-    match(args...) = (global match; match(args...))
+    function dispatch(s::Success)
+        (parent, state_parent) = pop!(stack)
+        success(parent, state_parent, s.child, s.state_child, s.iter, source, s.result)
+    end
 
-    to::Hdr = Hdr(matcher, CLEAN)
-    from::Hdr = Hdr(ROOT, CLEAN)
-    body::Body = Call(start(source))
+    function dispatch(f::Failure)
+        (parent, state_parent) = pop!(stack)
+        failure(parent, state_parent, f.child, f.state_child, f.iter, source)
+    end
 
     while true
-
-        to, from, body = match(to, from, body, source)
-#        print("$from -> $to:\n  $body\n")
-
-        if to.matcher == ROOT
-            if typeof(body) == Success
-                produce(body.result)
-            else
+        msg = dispatch(msg)
+        if length(stack) == 1
+            if typeof(msg) <: Success
+                produce(msg.result)
+                (parent, state_parent) = pop!(stack)
+                msg = Execute(parent, state_parent, msg.child, msg.state_child, start(source))
+            elseif typeof(msg) <: Failure
                 return
             end
         end
-
     end
 end
 
-function parse_all(source, matcher::Matcher)
-    Task(() -> producer(source, matcher))
-end
-
-function parse(source, matcher::Matcher)
-    task = parse_all(source, matcher)
-    result = consume(task)
-    if task.state == :done
-        throw(ParserException("cannot parse"))
-    else
-        return result
+function make_all(producer)
+    function (source, matcher::Matcher)
+        Task(() -> producer(source, matcher))
     end
 end
+
+function make_one(producer)
+    function (source, matcher::Matcher)
+        task = make_all(producer)(source, matcher)
+        result = consume(task)
+        if task.state == :done
+            throw(ParserException("cannot parse"))
+        else
+            return result
+        end
+    end
+end
+
+parse_all = make_all(no_caching_producer)
+parse_one = make_one(no_caching_producer)
