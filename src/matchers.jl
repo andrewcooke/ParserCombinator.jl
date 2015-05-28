@@ -1,4 +1,5 @@
 
+# some basic definitions for generic matches
 
 function call(m, s, i, _)
     error("$m did not expect to be called with $s")
@@ -12,11 +13,13 @@ function failure(m, s, c, t, i, _)
     error("$m did not expect to receive $s from failure of $c")
 end
 
-
 function execute(m, s::Dirty, i, _)
     Failure(m, s, i)
 end
 
+
+
+# the state machine for equality
 
 immutable Equal<:Matcher
     string
@@ -35,6 +38,9 @@ function execute(m::Equal, s::Clean, i, src)
     Success(m, DIRTY, i, m.string)
 end
 
+
+
+# the state machine for repetition (greedy and minimal)
 
 immutable Repeat<:Matcher
     matcher::Matcher
@@ -136,6 +142,9 @@ function failure(m::Repeat, s::Backtrack, c, t, i, src)
     execute(m, Yield(s.results, s.iters, s.states), i, src)
 end
 
+
+
+# the state machine for sequencing two matchers
 
 immutable And<:Matcher
     left::Matcher
