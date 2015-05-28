@@ -86,8 +86,7 @@ function execute(c::Child, s::ChildStateStart, iter, source)
   end
 end
 
-function success(p::Parent, s::ParentState, c::Child, cs::ChildState, iter,
-source, result)
+function success(p::Parent, s::ParentState, c::Child, cs::ChildState, iter, source, result)
   # the Successs() message above results in a call here, where we do something
   # with the result
   ...
