@@ -54,7 +54,7 @@ end
 
 # this is a very vague example, don't think too hard about what it means
 hello = Child("hello")
-world = Chile("world"
+world = Child("world")
 hello_world_grammar = Parent(hello, world)
 ```
 
