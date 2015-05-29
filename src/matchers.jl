@@ -2,20 +2,16 @@
 
 # some basic definitions for generic matches
 
-function call(m, s, i, _)
-    error("$m did not expect to be called with $s")
+function execute(m, s, i, _)
+    error("$m did not expect to be called with state $s")
 end
 
-function success(m, s, c, t, i, _, r)
-    error("$m did not expect to receive $s from success of $c")
-end
-
-function failure(m, s, c, t, i, _)
-    error("$m did not expect to receive $s from failure of $c")
+function response(m, s, c, t, i, _, r)
+    error("$m did not expect to receive state $s from $c")
 end
 
 function execute(m, s::Dirty, i, _)
-    Failure(m, s, i)
+    Response(m, s, i, FAILURE)
 end
 
 
@@ -29,14 +25,14 @@ end
 function execute(m::Equal, s::Clean, i, src)
     for x in m.string
         if done(src, i)
-            return Failure(m, DIRTY, i)
+            return Response(m, DIRTY, i, FAILURE)
         end
         y, i = next(src, i)
         if x != y
-            return Failure(m, DIRTY, i)
+            return Response(m, DIRTY, i, FAILURE)
         end
     end
-    Success(m, DIRTY, i, m.string)
+    Response(m, DIRTY, i, Value(m.string))
 end
 
 
@@ -56,19 +52,19 @@ abstract Greedy<:RepeatState
 immutable Slurp<:Greedy
     # there's a mismatch in lengths here because the empty results is
     # associated with an iter and state
-    results::Array{Any,1}  # accumulated during slurp
+    results::Array{Success,1}  # accumulated during slurp
     iters::Array{Any,1}    # at the end of the associated result
     states::Array{Any,1}   # at the end of the associated result
 end
 
 immutable Yield<:Greedy
-    results::Array{Any,1}
+    results::Array{Success,1}
     iters::Array{Any,1}
     states::Array{Any,1}
 end
 
 immutable Backtrack<:Greedy
-    results::Array{Any,1}
+    results::Array{Success,1}
     iters::Array{Any,1}
     states::Array{Any,1}
 end
@@ -82,7 +78,7 @@ function execute(m::Repeat, s::Clean, i, src)
     if m.b > m.a
         execute(m, Lazy(), i, src)
     else
-        execute(m, Slurp(Array(Any, 0), [i], Any[s]), i, src)
+        execute(m, Slurp(Array(Success, 0), [i], Any[s]), i, src)
     end
 end
 
@@ -98,7 +94,7 @@ function execute(m::Repeat, s::Slurp, i, src)
     end
 end
 
-function success(m::Repeat, s::Slurp, c, t, i, src, r)
+function response(m::Repeat, s::Slurp, c, t, i, src, r::Success)
     results = vcat(s.results, r)
     iters = vcat(s.iters, i)
     states = vcat(s.states, t)
@@ -109,7 +105,7 @@ function success(m::Repeat, s::Slurp, c, t, i, src, r)
     end
 end
 
-function failure(m::Repeat, s::Slurp, c, t, i, src)
+function response(m::Repeat, s::Slurp, c, t, i, src, ::Failure)
     execute(m, Yield(s.results, s.iters, s.states), i, src)
 end
 
@@ -118,28 +114,28 @@ end
 function execute(m::Repeat, s::Yield, i, src)
     n = length(s.results)
     if n >= m.b
-        Success(m, Backtrack(s.results, s.iters, s.states), s.iters[end], s.results)
+        Response(m, Backtrack(s.results, s.iters, s.states), s.iters[end], Value(unSuccess(s.results)))
     else
-        Failure(m, DIRTY, i)
+        Response(m, DIRTY, i, FAILURE)
     end
 end
 
 # another result is required, so discard and then advance if possible
 
 function execute(m::Repeat, s::Backtrack, i, src)
-    if length(s.results) == 0
-        Failure(m, DIRTY, i)
+    if length(s.iters) < 2  # is this correct?
+        Response(m, DIRTY, i, FAILURE)
     else
         # we need the iter from *before* the result
         Execute(m, Backtrack(s.results[1:end-1], s.iters[1:end-1], s.states[1:end-1]), m.matcher, s.states[end], s.iters[end-1])
     end
 end
 
-function success(m::Repeat, s::Backtrack, c, t, i, src, r)
+function response(m::Repeat, s::Backtrack, c, t, i, src, r::Success)
     execute(m, Slurp(vcat(s.results, r), vcat(s.iters, i), vcat(s.states, t)), i, src)
 end
 
-function failure(m::Repeat, s::Backtrack, c, t, i, src)
+function response(m::Repeat, s::Backtrack, c, t, i, src, ::Failure)
     execute(m, Yield(s.results, s.iters, s.states), i, src)
 end
 
@@ -180,23 +176,23 @@ function execute(m::And, s::Clean, i, src)
 end
 
 # if left couldn't match, then we're done
-function failure(m::And, s::Left, c, t, i, src)
-    Failure(m, DIRTY, i)
+function response(m::And, s::Left, c, t, i, src, ::Failure)
+    Response(m, DIRTY, i, FAILURE)
 end
 
 # if left did match, then save everything and match the right
-function success(m::And, s::Left, c, t, i, src, r)
+function response(m::And, s::Left, c, t, i, src, r::Success)
     Execute(m, Right(s.left_iter, t, i, r), m.right, CLEAN, i)
 end
 
 # if right couldn't match, then try again with left
-function failure(m::And, s::Right, c, t, i, src)
+function response(m::And, s::Right, c, t, i, src, ::Failure)
     Execute(m, Left(s.left_iter), m.left, s.left_state, s.left_iter)
 end
 
 # if right did match, then save everything and return
-function success(m::And, s::Right, c, t, i, src, r)
-    Success(m, Both(s.left_iter, s.left_state, s.right_iter, t, s.result), i, (s.result, r))
+function response(m::And, s::Right, c, t, i, src, r::Success)
+    Response(m, Both(s.left_iter, s.left_state, s.right_iter, t, s.result), i, Value((s.result, r)))
 end
 
 # if we're called with Both state, we need to backtrack on the right

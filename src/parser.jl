@@ -2,7 +2,7 @@
 function no_caching_producer(source, matcher::Matcher)
 
     stack = Stack(Tuple{Matcher,State})
-
+    n = 0
     msg::Message = Execute(ROOT, CLEAN, matcher, CLEAN, start(source))
 
     function dispatch(e::Execute)
@@ -10,24 +10,59 @@ function no_caching_producer(source, matcher::Matcher)
         execute(e.child, e.state_child, e.iter, source)
     end
 
-    function dispatch(s::Success)
+    function dispatch(r::Response)
         (parent, state_parent) = pop!(stack)
-        success(parent, state_parent, s.child, s.state_child, s.iter, source, s.result)
-    end
-
-    function dispatch(f::Failure)
-        (parent, state_parent) = pop!(stack)
-        failure(parent, state_parent, f.child, f.state_child, f.iter, source)
+        response(parent, state_parent, r.child, r.state_child, r.iter, source, r.result)
     end
 
     while true
         msg = dispatch(msg)
+        n = n+1
         if length(stack) == 1
-            if typeof(msg) <: Success
+            if typeof(msg) <: Response && msg.result <: Success
                 produce(msg.result)
                 (parent, state_parent) = pop!(stack)
                 msg = Execute(parent, state_parent, msg.child, msg.state_child, start(source))
-            elseif typeof(msg) <: Failure
+            elseif typeof(msg) <: Response && msg.result <: Failure
+                return
+            end
+        end
+    end
+end
+
+function caching_producer(source, matcher::Matcher)
+
+    stack = Stack(Tuple{Matcher,State,Tuple{Matcher,State,Any}})
+    cache = Dict{Tuple{Matcher,State,Any},Message}()
+    n, m = 0, 0
+    msg::Message = Execute(ROOT, CLEAN, matcher, CLEAN, start(source))
+
+    function dispatch(e::Execute)
+        key = (e.child, e.state_child, e.iter)
+        push!(stack, (e.parent, e.state_parent, key))
+        if haskey(cache, key)
+            m = m + 1
+            cache[key]
+        else
+            execute(e.child, e.state_child, e.iter, source)
+        end
+    end
+
+    function dispatch(r::Response)
+        parent, state_parent, key = pop!(stack)
+        cache[key] = r
+        response(parent, state_parent, r.child, r.state_child, r.iter, source, r.result)
+    end
+
+    while true
+        msg = dispatch(msg)
+        n = n+1
+        if length(stack) == 1
+            if typeof(msg) <: Response && typeof(msg.result) <: Success
+                produce(msg.result)
+                (parent, state_parent) = pop!(stack)
+                msg = Execute(parent, state_parent, msg.child, msg.state_child, start(source))
+            elseif typeof(msg) <: Response && typeof(msg.result) <: Failure
                 return
             end
         end
@@ -52,5 +87,7 @@ function make_one(producer)
     end
 end
 
-parse_all = make_all(no_caching_producer)
-parse_one = make_one(no_caching_producer)
+parse_all_nc = make_all(no_caching_producer)
+parse_one_nc = make_one(no_caching_producer)
+parse_all = make_all(caching_producer)
+parse_one = make_one(caching_producer)

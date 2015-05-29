@@ -2,23 +2,35 @@
 abstract Matcher
 abstract Message
 abstract State
+abstract Result
 
 
-# parent and state_paprent are popped from the stack.  call is made to
-# failure(parent, state_parent, child, state_child, iter, source)
-immutable Failure{C<:Matcher,SC<:State}<:Message
-    child::C
-    state_child::SC
-    iter
+immutable Failure<:Result end
+FAILURE = Failure()
+
+abstract Success<:Result
+
+immutable Empty<:Success end
+EMPTY = Empty()
+
+immutable Value{T}<:Success
+    value::T
 end
+
+function unSuccess(a::Array{Success,1})
+    map(x -> x.value, filter(x -> typeof(x) <: Value, a))
+end
+
+=={T}(x::Value{T}, y::Value{T}) = x.value == y.value
+hash(x::Value) = hash(x.value)
 
 # parent and state_paprent are popped from the stack.  call is made to
 # success(parent, state_parent, child, state_child, iter, source, result)
-immutable Success{C<:Matcher,SC<:State}<:Message
+immutable Response{C<:Matcher,SC<:State,R<:Result}<:Message
     child::C
     state_child::SC
     iter
-    result
+    result::R
 end
 
 # parent and state_parent are pushed to the stack.  call is made to
