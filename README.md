@@ -7,7 +7,7 @@ Parsec).
 
 **EXAMPLES HERE**
 
-this is still under development, but to give some idea..
+This is still under development, but to give some idea..
 
 ```
 julia> using SimpleParser
@@ -24,9 +24,11 @@ Maybe that seems a little unsexy, but it shows:
 
 * greedy repetition, `[0:2]`
 
-* joining matched characters to a string `> string`
+* calling a function on results:
 
-* joining matches to a tuple `> tuple`
+  * joining matched characters to a string `> string`
+
+  * joining matches to a tuple `> tuple`
 
 For large parsing tasks (eg parsing source code for a compiler) it would
 probably be better to use a wrapper around an external parser generator, like
