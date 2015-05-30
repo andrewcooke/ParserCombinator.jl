@@ -275,6 +275,42 @@ end
 
 
 
+# backtracked alternates
+
+immutable Choice<:Matcher
+    matchers::Array{Matcher,1}
+end
+
+immutable ChoiceState<:State
+    state::State
+    i
+end
+
+function execute(m::Choice, s::Clean, i, src)
+    if len(m.matchers) == 0
+        Response(m, DIRTY, i, FAILURE)
+    else
+        execute(m, ChoiceState(CLEAN, 1), i, src)
+end
+
+function execute(m::Choice, s::ChoiceState, i, src)
+    execute(m, s, m.matchers[s.i], s.state, i, src)
+end
+
+function response(m::Choice, s::ChoiceState, c, t, i, src. r::Success)
+    Response(m, ChoiceState(t, s.i), i, r)
+end
+
+function response(m::Choice, s::ChoiceState, c, t, i, src. r::Failure)
+    if s.i > len(m.matchers)
+        Response(m, DIRTY, i, FAILURE)
+    else
+        execute(m, ChoiceState(CLEAN, s.i + 1), i, src)
+    end
+end
+
+
+
 # evaluate the child, but discard values and do not advance the iter
 
 immutable Lookahead<:DelegateMatcher
