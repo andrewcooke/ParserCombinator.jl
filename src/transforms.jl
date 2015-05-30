@@ -1,6 +1,5 @@
 
 
-
 # transform a result (including failure)
 # note that the function will receive a Result instance (Failure, Empty or
 # Value) and that the value returned must also be a Result
@@ -23,6 +22,10 @@ function response(m::TransformResult, s, c, t, i, src, r::Result)
 end
 
 
+
+# transform successes (Empty and Value)
+# again, function must return a Result instance
+
 immutable TransformSuccess<:Matcher
     matcher::Matcher
     f::Function
@@ -44,6 +47,10 @@ function response(m::TransformSuccess, s, c, t, i, src, ::Failure)
     Response(m, DIRTY, i, FAILURE)
 end
 
+
+
+# transform Value instances
+# again, function must return a Result instance
 
 immutable TransformValue<:Matcher
     matcher::Matcher

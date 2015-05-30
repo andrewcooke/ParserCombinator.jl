@@ -1,4 +1,8 @@
 
+
+# place the result of a series of matcher inside anarray
+# (in practice, use this instead of And)
+
 function Seq(matcher::Matcher...)
     n = length(matcher)
     if n == 0

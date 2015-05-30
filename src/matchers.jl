@@ -48,6 +48,7 @@ function execute(m::Dot, s::Clean, i, src)
 end
 
 
+
 # evaluate the sub-matcher, but replace the result with EMPTY
 
 immutable Drop<:Matcher
@@ -71,7 +72,8 @@ function response(m::Drop, s, c, t, i, src, r::Failure)
 end
 
 
-# the state machine for equality
+
+# exact match
 
 immutable Equal<:Matcher
     string
@@ -92,7 +94,7 @@ end
 
 
 
-# the state machine for repetition (greedy and minimal)
+# repetition (greedy and minimal)
 
 immutable Repeat<:Matcher
     matcher::Matcher
@@ -223,7 +225,6 @@ immutable Both<:AndState
     right_state::State
     result
 end
-
 
 # on initial entry, save iter then call left
 function execute(m::And, s::Clean, i, src)
