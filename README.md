@@ -90,7 +90,7 @@ end
 
 function response(p::Parent, s::ParentState, c::Child, cs::ChildState, iter, source, result::Value)
   # the message containing a Value above triggers a call here, where we do 
-  # something with the result
+  # something with the result (like save it in the ParentState)
   ...
   # and then perhaps evaluate child2...
   Execute(p, s, p.child2, ChildStateStart(), iter)
