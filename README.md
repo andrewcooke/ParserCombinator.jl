@@ -82,15 +82,15 @@ end
 function execute(c::Child, s::ChildStateStart, iter, source)
   # the above will call here, where we check if the text matches
   if compare(c.text, source[iter:])
-    Success(c, ChildStateSucceeded(), iter, c.text)
+    Response(c, ChildStateSucceeded(), iter, Value(c.text))
   else
-    Failure(c, ChildStateFailed(), iter)
+    Response(c, ChildStateFailed(), iter, FAIL)
   end
 end
 
-function success(p::Parent, s::ParentState, c::Child, cs::ChildState, iter, source, result)
-  # the Successs() message above results in a call here, where we do something
-  # with the result
+function response(p::Parent, s::ParentState, c::Child, cs::ChildState, iter, source, result::Value)
+  # the message containing a Value above triggers a call here, where we do 
+  # something with the result
   ...
   # and then perhaps evaluate child2...
   Execute(p, s, p.child2, ChildStateStart(), iter)
@@ -108,6 +108,9 @@ given method.
 
 The source text is read using the [standard Julia iterator
 protocol](http://julia.readthedocs.org/en/latest/stdlib/collections/?highlight=iterator).
+
+This has the unfortunate result that Dot() returns characters, not strings.
+But in practice that matcher is rarely used.
 
 [![Build
 Status](https://travis-ci.org/andrewcooke/SimpleParser.jl.png)](https://travis-ci.org/andrewcooke/SimpleParser.jl)
