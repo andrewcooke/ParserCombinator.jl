@@ -4,8 +4,9 @@
 # (in practice, use this instead of And)
 
 immutable Seq<:DelegateMatcher
-    matchers::Tuple
-    Seq(matchers::Matcher...) = new(matchers)
+    matchers::Array{Matcher,1}
+    Seq(matchers::Matcher...) = new([matchers...])
+    Seq(matchers::Array{Matcher,1}) = new(matchers)
 end
 
 immutable SeqState<:DelegateState

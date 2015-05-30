@@ -15,6 +15,7 @@ using Base.Test
 @test parse_one("", Repeat(Equal("a"), 0, 0)).value == []
 @test parse_one("ab", Seq(Pattern(r"a"), Dot())).value == ["a", 'b']
 @test parse_one("ab", p"." + s"b").value == ["a", "b"]
+@test parse_one("abc", p"." + s"b" + s"c").value == ["a", "b", "c"]
 
 
 # check that greedy repeat is exactly the same as regexp
