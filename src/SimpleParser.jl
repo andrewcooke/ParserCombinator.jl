@@ -4,12 +4,13 @@ module SimpleParser
 using DataStructures.Stack
 using Compat
 import Base: start
+using Debug
 
 export parse_one, parse_all, parse_one_nc, parse_all_nc,
 ParserException, Value, Empty, EMPTY,
-Epsilon, Insert, Dot, Drop, Equal, Repeat, And,
+Epsilon, Insert, Dot, Drop, Equal, Repeat, And, Lookahead, Pattern,
 TransformResult, TransformSuccess, TransformValue,
-Seq
+Seq, @p_str, @s_str
 
 
 include("types.jl")

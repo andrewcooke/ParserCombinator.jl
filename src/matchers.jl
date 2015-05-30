@@ -14,8 +14,30 @@ function execute(m, s::Dirty, i, _)
     Response(m, s, i, FAILURE)
 end
 
-immutable ChildState<:State
-    state::State
+
+
+# many matchers delegate to a child, making only slight modifications.
+# we can describe the default behaviour just once, here.
+# child matchers then need to implement (1) state creation (typically on 
+# response) and (2) anything unusual (ie what the matcher actually does)
+
+# assume this has a matcher field
+abstract DelegateMatcher<:Matcher
+
+# assume this has a state field
+abstract DelegateState<:State
+
+function execute(m::DelegateMatcher, s::Clean, i, src)
+    Execute(m, s, m.matcher, CLEAN, i)
+end
+
+function execute(m::DelegateMatcher, s::DelegateState, i, src)
+    Execute(m, s, m.matcher, s.state, i)
+end
+
+# this avoids re-calling child on backtracking on failure
+function response(m::DelegateMatcher, s, c, t, i, src, r::Failure)
+    Response(m, DIRTY, i, FAILURE)
 end
 
 
@@ -51,24 +73,16 @@ end
 
 # evaluate the sub-matcher, but replace the result with EMPTY
 
-immutable Drop<:Matcher
+immutable Drop<:DelegateMatcher
     matcher::Matcher
 end
 
-function execute(m::Drop, s::Clean, i, src)
-    Execute(m, s, m.matcher, CLEAN, i)
+immutable DropState<:DelegateState
+    state::State
 end
 
-function execute(m::Drop, s::ChildState, i, src)
-    Execute(m, s, m.matcher, s.state, i)
-end
-
-function response(m::Drop, s, c, t, i, src, r::Success)
-    Response(m, ChildState(t), i, EMPTY)
-end
-
-function response(m::Drop, s, c, t, i, src, r::Failure)
-    Response(m, DIRTY, i, FAILURE)
+function response(m::Drop, s, c, t, i, src, rs::Success)
+    Response(m, DropState(t), i, EMPTY)
 end
 
 
@@ -257,6 +271,56 @@ end
 # if we're called with Both state, we need to backtrack on the right
 function execute(m::And, s::Both, i, src)
     Execute(m, Right(s.left_iter, s.left_state, s.right_iter, s.result), m.right, s.right_state, s.right_iter)
+end
+
+
+
+# evaluate the child, but discard values and do not advance the iter
+
+immutable Lookahead<:DelegateMatcher
+    matcher::Matcher
+end
+
+immutable LookaheadState<:DelegateState
+    state::State
+    iter
+end
+
+function execute(m::Lookahead, s::Clean, i, src)
+    Execute(m, LookaheadState(s, i), m.matcher, CLEAN, i)
+end
+
+function response(m::Lookahead, s, c, t, i, r::Success)
+    Response(m, LooakheadState(t, s.iter), s.iter, EMPTY)
+end
+
+
+
+# match a regular expression.
+
+# because Regex match against strings, this matcher works only against 
+# string sources.
+
+# for efficiency, we need to know the offset where the match finishes.
+# we do this by adding r"(.??)" to the end of the expression and using
+# the offset from that.
+
+immutable Pattern<:Matcher
+    regex::Regex
+    Pattern(r::Regex) = new(Regex(r.pattern * "(.??)"))
+end
+
+function execute(m::Pattern, s::Clean, i, src)
+    error("Pattern matcher works only with strings")
+end
+
+function execute(m::Pattern, s::Clean, i, src::AbstractString)
+    x = match(m.regex, src[i:end])
+    if x == nothing
+        Response(m, DIRTY, i, FAILURE)
+    else
+        Response(m, DIRTY, i + x.offsets[end] - 1, Value(x.match))
+    end
 end
 
 

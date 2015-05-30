@@ -2,7 +2,6 @@
 importall SimpleParser
 using Base.Test
 
-
 # various simple matchers
 
 @test parse_one("", Epsilon()) == EMPTY
@@ -14,6 +13,8 @@ using Base.Test
 @test parse_one("aa", Repeat(Equal("a"), 2, 2)).value == ["a", "a"]
 @test parse_one("aa", Repeat(Equal("a"), 2, 1)).value == ["a", "a"]
 @test parse_one("", Repeat(Equal("a"), 0, 0)).value == []
+@test parse_one("ab", Seq(Pattern(r"a"), Dot())).value == ["a", 'b']
+@test parse_one("ab", p"." + s"b").value == ["a", "b"]
 
 
 # check that greedy repeat is exactly the same as regexp

@@ -35,7 +35,7 @@ hash(x::Value) = hash(x.value)
 # Message sub-types
 
 # parent and state_paprent are popped from the stack.  a call is made to
-# success(parent, state_parent, child, state_child, iter, source, result)
+# response(parent, state_parent, child, state_child, iter, source, result)
 immutable Response{C<:Matcher,SC<:State,R<:Result}<:Message
     child::C
     state_child::SC
