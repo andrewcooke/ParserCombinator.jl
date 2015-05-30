@@ -168,8 +168,6 @@ end
 
 # yield a result
 
-# a similar unpack
-
 unpackArray(a) = map(x -> x.value, filter(x -> typeof(x) <: Value, a))
 
 function execute(m::Repeat, s::Yield, i, src)
