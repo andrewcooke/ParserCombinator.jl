@@ -147,6 +147,7 @@ end
 
 function execute(m::Repeat, s::Clean, i, src)
     if m.b > m.a
+        error("lazy repeat not yet supported")
         execute(m, Lazy(), i, src)
     else
         execute(m, Slurp(Array(Success, 0), [i], Any[s]), i, src)
@@ -277,35 +278,39 @@ end
 
 # backtracked alternates
 
-immutable Choice<:Matcher
+immutable Alt<:Matcher
     matchers::Array{Matcher,1}
+    Alt(matchers::Matcher...) = new([matchers...])
+    Alt(matchers::Array{Matcher,1}) = new(matchers)    
 end
 
-immutable ChoiceState<:State
+immutable AltState<:State
     state::State
+    iter
     i
 end
 
-function execute(m::Choice, s::Clean, i, src)
-    if len(m.matchers) == 0
+function execute(m::Alt, s::Clean, i, src)
+    if length(m.matchers) == 0
         Response(m, DIRTY, i, FAILURE)
     else
-        execute(m, ChoiceState(CLEAN, 1), i, src)
+        execute(m, AltState(CLEAN, i, 1), i, src)
+    end
 end
 
-function execute(m::Choice, s::ChoiceState, i, src)
-    execute(m, s, m.matchers[s.i], s.state, i, src)
+function execute(m::Alt, s::AltState, i, src)
+    Execute(m, s, m.matchers[s.i], s.state, s.iter)
 end
 
-function response(m::Choice, s::ChoiceState, c, t, i, src. r::Success)
-    Response(m, ChoiceState(t, s.i), i, r)
+function response(m::Alt, s::AltState, c, t, i, src, r::Success)
+    Response(m, AltState(t, s.iter, s.i), i, r)
 end
 
-function response(m::Choice, s::ChoiceState, c, t, i, src. r::Failure)
-    if s.i > len(m.matchers)
+function response(m::Alt, s::AltState, c, t, i, src, r::Failure)
+    if s.i == length(m.matchers)
         Response(m, DIRTY, i, FAILURE)
     else
-        execute(m, ChoiceState(CLEAN, s.i + 1), i, src)
+        execute(m, AltState(CLEAN, s.iter, s.i + 1), i, src)
     end
 end
 

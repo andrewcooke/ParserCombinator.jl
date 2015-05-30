@@ -5,7 +5,28 @@ This is a parser for Julia that tries to strike a balance between being both
 is similar to parser combinator libraries in other languages (eg Haskell's
 Parsec).
 
-**EXAMPLE HERE**
+**EXAMPLES HERE**
+
+this is still under development, but to give some idea..
+
+```
+julia> using SimpleParser
+
+julia> parse_one("abcd", (s"a" + (p"."[0:2] > string)) > tuple).value
+("a","bc")
+```
+
+Maybe that seems a little unsexy, but it shows:
+
+* a literal matcher, `s"a"`
+
+* regexp matcher, `p"."`
+
+* greedy repetition, `[0:2]`
+
+* joining matched characters to a string `> string`
+
+* joining matches to a tuple `> tuple`
 
 For large parsing tasks (eg parsing source code for a compiler) it would
 probably be better to use a wrapper around an external parser generator, like
