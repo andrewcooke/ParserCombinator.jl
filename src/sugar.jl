@@ -89,4 +89,5 @@ end
 getindex(m::Matcher,r::Int) = Repeat(m, r, r)
 getindex(m::Matcher,r::UnitRange) = Repeat(m, r.stop, r.start)
 >(m::Matcher, f::Function) = TransformValue(m, x -> Value(f(x.value...)))
+|>(m::Matcher, f::Function) = TransformValue(m, x -> Value(f(x.value)))
 >=(m::Matcher, f::Function) = TransformResult(m, f)
