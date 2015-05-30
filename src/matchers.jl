@@ -14,6 +14,61 @@ function execute(m, s::Dirty, i, _)
     Response(m, s, i, FAILURE)
 end
 
+immutable ChildState<:State
+    state::State
+end
+
+
+
+# various weird things for completeness
+
+immutable Epsilon<:Matcher end
+
+function execute(m::Epsilon, s::Clean, i, src)
+    Response(m, DIRTY, i, EMPTY)
+end
+
+immutable Insert<:Matcher
+    text
+end
+
+function execute(m::Insert, s::Clean, i, src)
+    Response(m, DIRTY, i, Value(m.text))
+end
+
+immutable Dot<:Matcher end
+
+function execute(m::Dot, s::Clean, i, src)
+    if done(src, i)
+        Response(m, DIRTY, i, FAILURE)
+    else
+        c, i = next(src, i)
+        Response(m, DIRTY, i, Value(c))
+    end
+end
+
+
+# evaluate the sub-matcher, but replace the result with EMPTY
+
+immutable Drop<:Matcher
+    matcher::Matcher
+end
+
+function execute(m::Drop, s::Clean, i, src)
+    Execute(m, s, m.matcher, CLEAN, i)
+end
+
+function execute(m::Drop, s::ChildState, i, src)
+    Execute(m, s, m.matcher, s.state, i)
+end
+
+function response(m::Drop, s, c, t, i, src, r::Success)
+    Response(m, ChildState(t), i, EMPTY)
+end
+
+function response(m::Drop, s, c, t, i, src, r::Failure)
+    Response(m, DIRTY, i, FAILURE)
+end
 
 
 # the state machine for equality

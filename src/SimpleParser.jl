@@ -6,12 +6,17 @@ using Compat
 import Base: start
 using Debug
 
-export parse_one, parse_all, parse_on_nc, parse_all_nc,
-ParserException, Value, Empty,
-Equal, Repeat, And
+export parse_one, parse_all, parse_one_nc, parse_all_nc,
+ParserException, Value, Empty, EMPTY,
+Epsilon, Insert, Dot, Drop, Equal, Repeat, And,
+TransformResult, TransformSuccess, TransformValue,
+Seq
+
 
 include("types.jl")
 include("matchers.jl")
-include("parser.jl")
+include("parsers.jl")
+include("transforms.jl")
+include("sugar.jl")
 
 end

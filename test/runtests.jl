@@ -2,10 +2,9 @@
 importall SimpleParser
 using Base.Test
 
-println(collect(parse_all("aaa", 
-                          And(Repeat(Equal("a"), 3, 0),
-                              Repeat(Equal("a"), 3, 0)))))
-error("stop")
+@test parse_one("", Epsilon()) == EMPTY
+@test parse_one("", Insert("foo")).value == "foo"
+@test parse_one("", Drop(Insert("foo"))) == EMPTY
 
 @test_throws ParserException parse_one("x", Equal("a")) 
 @test parse_one("a", Equal("a")).value == "a"
@@ -30,19 +29,18 @@ for i in 1:10
 end
 
 @test parse_one("ab", And(Equal("a"), Equal("b"))).value == (Value("a"), Value("b"))
-@test collect(parse_all("aaa", 
-                        And(Repeat(Equal("a"), 3, 0),
-                            Repeat(Equal("a"), 3, 0)))) == 
-                            [(["a","a","a"],[]),
-                             (["a","a"],["a"]),
-                             (["a","a"],[]),
-                             (["a"],["a","a"]),
-                             (["a"],["a"]),
-                             (["a"],[]),
-                             ([],["a","a","a"]),
-                             ([],["a","a"]),
-                             ([],["a"]),
-                             ([],[])]
+@test parse_one("abc", Seq(Dot(), Dot(), Dot())).value == ['a', 'b', 'c']
+@test map(x -> map(y -> length(y), x.value),
+          collect(parse_all("aaa", 
+                            Seq(Repeat(Equal("a"), 3, 0),
+                                Repeat(Equal("a"), 3, 0))))) == 
+                                Array[[3,0],
+                                      [2,1],[2,0],
+                                      [1,2],[1,1],[1,0],
+                                      [0,3],[0,2],[0,1],[0,0]]
+
+
+parse_one_nc("aa", Equal("a"))
 
 function slow(n)
 #    matcher = Repeat(Repeat(Equal("a"), n, 0), n, 0)
@@ -60,5 +58,5 @@ function slow(n)
     @time n2 = collect(parse_all(source, matcher))
     @test n1 == n2
 end
-slow(4)
-slow(8)
+slow(3)
+slow(6)

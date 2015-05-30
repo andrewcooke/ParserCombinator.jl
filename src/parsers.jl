@@ -19,11 +19,11 @@ function no_caching_producer(source, matcher::Matcher)
         msg = dispatch(msg)
         n = n+1
         if length(stack) == 1
-            if typeof(msg) <: Response && msg.result <: Success
+            if typeof(msg) <: Response && typeof(msg.result) <: Success
                 produce(msg.result)
                 (parent, state_parent) = pop!(stack)
                 msg = Execute(parent, state_parent, msg.child, msg.state_child, start(source))
-            elseif typeof(msg) <: Response && msg.result <: Failure
+            elseif typeof(msg) <: Response && typeof(msg.result) <: Failure
                 return
             end
         end
