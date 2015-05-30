@@ -199,6 +199,7 @@ end
 
 
 # the state machine for sequencing two matchers
+# in practice, use Seq from sugar.jl, which sweetens this considerably
 
 immutable And<:Matcher
     left::Matcher

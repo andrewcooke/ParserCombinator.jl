@@ -1,6 +1,6 @@
 
 
-# place the result of a series of matcher inside anarray
+# place the result of a series of matcher inside an array
 # (in practice, use this instead of And)
 
 function Seq(matcher::Matcher...)
