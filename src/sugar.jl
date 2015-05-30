@@ -75,15 +75,22 @@ end
 
 # sweet, sweet sugar
 
+# match and discard
 ~(m::Matcher) = Drop(m)
+
+# match in sequence, result in array
 +(a::Seq, b::Seq) = Seq(vcat(a.matchers, b.matchers))
 +(a::Seq, b::Matcher) = Seq(vcat(a.matchers, b))
 +(a::Matcher, b::Seq) = Seq(vcat(a, b.matchers))
 +(a::Matcher, b::Matcher) = Seq(a, b)
+
+# alternates
 |(a::Alt, b::Alt) = Alt(vcat(a.matchers, b.matchers))
 |(a::Alt, b::Matcher) = Alt(vcat(a.matchers, b))
 |(a::Matcher, b::Alt) = Alt(vcat(a, b.matchers))
 |(a::Matcher, b::Matcher) = Alt(a, b)
+
+# repeat via [lo:hi] or [n]
 # TODO - special value used by Range
 #endof(::Matcher) = -1
 getindex(m::Matcher,r::Int) = Repeat(m, r, r)
