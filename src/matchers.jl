@@ -168,10 +168,14 @@ end
 
 # yield a result
 
+# a similar unpack
+
+unpackArray(a) = map(x -> x.value, filter(x -> typeof(x) <: Value, a))
+
 function execute(m::Repeat, s::Yield, i, src)
     n = length(s.results)
     if n >= m.b
-        Response(m, Backtrack(s.results, s.iters, s.states), s.iters[end], Value(unSuccess(s.results)))
+        Response(m, Backtrack(s.results, s.iters, s.states), s.iters[end], Value(unpackArray(s.results)))
     else
         Response(m, DIRTY, i, FAILURE)
     end
