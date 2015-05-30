@@ -23,6 +23,7 @@ using Base.Test
 @test length(collect(parse_all("abc", p"."[0:3]))) == 4
 @test length(collect(parse_all("abc", p"."[1:2]))) == 2
 @test parse_one("abc", p"."[3] > tuple).value == ("a", "b", "c")
+@test parse_one("1.2", PFloat()).value == 1.2
 
 # check that greedy repeat is exactly the same as regexp
 
