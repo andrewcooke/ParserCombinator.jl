@@ -45,9 +45,9 @@ julia> parse_one("abcd",
 
 And it supports packrat parsing too.
 
-For large parsing tasks (eg parsing source code for a compiler) it would
-probably be better to use a wrapper around an external parser generator, like
-Anltr.
+Still, for large parsing tasks (eg parsing source code for a compiler) it
+would probably be better to use a wrapper around an external parser generator,
+like Anltr.
 
 ## Design
 
