@@ -18,7 +18,7 @@ end
 
 function unpackSeq(n)
     function (v)
-        a = []
+        a = Array(Any,0)
         function unpackValue(::Empty) end
         function unpackValue(x::Value) push!(a, x.value) end
         function unwind(i, v)
