@@ -30,6 +30,19 @@ Maybe that seems a little unsexy, but it shows:
 
   * joining matches to a tuple `> tuple`
 
+And, if you're into the whole traditiional parser combinator thing, that can
+also be written out longhand:
+
+```
+julia> parse_one("abcd", 
+                 TransformValue(
+                   Seq(Equal("a"), 
+                       TransformValue(Repeat(Pattern(r"."),2,0), 
+                                      x -> Value(string(x.value...)))),
+                   x -> Value(tuple(x.value...)))).value
+("a","bc")
+```
+
 For large parsing tasks (eg parsing source code for a compiler) it would
 probably be better to use a wrapper around an external parser generator, like
 Anltr.
