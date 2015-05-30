@@ -2,16 +2,21 @@
 importall SimpleParser
 using Base.Test
 
+
+# various simple matchers
+
 @test parse_one("", Epsilon()) == EMPTY
 @test parse_one("", Insert("foo")).value == "foo"
 @test parse_one("", Drop(Insert("foo"))) == EMPTY
-
 @test_throws ParserException parse_one("x", Equal("a")) 
 @test parse_one("a", Equal("a")).value == "a"
 @test_throws ParserException parse_one("a", Repeat(Equal("a"), 2, 2))
 @test parse_one("aa", Repeat(Equal("a"), 2, 2)).value == ["a", "a"]
 @test parse_one("aa", Repeat(Equal("a"), 2, 1)).value == ["a", "a"]
 @test parse_one("", Repeat(Equal("a"), 0, 0)).value == []
+
+
+# check that greedy repeat is exactly the same as regexp
 
 for i in 1:10
     lo = rand(0:3)
@@ -28,6 +33,9 @@ for i in 1:10
     end
 end
 
+
+# backtracking in sequences of repeats
+
 @test parse_one("ab", And(Equal("a"), Equal("b"))).value == (Value("a"), Value("b"))
 @test parse_one("abc", Seq(Dot(), Dot(), Dot())).value == ['a', 'b', 'c']
 @test map(x -> map(y -> length(y), x.value),
@@ -40,8 +48,10 @@ end
                                       [0,3],[0,2],[0,1],[0,0]]
 
 
-parse_one_nc("aa", Equal("a"))
+# is caching useful?  only in extreme cases, apparently
+# (but we may need to define equality on states!)
 
+@test parse_one_nc("aa", Equal("a")).value == "a"
 function slow(n)
 #    matcher = Repeat(Repeat(Equal("a"), n, 0), n, 0)
 #    matcher = And(Repeat(Equal("a"), n, 0), Repeat(Equal("a"), n, 0))
