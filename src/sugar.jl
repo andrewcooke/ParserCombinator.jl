@@ -72,6 +72,8 @@ end
 
 
 
+# sweet, sweet sugar
+
 ~(m::Matcher) = Drop(m)
 +(a::Seq, b::Seq) = Seq(vcat(a.matchers, b.matchers))
 +(a::Seq, b::Matcher) = Seq(vcat(a.matchers, b))
