@@ -59,4 +59,4 @@ function slow(n)
     @test n1 == n2
 end
 slow(3)
-slow(6)
+# slow(6)  # not for travis!
