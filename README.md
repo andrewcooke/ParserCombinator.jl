@@ -30,7 +30,7 @@ Maybe that seems a little unsexy, but it shows:
 
   * joining matches to a tuple `> tuple`
 
-And, if you're into the whole traditiional parser combinator thing, that can
+And, if you're into the whole traditiional parser combinator thing, it can
 also be written out longhand:
 
 ```
@@ -42,6 +42,8 @@ julia> parse_one("abcd",
                    x -> Value(tuple(x.value...)))).value
 ("a","bc")
 ```
+
+And it supports packrat parsing too.
 
 For large parsing tasks (eg parsing source code for a compiler) it would
 probably be better to use a wrapper around an external parser generator, like
