@@ -88,6 +88,10 @@ end
 #endof(::Matcher) = -1
 getindex(m::Matcher,r::Int) = Repeat(m, r, r)
 getindex(m::Matcher,r::UnitRange) = Repeat(m, r.stop, r.start)
+
+# interpolate multiple values (list or tuple)
 >(m::Matcher, f::Function) = TransformValue(m, x -> Value(f(x.value...)))
+# a single value
 |>(m::Matcher, f::Function) = TransformValue(m, x -> Value(f(x.value)))
+# the raw Result instance
 >=(m::Matcher, f::Function) = TransformResult(m, f)
