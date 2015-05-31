@@ -1,8 +1,4 @@
 
-importall SimpleParser
-using Base.Test
-using Compat
-
 # various simple matchers
 
 @test parse_one("", Epsilon()) == []
@@ -26,7 +22,7 @@ using Compat
 @test parse_one("abc", p"."[3] > tuple) == [("a", "b", "c")]
 @test parse_one("1.2", PFloat64()) == [1.2]
 m1 = Delayed()
-m1.matcher = And(Dot(), Opt(m1))
+m1.matcher = Nullable{SimpleParser.Matcher}(And(Dot(), Opt(m1)))
 @test parse_one_nc("abc", m1) == ['a', 'b', 'c']
 
 

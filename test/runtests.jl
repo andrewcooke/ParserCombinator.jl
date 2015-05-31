@@ -4,4 +4,4 @@ using Base.Test
 using Compat
 
 include("tests.jl")
-include("calc.jl")
+#include("calc.jl")

@@ -23,7 +23,7 @@ prd = val + (inv | dir)[0:99] |> Prd
 
 neg = (S"-" + prd) > Neg
 pos = (S"+" + prd)
-sum.matcher = (prd | neg | pos) + (neg | pos)[0:99] |> Sum
+sum.matcher = Nullable{SimpleParser.Matcher}((prd | neg | pos) + (neg | pos)[0:99] |> Sum)
 
 all = sum + Eos()
 
