@@ -170,13 +170,13 @@ function execute(c::Child, s::ChildStateStart, iter, source)
   # the above returns an Execute instance, which tells the trampoline to
   # make a call here, where we check if the text matches
   if compare(c.text, source[iter:])
-    Response(c, ChildStateSucceeded(), iter, Success(c.text))
+    Response(ChildStateSucceeded(), iter, Success(c.text))
   else
-    Response(c, ChildStateFailed(), iter, FAILURE)
+    Response(ChildStateFailed(), iter, FAILURE)
   end
 end
 
-function response(p::Parent, s::ParentState, c::Child, cs::ChildState, iter, source, result::Value)
+function response(p::Parent, s::ParentState, t::ChildState, iter, source, result::Value)
   # the Response message containing Success above triggers a call here, where
   # we do something with the result (like save it in the ParentState)
   ...

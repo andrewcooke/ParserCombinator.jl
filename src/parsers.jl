@@ -25,7 +25,7 @@ end
 
 function dispatch(c::NoCache, r::Response,)
     (parent, state_parent) = pop!(c.stack)
-    response(parent, state_parent, r.child, r.state_child, r.iter, c.source, r.result)
+    response(parent, state_parent, r.state_child, r.iter, c.source, r.result)
 end
 
 
@@ -56,7 +56,7 @@ end
 function dispatch(c::Cache, r::Response)
     parent, state_parent, key = pop!(c.stack)
     c.cache[key] = r
-    response(parent, state_parent, r.child, r.state_child, r.iter, c.source, r.result)
+    response(parent, state_parent, r.state_child, r.iter, c.source, r.result)
 end
 
 
@@ -71,8 +71,8 @@ immutable RootState<:DelegateState
     state::State
 end
 
-response(m::Root, s::State, c::Matcher, t::State, i, src, r::Success) = Response(m, RootState(t), i, r)
-response(m::Root, s::State, c::Matcher, t::State, i, src, r::Failure) = Response(m, DIRTY, i, r)
+response(m::Root, s::State, t::State, i, src, r::Success) = Response(RootState(t), i, r)
+response(m::Root, s::State, t::State, i, src, r::Failure) = Response(DIRTY, i, r)
 
 function producer(c::Config, m::Matcher)
 

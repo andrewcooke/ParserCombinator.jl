@@ -4,9 +4,9 @@
 
 execute(m, s, i, _) = error("$m did not expect to be called with state $s")
 
-response(m, s, c, t, i, _, r) = error("$m did not expect to receive state $s from $c")
+response(m, s, t, i, _, r) = error("$m did not expect to receive state $s from $c")
 
-execute(m::Matcher, s::Dirty, i, _) = Response(m, s, i, FAILURE)
+execute(m::Matcher, s::Dirty, i, _) = Response(s, i, FAILURE)
 
 
 
@@ -26,7 +26,7 @@ execute(m::Delegate, s::Clean, i, src) = Execute(m, s, m.matcher, CLEAN, i)
 execute(m::Delegate, s::DelegateState, i, src) = Execute(m, s, m.matcher, s.state, i)
 
 # this avoids re-calling child on backtracking on failure
-response(m::Delegate, s, c, t, i, src, r::Failure) = Response(m, DIRTY, i, FAILURE)
+response(m::Delegate, s, t, i, src, r::Failure) = Response(DIRTY, i, FAILURE)
 
 
 
@@ -34,22 +34,22 @@ response(m::Delegate, s, c, t, i, src, r::Failure) = Response(m, DIRTY, i, FAILU
 
 immutable Epsilon<:Matcher end
 
-execute(m::Epsilon, s::Clean, i, src) = Response(m, DIRTY, i, EMPTY)
+execute(m::Epsilon, s::Clean, i, src) = Response(DIRTY, i, EMPTY)
 
 immutable Insert<:Matcher
     text
 end
 
-execute(m::Insert, s::Clean, i, src) = Response(m, DIRTY, i, Success(m.text))
+execute(m::Insert, s::Clean, i, src) = Response(DIRTY, i, Success(m.text))
 
 immutable Dot<:Matcher end
 
 function execute(m::Dot, s::Clean, i, src)
     if done(src, i)
-        Response(m, DIRTY, i, FAILURE)
+        Response(DIRTY, i, FAILURE)
     else
         c, i = next(src, i)
-        Response(m, DIRTY, i, Success(c))
+        Response(DIRTY, i, Success(c))
     end
 end
 
@@ -65,7 +65,7 @@ immutable DropState<:DelegateState
     state::State
 end
 
-response(m::Drop, s, c, t, i, src, rs::Success) = Response(m, DropState(t), i, EMPTY)
+response(m::Drop, s, t, i, src, rs::Success) = Response(DropState(t), i, EMPTY)
 
 
 
@@ -78,14 +78,14 @@ end
 function execute(m::Equal, s::Clean, i, src)
     for x in m.string
         if done(src, i)
-            return Response(m, DIRTY, i, FAILURE)
+            return Response(DIRTY, i, FAILURE)
         end
         y, i = next(src, i)
         if x != y
-            return Response(m, DIRTY, i, FAILURE)
+            return Response(DIRTY, i, FAILURE)
         end
     end
-    Response(m, DIRTY, i, Success(m.string))
+    Response(DIRTY, i, Success(m.string))
 end
 
 
@@ -149,18 +149,18 @@ function execute(m::Repeat, s::Slurp, i, src)
     end
 end
 
-function response(m::Repeat, s::Slurp, c, t, i, src, r::Success)
+function response(m::Repeat, s::Slurp, t, i, src, r::Success)
     results = Value[s.results..., r.value]
     iters = vcat(s.iters, i)
     states = vcat(s.states, t)
     if work_to_do(m, results)
-        Execute(m, Slurp(results, iters, states), c, CLEAN, i)
+        Execute(m, Slurp(results, iters, states), m.matcher, CLEAN, i)
     else
         execute(m, Yield(results, iters, states), i, src)
     end
 end
 
-function response(m::Repeat, s::Slurp, c, t, i, src, ::Failure)
+function response(m::Repeat, s::Slurp, t, i, src, ::Failure)
     execute(m, Yield(s.results, s.iters, s.states), i, src)
 end
 
@@ -169,9 +169,9 @@ end
 function execute(m::Repeat, s::Yield, i, src)
     n = length(s.results)
     if n >= m.b
-        Response(m, Backtrack(s.results, s.iters, s.states), s.iters[end], Success(flatten(s.results)))
+        Response(Backtrack(s.results, s.iters, s.states), s.iters[end], Success(flatten(s.results)))
     else
-        Response(m, DIRTY, i, FAILURE)
+        Response(DIRTY, i, FAILURE)
     end
 end
 
@@ -179,18 +179,18 @@ end
 
 function execute(m::Repeat, s::Backtrack, i, src)
     if length(s.iters) < 2  # is this correct?
-        Response(m, DIRTY, i, FAILURE)
+        Response(DIRTY, i, FAILURE)
     else
         # we need the iter from *before* the result
         Execute(m, Backtrack(s.results[1:end-1], s.iters[1:end-1], s.states[1:end-1]), m.matcher, s.states[end], s.iters[end-1])
     end
 end
 
-function response(m::Repeat, s::Backtrack, c, t, i, src, r::Success)
+function response(m::Repeat, s::Backtrack, t, i, src, r::Success)
     execute(m, Slurp(Array{Value}[s.results... r.value], vcat(s.iters, i), vcat(s.states, t)), i, src)
 end
 
-function response(m::Repeat, s::Backtrack, c, t, i, src, ::Failure)
+function response(m::Repeat, s::Backtrack, t, i, src, ::Failure)
     execute(m, Yield(s.results, s.iters, s.states), i, src)
 end
 
@@ -236,16 +236,16 @@ end
 execute(m::And, s::Clean, i, src) = Execute(m, Left(i), m.left, CLEAN, i)
 
 # if left couldn't match, then we're done
-response(m::And, s::Left, c, t, i, src, ::Failure) = Response(m, DIRTY, i, FAILURE)
+response(m::And, s::Left, t, i, src, ::Failure) = Response(DIRTY, i, FAILURE)
 
 # if left did match, then save everything and match the right
-response(m::And, s::Left, c, t, i, src, r::Success) = Execute(m, Right(s.left_iter, t, i, r), m.right, CLEAN, i)
+response(m::And, s::Left, t, i, src, r::Success) = Execute(m, Right(s.left_iter, t, i, r), m.right, CLEAN, i)
 
 # if right couldn't match, then try again with left
-response(m::And, s::Right, c, t, i, src, ::Failure) = Execute(m, Left(s.left_iter), m.left, s.left_state, s.left_iter)
+response(m::And, s::Right, t, i, src, ::Failure) = Execute(m, Left(s.left_iter), m.left, s.left_state, s.left_iter)
 
 # if right did match, then save everything and return
-response(m::And, s::Right, c, t, i, src, r::Success) = Response(m, Both(s.left_iter, s.left_state, s.right_iter, t, s.result), i, Success(vcat(s.result.value, r.value)))
+response(m::And, s::Right, t, i, src, r::Success) = Response(Both(s.left_iter, s.left_state, s.right_iter, t, s.result), i, Success(vcat(s.result.value, r.value)))
 
 # if we're called with Both state, we need to backtrack on the right
 execute(m::And, s::Both, i, src) = Execute(m, Right(s.left_iter, s.left_state, s.right_iter, s.result), m.right, s.right_state, s.right_iter)
@@ -268,7 +268,7 @@ end
 
 function execute(m::Alt, s::Clean, i, src)
     if length(m.matchers) == 0
-        Response(m, DIRTY, i, FAILURE)
+        Response(DIRTY, i, FAILURE)
     else
         execute(m, AltState(CLEAN, i, 1), i, src)
     end
@@ -278,13 +278,13 @@ function execute(m::Alt, s::AltState, i, src)
     Execute(m, s, m.matchers[s.i], s.state, s.iter)
 end
 
-function response(m::Alt, s::AltState, c, t, i, src, r::Success)
-    Response(m, AltState(t, s.iter, s.i), i, r)
+function response(m::Alt, s::AltState, t, i, src, r::Success)
+    Response(AltState(t, s.iter, s.i), i, r)
 end
 
-function response(m::Alt, s::AltState, c, t, i, src, r::Failure)
+function response(m::Alt, s::AltState, t, i, src, r::Failure)
     if s.i == length(m.matchers)
-        Response(m, DIRTY, i, FAILURE)
+        Response(DIRTY, i, FAILURE)
     else
         execute(m, AltState(CLEAN, s.iter, s.i + 1), i, src)
     end
@@ -305,7 +305,7 @@ end
 
 execute(m::Lookahead, s::Clean, i, src) = Execute(m, LookaheadState(s, i), m.matcher, CLEAN, i)
 
-response(m::Lookahead, s, c, t, i, r::Success) = Response(m, LooakheadState(t, s.iter), s.iter, EMPTY)
+response(m::Lookahead, s, t, i, r::Success) = Response(LooakheadState(t, s.iter), s.iter, EMPTY)
 
 
 
@@ -333,9 +333,9 @@ end
 function execute(m::Pattern, s::Clean, i, src::AbstractString)
     x = match(m.regex, src[i:end])
     if x == nothing
-        Response(m, DIRTY, i, FAILURE)
+        Response(DIRTY, i, FAILURE)
     else
-        Response(m, DIRTY, i + x.offsets[end] - 1, Success(x.match))
+        Response(DIRTY, i + x.offsets[end] - 1, Success(x.match))
     end
 end
 
@@ -349,7 +349,7 @@ type Delayed<:Matcher
 end
 
 function execute(m::Delayed, s::Dirty, i, src)
-    Response(m, DIRTY, i, FAILURE)
+    Response(DIRTY, i, FAILURE)
 end
 
 function execute(m::Delayed, s::State, i, src)
@@ -368,9 +368,9 @@ immutable Eos<:Matcher end
 
 function execute(m::Eos, s::Clean, i, src)
     if done(src, i)
-        Response(m, DIRTY, i, EMPTY)
+        Response(DIRTY, i, EMPTY)
     else
-        Response(m, DIRTY, i, FAILURE)
+        Response(DIRTY, i, FAILURE)
     end
 end
 
