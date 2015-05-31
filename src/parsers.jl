@@ -31,7 +31,7 @@ end
 
 # evaluation with a complete cache (all intermediate results memoized)
 
-typealias Key Tuple{Matcher,State,Any}  # final type is iter
+typealias Key @compat Tuple{Matcher,State,Any}  # final type is iter
 
 type Cache<:Config
     source::Any
