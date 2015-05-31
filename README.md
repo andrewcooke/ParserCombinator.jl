@@ -67,7 +67,7 @@ Some explanation of the above:
   if the match succeeded but matched nothing.
 
 * The operator `+` matches the expressions to either side and appends the
-  resulting lists.
+  resulting lists.  Similarly, `|` matches one of two alternatives.
 
 * The operator `|>` calls the function to the right, passing in the results
   from the matchers on the left.
