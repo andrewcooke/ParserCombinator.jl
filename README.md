@@ -9,7 +9,6 @@ Parsec).
 
 ```julia
 using SimpleParser
-using Base.Test
 
 
 # the AST nodes we will construct, with evaluation via calc()
