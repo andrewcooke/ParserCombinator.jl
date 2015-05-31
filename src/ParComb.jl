@@ -1,5 +1,5 @@
 
-module SimpleParser
+module ParComb
 
 using DataStructures.Stack
 using Compat

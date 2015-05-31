@@ -1,5 +1,5 @@
 
-importall SimpleParser
+importall ParComb
 using Base.Test
 using Compat
 

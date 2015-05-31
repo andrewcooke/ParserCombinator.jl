@@ -1,4 +1,4 @@
-# SimpleParser
+# ParComb
 
 This is a parser for Julia that tries to strike a balance between being both
 (moderately) efficient and simple (for the end-user and the maintainer).  It
@@ -6,12 +6,12 @@ is similar to parser combinator libraries in other languages (eg Haskell's
 Parsec) with similar properties - it can include caching (memoization), but
 currently doe snot handle left-recursive grammars.
 
-SimpleParser can parse any iterable type (not just strings).
+ParComb can parse any iterable type (not just strings).
 
 ## Example
 
 ```julia
-using SimpleParser
+using ParComb
 
 
 # the AST nodes we will construct, with evaluation via calc()
@@ -96,7 +96,7 @@ like Anltr.
 
 Julia does not support tail call recursion, and is not lazy, so a naive
 combinator library would be limited by recursion depth and strict evaluation
-(no caching).  Instead, the "combinators" in SimpleParser construct a tree
+(no caching).  Instead, the "combinators" in ParComb construct a tree
 that describes the grammar, and which is "interpreted" during parsing, by
 dispatching functions on the tree nodes.  The traversal over the tree is
 implemented via trampolining, with an optional cache to avoid repeated
@@ -200,5 +200,5 @@ This has the unfortunate result that `Dot()` returns characters, not strings.
 But in practice that matcher is rarely used.
 
 [![Build
-Status](https://travis-ci.org/andrewcooke/SimpleParser.jl.png)](https://travis-ci.org/andrewcooke/SimpleParser.jl)
+Status](https://travis-ci.org/andrewcooke/ParComb.jl.png)](https://travis-ci.org/andrewcooke/ParComb.jl)
 Julia 0.3 and 0.4 (trunk).
