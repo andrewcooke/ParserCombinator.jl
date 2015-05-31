@@ -15,7 +15,8 @@ end
 
 # execute comes from DelegateMatcher
 
-# needed to remove ambiguity from default short-circuit action
+# success and failure both needed (instead of single result) to remove 
+# ambiguity from default short-circuit action
 response(m::TransformResult, s, c, t, i, src, r::Failure) = Response(m, TransformState(t), i, m.f(r))
 
 response(m::TransformResult, s, c, t, i, src, r::Success) = Response(m, TransformState(t), i, m.f(r))
