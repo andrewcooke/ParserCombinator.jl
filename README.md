@@ -55,6 +55,30 @@ calc(parse_one("1+2*3/4")[0])
 parse_one("1+2")
 ```
 
+Some explanation of the above:
+
+* It's using rather a lot of "syntactic sugar".  You can use a more verbose,
+  "parser combinator" style if you prefer.
+
+* `S"xyz"` matches and then discards the string `"xyz"`.
+
+* Every matcher returns a list of matched values.  This can be an empty list
+  if the match succeeded but matched nothing.
+
+* `+` matches the expressions to either side and appends the resulting lists.
+
+* `|>` calls the function to the right, passing in the results from the
+  matchers on the left.
+
+* `>` is similar to `|>` but interpolates the arguments (uses `...`).  So
+  instead of passing a list of values, it calls the function with multiple
+  arguments.
+
+* `Delayed()` lets you define a loop in the grammar.
+
+* `[0:99]` is a greedy repeat of the match to the left (between 0 and 99
+  times). I still need to add support for `end` to mean "repeat forever".
+
 And it supports packrat parsing too.
 
 Still, for large parsing tasks (eg parsing source code for a compiler) it
