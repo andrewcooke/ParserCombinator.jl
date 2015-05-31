@@ -5,6 +5,8 @@ This is a parser for Julia that tries to strike a balance between being both
 is similar to parser combinator libraries in other languages (eg Haskell's
 Parsec).
 
+SimpleParser can parse any iterable type (not just strings).
+
 ## Example
 
 ```julia
