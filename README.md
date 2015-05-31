@@ -97,9 +97,8 @@ combinator library would be limited by recursion depth and strict evaluation
 (no caching).  Instead, the "combinators" in SimpleParser construct a tree
 that describes the grammar, and which is "interpreted" during parsing, by
 dispatching functions on the tree nodes.  The traversal over the tree is
-implemented via trampolining, with an optional (adjustable) cache to avoid
-repeated evaluation (and, possibly, in the future, detect left-recursive
-grammars).
+implemented via trampolining, with an optional cache to avoid repeated
+evaluation (and, possibly, in the future, detect left-recursive grammars).
 
 The advantages of this approch are:
 
