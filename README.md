@@ -115,6 +115,9 @@ tasks are significantly "heavier".
 
 ### Matcher Protocol
 
+Below I try to give a "high level picture" of how evaluation proceeds.  For
+the full details, please see the source.
+
 Consider the matchers `Parent` and `Child` which might be used in some way to
 parse "hello world":
 
@@ -134,11 +137,11 @@ world = Child("world")
 hello_world_grammar = Parent(hello, world)
 ```
 
-In addition, typically, each matcher has some associated types that store
-state (the matchers themselves describe only the *static* grammar; the state
-describes the associated state during matching and backtracking).  Two states,
-`CLEAN` and `DIRTY`, are used globally to indicate that a matcher is uncalled,
-or has exhausted all matches, respectively.
+Each matcher has some associated types that store state (the matchers
+themselves describe only the *static* grammar; the state describes the
+associated state during matching and backtracking).  Two states, `CLEAN` and
+`DIRTY`, are used globally to indicate that a matcher is uncalled, or has
+exhausted all matches, respectively.
 
 Methods are then associated with combinations of matchers and state.
 Transitions between these methods implement a state machine.
@@ -156,22 +159,28 @@ function execute(p::Parent, s::ParentState, iter, source)
 end
 
 function execute(c::Child, s::ChildStateStart, iter, source)
-  # the above will call here, where we check if the text matches
+  # the above returns an Execute instance, which tells the trampoline to
+  # make a call here, where we check if the text matches
   if compare(c.text, source[iter:])
-    Response(c, ChildStateSucceeded(), iter, Value(c.text))
+    Response(c, ChildStateSucceeded(), iter, Success(c.text))
   else
-    Response(c, ChildStateFailed(), iter, FAIL)
+    Response(c, ChildStateFailed(), iter, FAILURE)
   end
 end
 
 function response(p::Parent, s::ParentState, c::Child, cs::ChildState, iter, source, result::Value)
-  # the message containing a Value above triggers a call here, where we do 
-  # something with the result (like save it in the ParentState)
+  # the Response message containing Success above triggers a call here, where
+  # we do something with the result (like save it in the ParentState)
   ...
   # and then perhaps evaluate child2...
   Execute(p, s, p.child2, ChildStateStart(), iter)
 end
 ```
+
+Hopefully you can see how each returned `Execute` and `Response` results in
+the calling of an `execute()` or `response()` function.  In this way we can
+write code that works as though it is recursive, without exhausting Julia's
+stack.
 
 Finally, to simplify caching in the trampoline, it is important that the
 different matchers appear as simple calls and responses.  So internal
@@ -185,7 +194,7 @@ given method.
 The source text is read using the [standard Julia iterator
 protocol](http://julia.readthedocs.org/en/latest/stdlib/collections/?highlight=iterator).
 
-This has the unfortunate result that Dot() returns characters, not strings.
+This has the unfortunate result that `Dot()` returns characters, not strings.
 But in practice that matcher is rarely used.
 
 [![Build
