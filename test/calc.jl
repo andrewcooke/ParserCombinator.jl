@@ -1,7 +1,4 @@
 
-using SimpleParser
-using Base.Test
-
 abstract Node
 ==(n1::Node, n2::Node) = n1.val == n2.val
 calc(n::Float64) = n
