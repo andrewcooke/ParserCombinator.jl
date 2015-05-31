@@ -375,7 +375,3 @@ function execute(m::Eos, s::Clean, i, src)
 end
 
 
-# a dummy matcher used by the parser
-
-immutable Root<:Matcher end
-ROOT = Root()

@@ -40,19 +40,19 @@ hash(x::Success) = hash(x.value)
 # parent and state_paprent are popped from the stack.  a call is made to
 # response(parent, state_parent, child, state_child, iter, source, result)
 immutable Response{C<:Matcher,SC<:State,R<:Result}<:Message
-    child::C
-    state_child::SC
-    iter
-    result::R
+    child::C          # TODO - is this needed?
+    state_child::SC   # parent to store, passed in next call for backtracking
+    iter              # original value on failure, or advanced on success
+    result::R         # Failure, or Sucess in an Array (possibly empty)
 end
 
 # parent and state_parent are pushed to the stack.  a call is made to
 # execute(child, state_child, iter, source)
 immutable Execute{P<:Matcher,SP<:State,C<:Matcher,SC<:State}<:Message
-    parent::P
-    state_parent::SP
-    child::C
-    state_child::SC
+    parent::P         # TODO - is this needed?
+    state_parent::SP  # stored by trampoline, added to response
+    child::C          # the matcher to evaluate
+    state_child::SC   # needed by for evaluation (was stpred by parent)
     iter
 end
 

@@ -6,7 +6,7 @@ using Compat
 import Base: start, endof
 using Debug
 
-export parse_one, parse_all, parse_one_nc, parse_all_nc,
+export Cache, NoCache, make_all, make_one, parse_one, parse_all,
 ParserException, Value, Empty, EMPTY,
 Epsilon, Insert, Dot, Drop, Equal, Repeat, Star, Plus, And, Alt, Lookahead, 
 Pattern, Delayed, Eos,

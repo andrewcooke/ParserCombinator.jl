@@ -6,6 +6,7 @@
 @test parse_one("", Drop(Insert("foo"))) == []
 @test_throws ParserException parse_one("x", Equal("a")) 
 @test parse_one("a", Equal("a")) == ["a"]
+@test parse_one("aa", Equal("a")) == ["a"]
 @test_throws ParserException parse_one("a", Repeat(Equal("a"), 2, 2))
 @test parse_one("aa", Repeat(Equal("a"), 2, 2)) == ["a", "a"]
 @test parse_one("aa", Repeat(Equal("a"), 2, 1)) == ["a", "a"]
@@ -23,7 +24,7 @@
 @test parse_one("1.2", PFloat64()) == [1.2]
 m1 = Delayed()
 m1.matcher = Nullable{ParComb.Matcher}(And(Dot(), Opt(m1)))
-@test parse_one_nc("abc", m1) == ['a', 'b', 'c']
+@test parse_one("abc", m1) == ['a', 'b', 'c']
 
 
 # check that greedy repeat is exactly the same as regexp
@@ -61,7 +62,6 @@ end
 # is caching useful?  only in extreme cases, apparently
 # (but we may need to define equality on states!)
 
-@test parse_one_nc("aa", Equal("a")) == ["a"]
 function slow(n)
 #    matcher = Repeat(Repeat(Equal("a"), n, 0), n, 0)
 #    matcher = And(Repeat(Equal("a"), n, 0), Repeat(Equal("a"), n, 0))
@@ -70,13 +70,13 @@ function slow(n)
         matcher = And(Repeat(Equal("a"), n, 0), matcher)
     end
     source = repeat("a", n)
-    println("no cache $n")
-    @time collect(parse_all_nc(source, matcher))
-    @time n1 = collect(parse_all_nc(source, matcher))
-    println("cache $n")
-    @time collect(parse_all(source, matcher))
-    @time n2 = collect(parse_all(source, matcher))
-    @test n1 == n2
+    for config in (Cache, NoCache)
+        println("$(config)")
+        all = make_all(config)
+        @time collect(all(source, matcher))
+        @time n = length(collect(all(source, matcher)))
+        println(n)
+    end
 end
 slow(3)
 # slow(6)  # not for travis!
