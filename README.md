@@ -3,7 +3,7 @@
 This is a parser for Julia that tries to strike a balance between being both
 (moderately) efficient and simple (for the end-user and the maintainer).  It
 is similar to parser combinator libraries in other languages (eg Haskell's
-Parsec) - it can include caching (memoization), but currently doe snot handle
+Parsec), and can include caching (memoization), but does not handle
 left-recursive grammars.
 
 ParComb can parse any iterable type (not just strings).
