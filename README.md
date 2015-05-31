@@ -7,9 +7,12 @@ Parsec).
 
 ## Example
 
-```
+```julia
 using SimpleParser
 using Base.Test
+
+
+# the AST nodes we will construct, with evaluation via calc()
 
 abstract Node
 ==(n1::Node, n2::Node) = n1.val == n2.val
@@ -22,6 +25,9 @@ type Neg<:Node val end
 calc(n::Neg) = -calc(n.val)
 type Sum<:Node val end
 calc(s::Sum) = Base.sum(map(calc, s.val))
+
+
+# the grammar
 
 num = PFloat64()
 sum = Delayed()
@@ -39,20 +45,14 @@ sum.matcher = (prd | neg | pos) + (neg | pos)[0:99] |> Sum
 
 all = sum + Eos()
 
-for (src, ast, val) in 
-    [
-     ("1.0", Sum([Prd([1.0])]), 1.0)
-     ("-1.0", Sum([Prd([-1.0])]), -1.0)
-     ("--1.0", Sum([Neg(Prd([-1.0]))]), 1.0)
-     ("1+2", Sum([Prd([1.0]),Prd([2.0])]), 3.0)
-     ("1+2*3/4", nothing, 2.5)
-     ]
-    if ast != nothing
-        @test parse_one(src, all)[1] == ast
-    end
-    @test_approx_eq calc(parse_one(src, all)[1]) val
-    println("$src = $val")
-end
+
+# and test 
+
+# this prints 2.5
+calc(parse_one("1+2*3/4")[0])
+
+# this prints [Sum([Prd([1.0]),Prd([2.0])])]
+parse_one("1+2")
 ```
 
 And it supports packrat parsing too.
