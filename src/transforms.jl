@@ -4,7 +4,7 @@
 # note that the function will receive a Result instance (Failure, Empty or
 # Value) and that the value returned must also be a Result
 
-immutable TransformResult<:DelegateMatcher
+immutable TransformResult<:Delegate
     matcher::Matcher
     f::Function
 end
@@ -29,12 +29,12 @@ end
 # transform successes (Empty and Value)
 # again, function must return a Result instance
 
-immutable TransformSuccess<:DelegateMatcher
+immutable TransformSuccess<:Delegate
     matcher::Matcher
     f::Function
 end
 
-# execute comes from DelegateMatcher
+# execute comes from Delegate
 
 function response(m::TransformSuccess, s, c, t, i, src, r::Success)
     Response(m, TransformState(t), i, m.f(r))

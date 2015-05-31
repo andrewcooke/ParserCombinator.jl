@@ -7,9 +7,17 @@ macro p_str(s)
     Pattern(Regex(s))
 end
 
+macro P_str(s)
+    Drop(Pattern(Regex(s)))
+end
+
 # s"..." creates a matcher for the given string
 macro s_str(s)
     Equal(s)
+end
+
+macro S_str(s)
+    Drop(Equal(s))
 end
 
 
@@ -39,8 +47,8 @@ getindex(m::Matcher,r::Int) = Repeat(m, r, r)
 getindex(m::Matcher,r::UnitRange) = Repeat(m, r.stop, r.start)
 
 # interpolate multiple values (list or tuple)
->(m::Matcher, f::Function) = TransformSuccess(m, x -> Success(f(x.value...)))
+>(m::Matcher, f::Union(Function,DataType)) = TransformSuccess(m, x -> Success(f(x.value...)))
 # a single value
-|>(m::Matcher, f::Function) = TransformSuccess(m, x -> Success(f(x.value)))
+|>(m::Matcher, f::Union(Function,DataType)) = TransformSuccess(m, x -> Success(f(x.value)))
 # the raw Result instance
 >=(m::Matcher, f::Function) = TransformResult(m, f)

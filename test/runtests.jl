@@ -1,6 +1,7 @@
 
 importall SimpleParser
 using Base.Test
+using Compat
 
 # various simple matchers
 
@@ -16,6 +17,7 @@ using Base.Test
 @test parse_one("ab", And(Pattern(r"a"), Dot())) == ["a", 'b']
 @test parse_one("ab", p"." + s"b") == ["a", "b"]
 @test parse_one("abc", p"." + s"b" + s"c") == ["a", "b", "c"]
+@test parse_one("abc", p"." + S"b" + s"c") == ["a", "c"]
 @test parse_one("b", Alt(s"a", s"b", s"c")) == ["b"]
 @test collect(parse_all("b", Alt(Epsilon(), Repeat(s"b", 1, 0)))) == Array[[], ["b"], []]
 @test parse_one("abc", p"." + (s"b" | s"c")) == ["a", "b"]

@@ -2,17 +2,11 @@
 
 # some basic definitions for generic matches
 
-function execute(m, s, i, _)
-    error("$m did not expect to be called with state $s")
-end
+execute(m, s, i, _) = error("$m did not expect to be called with state $s")
 
-function response(m, s, c, t, i, _, r)
-    error("$m did not expect to receive state $s from $c")
-end
+response(m, s, c, t, i, _, r) = error("$m did not expect to receive state $s from $c")
 
-function execute(m::Matcher, s::Dirty, i, _)
-    Response(m, s, i, FAILURE)
-end
+execute(m::Matcher, s::Dirty, i, _) = Response(m, s, i, FAILURE)
 
 
 
@@ -22,23 +16,17 @@ end
 # response) and (2) anything unusual (ie what the matcher actually does)
 
 # assume this has a matcher field
-abstract DelegateMatcher<:Matcher
+abstract Delegate<:Matcher
 
 # assume this has a state field
 abstract DelegateState<:State
 
-function execute(m::DelegateMatcher, s::Clean, i, src)
-    Execute(m, s, m.matcher, CLEAN, i)
-end
+execute(m::Delegate, s::Clean, i, src) = Execute(m, s, m.matcher, CLEAN, i)
 
-function execute(m::DelegateMatcher, s::DelegateState, i, src)
-    Execute(m, s, m.matcher, s.state, i)
-end
+execute(m::Delegate, s::DelegateState, i, src) = Execute(m, s, m.matcher, s.state, i)
 
 # this avoids re-calling child on backtracking on failure
-function response(m::DelegateMatcher, s, c, t, i, src, r::Failure)
-    Response(m, DIRTY, i, FAILURE)
-end
+response(m::Delegate, s, c, t, i, src, r::Failure) = Response(m, DIRTY, i, FAILURE)
 
 
 
@@ -46,17 +34,13 @@ end
 
 immutable Epsilon<:Matcher end
 
-function execute(m::Epsilon, s::Clean, i, src)
-    Response(m, DIRTY, i, EMPTY)
-end
+execute(m::Epsilon, s::Clean, i, src) = Response(m, DIRTY, i, EMPTY)
 
 immutable Insert<:Matcher
     text
 end
 
-function execute(m::Insert, s::Clean, i, src)
-    Response(m, DIRTY, i, Success(m.text))
-end
+execute(m::Insert, s::Clean, i, src) = Response(m, DIRTY, i, Success(m.text))
 
 immutable Dot<:Matcher end
 
@@ -73,7 +57,7 @@ end
 
 # evaluate the sub-matcher, but replace the result with EMPTY
 
-immutable Drop<:DelegateMatcher
+immutable Drop<:Delegate
     matcher::Matcher
 end
 
@@ -81,9 +65,7 @@ immutable DropState<:DelegateState
     state::State
 end
 
-function response(m::Drop, s, c, t, i, src, rs::Success)
-    Response(m, DropState(t), i, EMPTY)
-end
+response(m::Drop, s, c, t, i, src, rs::Success) = Response(m, DropState(t), i, EMPTY)
 
 
 
@@ -243,34 +225,22 @@ immutable Both<:AndState
 end
 
 # on initial entry, save iter then call left
-function execute(m::And, s::Clean, i, src)
-    Execute(m, Left(i), m.left, CLEAN, i)
-end
+execute(m::And, s::Clean, i, src) = Execute(m, Left(i), m.left, CLEAN, i)
 
 # if left couldn't match, then we're done
-function response(m::And, s::Left, c, t, i, src, ::Failure)
-    Response(m, DIRTY, i, FAILURE)
-end
+response(m::And, s::Left, c, t, i, src, ::Failure) = Response(m, DIRTY, i, FAILURE)
 
 # if left did match, then save everything and match the right
-function response(m::And, s::Left, c, t, i, src, r::Success)
-    Execute(m, Right(s.left_iter, t, i, r), m.right, CLEAN, i)
-end
+response(m::And, s::Left, c, t, i, src, r::Success) = Execute(m, Right(s.left_iter, t, i, r), m.right, CLEAN, i)
 
 # if right couldn't match, then try again with left
-function response(m::And, s::Right, c, t, i, src, ::Failure)
-    Execute(m, Left(s.left_iter), m.left, s.left_state, s.left_iter)
-end
+response(m::And, s::Right, c, t, i, src, ::Failure) = Execute(m, Left(s.left_iter), m.left, s.left_state, s.left_iter)
 
 # if right did match, then save everything and return
-function response(m::And, s::Right, c, t, i, src, r::Success)
-    Response(m, Both(s.left_iter, s.left_state, s.right_iter, t, s.result), i, Success(vcat(s.result.value, r.value)))
-end
+response(m::And, s::Right, c, t, i, src, r::Success) = Response(m, Both(s.left_iter, s.left_state, s.right_iter, t, s.result), i, Success(vcat(s.result.value, r.value)))
 
 # if we're called with Both state, we need to backtrack on the right
-function execute(m::And, s::Both, i, src)
-    Execute(m, Right(s.left_iter, s.left_state, s.right_iter, s.result), m.right, s.right_state, s.right_iter)
-end
+execute(m::And, s::Both, i, src) = Execute(m, Right(s.left_iter, s.left_state, s.right_iter, s.result), m.right, s.right_state, s.right_iter)
 
 
 
@@ -316,7 +286,7 @@ end
 
 # evaluate the child, but discard values and do not advance the iter
 
-immutable Lookahead<:DelegateMatcher
+immutable Lookahead<:Delegate
     matcher::Matcher
 end
 
@@ -325,13 +295,9 @@ immutable LookaheadState<:DelegateState
     iter
 end
 
-function execute(m::Lookahead, s::Clean, i, src)
-    Execute(m, LookaheadState(s, i), m.matcher, CLEAN, i)
-end
+execute(m::Lookahead, s::Clean, i, src) = Execute(m, LookaheadState(s, i), m.matcher, CLEAN, i)
 
-function response(m::Lookahead, s, c, t, i, r::Success)
-    Response(m, LooakheadState(t, s.iter), s.iter, EMPTY)
-end
+response(m::Lookahead, s, c, t, i, r::Success) = Response(m, LooakheadState(t, s.iter), s.iter, EMPTY)
 
 
 
@@ -344,9 +310,11 @@ end
 # we do this by adding r"(.??)" to the end of the expression and using
 # the offset from that.
 
+# we also prepend ^ to anchor the match
+
 immutable Pattern<:Matcher
     regex::Regex
-    Pattern(r::Regex) = new(Regex(r.pattern * "(.??)"))
+    Pattern(r::Regex) = new(Regex("^" * r.pattern * "(.??)"))
 end
 
 function execute(m::Pattern, s::Clean, i, src)
@@ -383,6 +351,19 @@ function execute(m::Delayed, s::State, i, src)
     end
 end
 
+
+
+# end of stream / string
+
+immutable Eos<:Matcher end
+
+function execute(m::Eos, s::Clean, i, src)
+    if done(src, i)
+        Response(m, DIRTY, i, EMPTY)
+    else
+        Response(m, DIRTY, i, FAILURE)
+    end
+end
 
 
 # a dummy matcher used by the parser
