@@ -20,7 +20,7 @@ function no_caching_producer(source, matcher::Matcher)
         n = n+1
         if length(stack) == 1
             if isa(msg, Response) && isa(msg.result, Success)
-                produce(msg.result)
+                produce(msg.result.value)
                 (parent, state_parent) = pop!(stack)
                 msg = Execute(parent, state_parent, msg.child, msg.state_child, start(source))
             elseif isa(msg, Response) && isa(msg.result, Failure)
@@ -59,7 +59,7 @@ function caching_producer(source, matcher::Matcher)
         n = n+1
         if length(stack) == 1
             if isa(msg, Response) && isa(msg.result, Success)
-                produce(msg.result)
+                produce(msg.result.value)
                 (parent, state_parent) = pop!(stack)
                 msg = Execute(parent, state_parent, msg.child, msg.state_child, start(source))
             elseif isa(msg, Response) && isa(msg.result, Failure)

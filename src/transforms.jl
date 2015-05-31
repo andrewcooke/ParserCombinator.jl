@@ -13,12 +13,14 @@ immutable TransformState<:DelegateState
     state::State
 end
 
+# execute comes from DelegateMatcher
+
 # needed to remove ambiguity from default short-circuit action
 function response(m::TransformResult, s, c, t, i, src, r::Failure)
     Response(m, TransformState(t), i, m.f(r))
 end
 
-function response(m::TransformResult, s, c, t, i, src, r::Result)
+function response(m::TransformResult, s, c, t, i, src, r::Success)
     Response(m, TransformState(t), i, m.f(r))
 end
 
@@ -32,22 +34,8 @@ immutable TransformSuccess<:DelegateMatcher
     f::Function
 end
 
+# execute comes from DelegateMatcher
+
 function response(m::TransformSuccess, s, c, t, i, src, r::Success)
     Response(m, TransformState(t), i, m.f(r))
 end
-
-
-
-
-# transform Value instances
-# again, function must return a Result instance
-
-immutable TransformValue<:DelegateMatcher
-    matcher::Matcher
-    f::Function
-end
-
-function response(m::TransformValue, s, c, t, i, src, r::Value)
-    Response(m, TransformState(t), i, m.f(r))
-end
-

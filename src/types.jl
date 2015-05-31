@@ -15,20 +15,23 @@ abstract State     # state associated with Matchers during evaluation
 immutable Failure<:Result end
 FAILURE = Failure()
 
-# match successed (more below)
-abstract Success<:Result
+# match succeeded (we use an array to handle empty values in a natural way)
 
-# match succeeded but has no associated value
-immutable Empty<:Success end
-EMPTY = Empty()
+typealias Value Array{Any,1}
 
-# match succeeded and returned a value
-immutable Value{T}<:Success
-    value::T
+function flatten(x::Array{Value,1})
+    y::Value = vcat(x...)
+    return y
 end
 
-=={T}(x::Value{T}, y::Value{T}) = x.value == y.value
-hash(x::Value) = hash(x.value)
+immutable Success<:Result
+    value::Value  # immutable!
+    Success(x::Any...) = new(vcat(x...))
+end
+
+EMPTY = Success()
+==(x::Success, y::Success) = x.value == y.value
+hash(x::Success) = hash(x.value)
 
 
 

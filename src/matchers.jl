@@ -55,18 +55,17 @@ immutable Insert<:Matcher
 end
 
 function execute(m::Insert, s::Clean, i, src)
-    Response(m, DIRTY, i, Value(m.text))
+    Response(m, DIRTY, i, Success(m.text))
 end
 
 immutable Dot<:Matcher end
 
 function execute(m::Dot, s::Clean, i, src)
-    println("dot at $i")
     if done(src, i)
         Response(m, DIRTY, i, FAILURE)
     else
         c, i = next(src, i)
-        Response(m, DIRTY, i, Value(c))
+        Response(m, DIRTY, i, Success(c))
     end
 end
 
@@ -104,7 +103,7 @@ function execute(m::Equal, s::Clean, i, src)
             return Response(m, DIRTY, i, FAILURE)
         end
     end
-    Response(m, DIRTY, i, Value(m.string))
+    Response(m, DIRTY, i, Success(m.string))
 end
 
 
@@ -124,19 +123,19 @@ abstract Greedy<:RepeatState
 immutable Slurp<:Greedy
     # there's a mismatch in lengths here because the empty results is
     # associated with an iter and state
-    results::Array{Success,1}  # accumulated during slurp
-    iters::Array{Any,1}    # at the end of the associated result
-    states::Array{Any,1}   # at the end of the associated result
+    results::Array{Value,1}  # accumulated during slurp
+    iters::Array{Any,1}      # at the end of the associated result
+    states::Array{Any,1}     # at the end of the associated result
 end
 
 immutable Yield<:Greedy
-    results::Array{Success,1}
+    results::Array{Value,1}
     iters::Array{Any,1}
     states::Array{Any,1}
 end
 
 immutable Backtrack<:Greedy
-    results::Array{Success,1}
+    results::Array{Value,1}
     iters::Array{Any,1}
     states::Array{Any,1}
 end
@@ -151,7 +150,7 @@ function execute(m::Repeat, s::Clean, i, src)
         error("lazy repeat not yet supported")
         execute(m, Lazy(), i, src)
     else
-        execute(m, Slurp(Array(Success, 0), [i], Any[s]), i, src)
+        execute(m, Slurp(Array(Value, 0), [i], Any[s]), i, src)
     end
 end
 
@@ -168,7 +167,7 @@ function execute(m::Repeat, s::Slurp, i, src)
 end
 
 function response(m::Repeat, s::Slurp, c, t, i, src, r::Success)
-    results = vcat(s.results, r)
+    results = Value[s.results..., r.value]
     iters = vcat(s.iters, i)
     states = vcat(s.states, t)
     if work_to_do(m, results)
@@ -184,12 +183,10 @@ end
 
 # yield a result
 
-unpackArray(a) = map(x -> x.value, filter(x -> typeof(x) <: Value, a))
-
 function execute(m::Repeat, s::Yield, i, src)
     n = length(s.results)
     if n >= m.b
-        Response(m, Backtrack(s.results, s.iters, s.states), s.iters[end], Value(unpackArray(s.results)))
+        Response(m, Backtrack(s.results, s.iters, s.states), s.iters[end], Success(flatten(s.results)))
     else
         Response(m, DIRTY, i, FAILURE)
     end
@@ -207,7 +204,7 @@ function execute(m::Repeat, s::Backtrack, i, src)
 end
 
 function response(m::Repeat, s::Backtrack, c, t, i, src, r::Success)
-    execute(m, Slurp(vcat(s.results, r), vcat(s.iters, i), vcat(s.states, t)), i, src)
+    execute(m, Slurp(Array{Value}[s.results... r.value], vcat(s.iters, i), vcat(s.states, t)), i, src)
 end
 
 function response(m::Repeat, s::Backtrack, c, t, i, src, ::Failure)
@@ -267,7 +264,7 @@ end
 
 # if right did match, then save everything and return
 function response(m::And, s::Right, c, t, i, src, r::Success)
-    Response(m, Both(s.left_iter, s.left_state, s.right_iter, t, s.result), i, Value((s.result, r)))
+    Response(m, Both(s.left_iter, s.left_state, s.right_iter, t, s.result), i, Success(vcat(s.result.value, r.value)))
 end
 
 # if we're called with Both state, we need to backtrack on the right
@@ -300,7 +297,6 @@ function execute(m::Alt, s::Clean, i, src)
 end
 
 function execute(m::Alt, s::AltState, i, src)
-    println("alt $(s.i)")
     Execute(m, s, m.matchers[s.i], s.state, s.iter)
 end
 
@@ -362,7 +358,7 @@ function execute(m::Pattern, s::Clean, i, src::AbstractString)
     if x == nothing
         Response(m, DIRTY, i, FAILURE)
     else
-        Response(m, DIRTY, i + x.offsets[end] - 1, Value(x.match))
+        Response(m, DIRTY, i + x.offsets[end] - 1, Success(x.match))
     end
 end
 
@@ -376,12 +372,10 @@ type Delayed<:Matcher
 end
 
 function execute(m::Delayed, s::Dirty, i, src)
-    println("fail delayed")
     Response(m, DIRTY, i, FAILURE)
 end
 
 function execute(m::Delayed, s::State, i, src)
-    println("transition from delayed")
     if isnull(m.matcher)
         error("assign to the Delayed() matcher attribute")
     else
