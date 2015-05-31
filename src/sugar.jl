@@ -73,6 +73,10 @@ end
 
 
 
+Opt(m::Matcher) = Alt(m, Epsilon())
+
+
+
 # sweet, sweet sugar
 
 # match and discard

@@ -10,7 +10,7 @@ function response(m, s, c, t, i, _, r)
     error("$m did not expect to receive state $s from $c")
 end
 
-function execute(m, s::Dirty, i, _)
+function execute(m::Matcher, s::Dirty, i, _)
     Response(m, s, i, FAILURE)
 end
 
@@ -61,6 +61,7 @@ end
 immutable Dot<:Matcher end
 
 function execute(m::Dot, s::Clean, i, src)
+    println("dot at $i")
     if done(src, i)
         Response(m, DIRTY, i, FAILURE)
     else
@@ -299,6 +300,7 @@ function execute(m::Alt, s::Clean, i, src)
 end
 
 function execute(m::Alt, s::AltState, i, src)
+    println("alt $(s.i)")
     Execute(m, s, m.matchers[s.i], s.state, s.iter)
 end
 
@@ -361,6 +363,29 @@ function execute(m::Pattern, s::Clean, i, src::AbstractString)
         Response(m, DIRTY, i, FAILURE)
     else
         Response(m, DIRTY, i + x.offsets[end] - 1, Value(x.match))
+    end
+end
+
+
+
+# support loops
+
+type Delayed<:Matcher
+    matcher::Nullable{Matcher}
+    Delayed() = new(Nullable{Matcher}())
+end
+
+function execute(m::Delayed, s::Dirty, i, src)
+    println("fail delayed")
+    Response(m, DIRTY, i, FAILURE)
+end
+
+function execute(m::Delayed, s::State, i, src)
+    println("transition from delayed")
+    if isnull(m.matcher)
+        error("assign to the Delayed() matcher attribute")
+    else
+        execute(get(m.matcher), s, i, src)
     end
 end
 

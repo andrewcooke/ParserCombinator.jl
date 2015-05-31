@@ -4,6 +4,11 @@ using Base.Test
 
 # various simple matchers
 
+m1 = Delayed()
+m1.matcher = Seq(Dot(), Opt(m1))
+println(parse_one_nc("abc", m1))
+error()
+
 @test parse_one("", Epsilon()) == EMPTY
 @test parse_one("", Insert("foo")).value == "foo"
 @test parse_one("", Drop(Insert("foo"))) == EMPTY
@@ -24,6 +29,10 @@ using Base.Test
 @test length(collect(parse_all("abc", p"."[1:2]))) == 2
 @test parse_one("abc", p"."[3] > tuple).value == ("a", "b", "c")
 @test parse_one("1.2", PFloat()).value == 1.2
+m1 = Delayed()
+m1.matcher = And(Dot(), Opt(m1))
+@test parse_one_nc("abc", m1).value == ['a', 'b', 'c']
+
 
 # check that greedy repeat is exactly the same as regexp
 
