@@ -41,8 +41,7 @@ Opt(m::Matcher) = Alt(m, Epsilon())
 |(a::Matcher, b::Matcher) = Alt(a, b)
 
 # repeat via [lo:hi] or [n]
-# TODO - special value used by Range
-#endof(::Matcher) = -1
+endof{M<:Matcher}(m::M) = typemax(Int)
 getindex(m::Matcher,r::Int) = Repeat(m, r, r)
 getindex(m::Matcher,r::UnitRange) = Repeat(m, r.stop, r.start)
 

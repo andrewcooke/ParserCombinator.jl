@@ -19,11 +19,11 @@ val = par | num
 
 inv = (S"/" + val) > Inv
 dir = (S"*" + val)
-prd = val + (inv | dir)[0:99] |> Prd
+prd = val + (inv | dir)[0:end] |> Prd
 
 neg = (S"-" + prd) > Neg
 pos = (S"+" + prd)
-sum.matcher = Nullable{SimpleParser.Matcher}((prd | neg | pos) + (neg | pos)[0:99] |> Sum)
+sum.matcher = Nullable{SimpleParser.Matcher}((prd | neg | pos) + (neg | pos)[0:end] |> Sum)
 
 all = sum + Eos()
 

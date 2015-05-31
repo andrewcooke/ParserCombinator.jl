@@ -91,6 +91,7 @@ end
 
 
 # repetition (greedy and minimal)
+# Repeat(m, hi, lo) is greedy; Repeat(m, lo, hi) is lazy
 
 immutable Repeat<:Matcher
     matcher::Matcher
@@ -193,10 +194,17 @@ function response(m::Repeat, s::Backtrack, c, t, i, src, ::Failure)
     execute(m, Yield(s.results, s.iters, s.states), i, src)
 end
 
+# see sugar.jl for [] syntax support
+
+Star(m::Matcher) = m[0:end]
+Plus(m::Matcher) = m[1:end]
+
+
 
 
 # the state machine for sequencing two matchers
-# in practice, use Seq from sugar.jl, which sweetens this considerably
+# + creates nested pairs of these (previously we had Seq, which flattened
+# the tree, but it was not needed once we switched to returning lists)
 
 immutable And<:Matcher
     left::Matcher
@@ -315,6 +323,7 @@ response(m::Lookahead, s, c, t, i, r::Success) = Response(m, LooakheadState(t, s
 immutable Pattern<:Matcher
     regex::Regex
     Pattern(r::Regex) = new(Regex("^" * r.pattern * "(.??)"))
+    Pattern(s::AbstractString) = new(Regex("^" * s * "(.??)"))
 end
 
 function execute(m::Pattern, s::Clean, i, src)

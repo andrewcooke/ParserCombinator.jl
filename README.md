@@ -38,11 +38,11 @@ val = par | num
 
 inv = (S"/" + val) > Inv
 dir = (S"*" + val)
-prd = val + (inv | dir)[0:99] |> Prd
+prd = val + (inv | dir)[0:end] |> Prd
 
 neg = (S"-" + prd) > Neg
 pos = (S"+" + prd)
-sum.matcher = (prd | neg | pos) + (neg | pos)[0:99] |> Sum
+sum.matcher = (prd | neg | pos) + (neg | pos)[0:end] |> Sum
 
 all = sum + Eos()
 
@@ -79,9 +79,9 @@ Some explanation of the above:
 
 * `Delayed()` lets you define a loop in the grammar.
 
-* The syntax `[0:99]` is a greedy repeat of the matcher to the left (between 0
-  and 99 times). I still need to add support for `end` to mean "repeat
-  forever".
+* The syntax `[0:end]` is a greedy repeat of the matcher to the left.  An
+  alternative would be `Star(...)`, while `[3:4]` would match only 3 or 4
+  values.
 
 And it supports packrat parsing too.
 
