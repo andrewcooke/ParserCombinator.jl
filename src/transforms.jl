@@ -17,6 +17,9 @@ end
 
 # success and failure both needed (instead of single result) to remove 
 # ambiguity from default short-circuit action
+
+# TODO - does this even make sense?  wouldn't we need to modify state too?
+
 response(m::TransformResult, s, c, t, i, src, r::Failure) = Response(m, TransformState(t), i, m.f(r))
 
 response(m::TransformResult, s, c, t, i, src, r::Success) = Response(m, TransformState(t), i, m.f(r))
