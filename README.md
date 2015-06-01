@@ -207,7 +207,8 @@ The source text is read using the [standard Julia iterator
 protocol](http://julia.readthedocs.org/en/latest/stdlib/collections/?highlight=iterator).
 
 This has the unfortunate result that `Dot()` returns characters, not strings.
-But in practice that matcher is rarely used.
+But in practice that matcher is rarely used (particularly since, with strings,
+you can use regular expressions - `p"pattern"` for example).
 
 [![Build
 Status](https://travis-ci.org/andrewcooke/ParserCombinator.jl.png)](https://travis-ci.org/andrewcooke/ParserCombinator.jl)
