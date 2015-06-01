@@ -125,13 +125,15 @@ immutable Backtrack<:RepeatState
     states::Array{State,1}
 end
 
-function Repeat(m::Matcher, lo=0, hi=ALL; flatten=true, minimal=false)
+function Repeat(m::Matcher, lo, hi; flatten=true, minimal=false)
     if minimal
         Minimal(m, lo, hi, flatten)
     else
         Greedy(m, lo, hi, flatten)
     end
 end
+Repeat(m::Matcher, lo; flatten=true, minimal=false) = Repeat(m, lo, lo; flatten=flatten, minimal=minimal)
+Repeat(m::Matcher; flatten=true, minimal=false) = Repeat(m, 0, ALL; flatten=flatten, minimal=minimal)
 
 
 # greedy-specific state and logic

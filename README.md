@@ -223,10 +223,9 @@ julia> parse_one("abc", Repeat(p"."))
  "c"
 
 julia> parse_one("abc", Repeat(p".", 2))
-3-element Array{Any,1}:
+2-element Array{Any,1}:
  "a"
  "b"
- "c"
 
 julia> collect(parse_all("abc", Repeat(p".", 2, 3)))
 2-element Array{Any,1}:
