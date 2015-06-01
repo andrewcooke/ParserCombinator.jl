@@ -1,9 +1,13 @@
 
-function debug(k, p, s, c, t, i)
-    @printf("%04d %30s => %-30s\n", i, typeof(p), typeof(c))
+function debug(k, p, s, c, t, i, cached)
+    if cached
+        @printf("%04d %30s <> %-30s\n", i, typeof(p), typeof(c))
+    else
+        @printf("%04d %30s => %-30s\n", i, typeof(p), typeof(c))
+    end
 end
 
-function debug(k, p, s, t, i, r::Result)
+function debug(k, p, s, t, i, r)
     @printf("%04d %30s <= %-30s\n", i, typeof(p), typeof(r))
 end
 
@@ -20,7 +24,7 @@ end
 function dispatch(k::NoCache, e::Execute)
     push!(k.stack, (e.parent, e.state_parent))
     if k.debug 
-        debug(k, e.parent, e.state_parent, e.child, e.state_child, e.iter)
+        debug(k, e.parent, e.state_parent, e.child, e.state_child, e.iter, false)
     end
     execute(k, e.child, e.state_child, e.iter)
 end
@@ -46,14 +50,6 @@ type Cache<:Config
     Cache(source; debug=false) = new(source, debug, 
                                      Stack(Tuple{Matcher,State,Key}),
                                      Dict{Key,Message}())
-end
-
-function debug(k, p, s, c, t, i, cached::Bool)
-    if cached
-        @printf("%04d %30s CC %-30s\n", i, typeof(p), typeof(c))
-    else
-        debug(k, p, s, c, t, i)
-    end
 end
 
 function dispatch(k::Cache, e::Execute)
