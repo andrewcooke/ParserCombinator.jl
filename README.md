@@ -93,8 +93,105 @@ like Anltr.
 
 ## Manual
 
-### Basic Concepts
+### Basic Matchers
 
+#### Equality
+
+```julia
+julia> parse_one("abc", Equal("ab"))
+1-element Array{Any,1}:
+ "ab"
+
+julia> parse_one("abc", Equal("abx"))
+ERROR: ParserCombinator.ParserException("cannot parse")
+```
+
+This is so common that there's a corresponding [string
+literal](http://julia.readthedocs.org/en/latest/manual/strings/#non-standard-string-literals).
+
+```julia
+julia> parse_one("abc", s"ab")
+1-element Array{Any,1}:
+ "ab"
+```
+
+#### Sequences
+
+Matchers return lists of values.  Multiple matchers can return lists of lists,
+or the results can be "flattened" a level (usually more useful):
+
+```julia
+julia> parse_one("abc", And(Equal("a"), Equal("b")))
+2-element Array{Any,1}:
+ Any["a"]
+ Any["b"]
+
+julia> parse_one("abc", s"a" & s"b")
+2-element Array{Any,1}:
+ Any["a"]
+ Any["b"]
+
+julia> parse_one("abc", Seq(Equal("a"), Equal("b")))
+2-element Array{Any,1}:
+ "a"
+ "b"
+
+julia> parse_one("abc", s"a" + s"b")
+2-element Array{Any,1}:
+ "a"
+ "b"
+```
+
+#### Empty Values
+
+Often, you want to match something but then discard it.  An empty (or
+discarded) value is an empty list.  This may help explain why I said
+flattening lists was useful above.
+
+```julia
+julia> parse_one("abc", And(Drop(Equal("a")), Equal("b")))
+2-element Array{Any,1}:
+ Any[]   
+ Any["b"]
+
+julia> parse_one("abc", Seq(Drop(Equal("a")), Equal("b")))
+1-element Array{Any,1}:
+ "b"
+
+julia> parse_one("abc", ~s"a" + s"b")
+1-element Array{Any,1}:
+ "b"
+
+julia> parse_one("abc", S"a" + s"b")
+1-element Array{Any,1}:
+ "b"
+```
+
+Note the `~` and capital `S` in the last two examples, respectively.
+
+#### Alternates
+
+
+```julia
+```
+
+```julia
+```
+
+```julia
+```
+
+```julia
+```
+
+```julia
+```
+
+```julia
+```
+
+```julia
+```
 
 
 ## Design
@@ -114,11 +211,15 @@ The advantages of this approach are:
   * Recursion is reduced (repetition and sequential matching are iterative,
     but the grammar itself can still contain loops).
 
+  * Method dispatch on node types leads to idiomatic Julia code (well,
+    as idiomatic as possble, for what is a glorified state machine).
+
   * Caching can be isolated to within the trampoline (and has access to exact,
     explicit state for the matcher, which makes keying the lookup trivial).
 
-  * Method dispatch on node types leads to idiomatic Julia code (well,
-    as idiomatic as possble, for what is a glorified state machine).
+  * The trampoline also dispatches on Config type, which means that new
+    behaviours (like automatic removal of spaces) can be added to the parser
+    "globally" in an idiomatic way.
 
 It would also have been possible to use Julia tasks (coroutines).  I avoided
 this approach because my understanding is (although I have no proof) that
@@ -171,22 +272,22 @@ I've tried to be exact, but that sounds horribly opaque.  In practice, it's
 quite simple.  For example:
 
 ```
-function execute(p::Parent, s::ParentState, iter, source)
+function execute(k::Config, p::Parent, s::ParentState, iter)
   # the parent wants to match the source text at offset iter against child1
   Execute(p, s, p.child1, ChildStateStart(), iter)
 end
 
-function execute(c::Child, s::ChildStateStart, iter, source)
+function execute(k::Config, c::Child, s::ChildStateStart, iter)
   # the above returns an Execute instance, which tells the trampoline to
   # make a call here, where we check if the text matches
-  if compare(c.text, source[iter:])
+  if compare(c.text, k.source[iter:])
     Response(ChildStateSucceeded(), iter, Success(c.text))
   else
     Response(ChildStateFailed(), iter, FAILURE)
   end
 end
 
-function response(p::Parent, s::ParentState, t::ChildState, iter, source, result::Success)
+function response(k::Config, p::Parent, s::ParentState, t::ChildState, iter, result::Success)
   # the Response message containing Success above triggers a call here, where
   # we do something with the result (like save it in the ParentState)
   ...
