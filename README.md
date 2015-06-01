@@ -6,7 +6,7 @@ is similar to parser combinator libraries in other languages (eg Haskell's
 Parsec) - it can include caching (memoization) but does not handle
 left-recursive grammars.
 
-ParComb can parse any iterable type (not just strings).
+ParserCombinator can parse any iterable type (not just strings).
 
 ## Example
 
@@ -103,7 +103,7 @@ like Anltr.
 
 Julia does not support tail call recursion, and is not lazy, so a naive
 combinator library would be limited by recursion depth and strict evaluation
-(no caching).  Instead, the "combinators" in ParComb construct a tree
+(no caching).  Instead, the "combinators" in ParserCombinator construct a tree
 that describes the grammar, and which is "interpreted" during parsing, by
 dispatching functions on the tree nodes.  The traversal over the tree is
 implemented via trampolining, with an optional cache to avoid repeated
