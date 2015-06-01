@@ -186,7 +186,7 @@ function execute(c::Child, s::ChildStateStart, iter, source)
   end
 end
 
-function response(p::Parent, s::ParentState, t::ChildState, iter, source, result::Value)
+function response(p::Parent, s::ParentState, t::ChildState, iter, source, result::Success)
   # the Response message containing Success above triggers a call here, where
   # we do something with the result (like save it in the ParentState)
   ...
