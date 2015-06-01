@@ -110,7 +110,8 @@ ERROR: ParserCombinator.ParserException("cannot parse")
 ```
 
 This is so common that there's a corresponding [string
-literal](http://julia.readthedocs.org/en/latest/manual/strings/#non-standard-string-literals).
+literal](http://julia.readthedocs.org/en/latest/manual/strings/#non-standard-string-literals)
+(it's "s" for "string").
 
 ```julia
 julia> parse_one("abc", s"ab")
@@ -204,8 +205,8 @@ julia> parse_one("abc", P"." + p"b.")
  "bc"
 ```
 
-As with equality, a capital prefix to the string literal implies that the
-value is dropped.
+As with equality, a capital prefix to the string literal ("p" for "pattern" by
+the way) implies that the value is dropped.
 
 #### Reptition
 
