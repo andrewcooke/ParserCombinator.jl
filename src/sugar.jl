@@ -58,7 +58,7 @@ Opt(m::Matcher) = Alt(m, Epsilon())
 # repeat via [lo:hi] or [n]
 endof{M<:Matcher}(m::M) = typemax(Int)
 getindex(m::Matcher,r::Int) = Repeat(m, r, r)
-getindex(m::Matcher,r::UnitRange) = Repeat(m, r.stop, r.start)
+getindex(m::Matcher,r::UnitRange) = Repeat(m, r.start, r.stop)
 
 
 # interpolate multiple values (list or tuple)

@@ -125,16 +125,6 @@ Matchers return lists of values.  Multiple matchers can return lists of lists,
 or the results can be "flattened" a level (usually more useful):
 
 ```julia
-julia> parse_one("abc", And(Equal("a"), Equal("b")))
-2-element Array{Any,1}:
- Any["a"]
- Any["b"]
-
-julia> parse_one("abc", s"a" & s"b")
-2-element Array{Any,1}:
- Any["a"]
- Any["b"]
-
 julia> parse_one("abc", Seq(Equal("a"), Equal("b")))
 2-element Array{Any,1}:
  "a"
@@ -144,6 +134,21 @@ julia> parse_one("abc", s"a" + s"b")
 2-element Array{Any,1}:
  "a"
  "b"
+
+julia> parse_one("abc", Seq(Equal("a"), Equal("b"); flatten=false))
+2-element Array{Any,1}:
+ Any["a"]
+ Any["b"]
+
+julia> parse_one("abc", And(Equal("a"), Equal("b")))
+2-element Array{Any,1}:
+ Any["a"]
+ Any["b"]
+
+julia> parse_one("abc", s"a" & s"b")
+2-element Array{Any,1}:
+ Any["a"]
+ Any["b"]
 ```
 
 Note the difference between `&` and `+` above.
@@ -208,36 +213,38 @@ julia> parse_one("abc", P"." + p"b.")
 As with equality, a capital prefix to the string literal ("p" for "pattern" by
 the way) implies that the value is dropped.
 
-#### Reptition
-
-There are some odd details here, so please read on after the examples.
+#### Repetition
 
 ```julia
-julia> parse_one("abc", Repeat(p".", ALL, 0))
+julia> parse_one("abc", Repeat(p"."))
 3-element Array{Any,1}:
  "a"
  "b"
  "c"
 
-julia> parse_one("abc", p"."[0:end])
+julia> parse_one("abc", Repeat(p".", 2))
 3-element Array{Any,1}:
  "a"
  "b"
  "c"
+
+julia> collect(parse_all("abc", Repeat(p".", 2, 3)))
+2-element Array{Any,1}:
+ Any["a","b","c"]
+ Any["a","b"]    
+
+julia> parse_one("abc", Repeat(p".", 2; flatten=false))
+3-element Array{Any,1}:
+ Any["a"]
+ Any["b"]
+ Any["c"]
 ```
 
-The first oddity is the order of the arguments in `Repeat(matcher, hi, lo)`.
-The `hi` value comes *before* the `lo` value to indicate that the repeat is
-*greedy*.  In other words, it tries to match `hi` first, then backs down
-towards `lo`.
+The sugared version looks like this:
 
-Non-greedy (minimal, or lazy) matching is not yet supported.  But when it is,
-it will be accessed by `Repeat(matcher, lo, hi)`.
+```julia
 
-The second oddity is the use of `[]` for repeats.  It is means to look like
-`{}` in regular expressions.  And the third oddity is that here the order is
-*always* `lo:hi`.  This is for obscure julia-related reasons.  Lazy matching
-via `[]` will require a different syntax (TBD).
+```
 
 There are also some well known special cases:
 

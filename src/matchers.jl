@@ -90,60 +90,68 @@ end
 
 
 
-# repetition (greedy and minimal)
-# Repeat(m, hi, lo) is greedy; Repeat(m, lo, hi) is lazy
+# repetition
 
-immutable Repeat<:Matcher
+abstract Repeat<:Matcher
+
+immutable Minimal<:Repeat
     matcher::Matcher
-    a::Integer
-    b::Integer
+    lo::Integer
+    hi::Integer
+    flatten::Bool
 end
 
 ALL = typemax(Int)
 
 abstract RepeatState<:State
 
-abstract Greedy<:RepeatState
-
-immutable Slurp<:Greedy
+immutable Slurp<:RepeatState
     # there's a mismatch in lengths here because the empty results is
     # associated with an iter and state
-    results::Array{Value,1}  # accumulated during slurp
-    iters::Array{Any,1}      # at the end of the associated result
-    states::Array{State,1}     # at the end of the associated result
+    results::Array{Value,1} # accumulated.  starts []
+    iters::Array{Any,1}     # at the end of the result.  starts [i]
+    states::Array{State,1}  # at the end of the result.  starts {CLEAN]
 end
 
-immutable Yield<:Greedy
+immutable Yield<:RepeatState
     results::Array{Value,1}
     iters::Array{Any,1}
     states::Array{State,1}
 end
 
-immutable Backtrack<:Greedy
+immutable Backtrack<:RepeatState
     results::Array{Value,1}
     iters::Array{Any,1}
     states::Array{State,1}
 end
 
-immutable Lazy<:RepeatState
+function Repeat(m::Matcher, lo=0, hi=ALL; flatten=true, minimal=false)
+    if minimal
+        Minimal(m, lo, hi, flatten)
+    else
+        Greedy(m, lo, hi, flatten)
+    end
+end
+
+
+# greedy-specific state and logic
+
+immutable Greedy<:Repeat
+    matcher::Matcher
+    lo::Integer
+    hi::Integer
+    flatten::Bool
 end
 
 # when first called, create base state and make internal transition
 
-function execute(k::Config, m::Repeat, s::Clean, i)
-    if m.b > m.a
-        error("lazy repeat not yet supported")
-        execute(k, m, Lazy(), i)
-    else
-        execute(k, m, Slurp(Array(Value, 0), [i], Any[s]), i)
-    end
-end
+execute(k::Config, m::Greedy, s::Clean, i) = execute(k, m, Slurp(Array(Value, 0), [i], Any[CLEAN]), i)
 
 # match until complete
 
-work_to_do(m::Repeat, results) = m.a > length(results)
+work_to_do(m::Greedy, results) = m.hi > length(results)
 
-function execute(k::Config, m::Repeat, s::Slurp, i)
+function execute(k::Config, m::Greedy, s::Slurp, i)
     if work_to_do(m, s.results)
         Execute(m, s, m.matcher, CLEAN, i)
     else
@@ -151,7 +159,7 @@ function execute(k::Config, m::Repeat, s::Slurp, i)
     end
 end
 
-function response(k::Config, m::Repeat, s::Slurp, t, i, r::Success)
+function response(k::Config, m::Greedy, s::Slurp, t, i, r::Success)
     results = Value[s.results..., r.value]
     iters = vcat(s.iters, i)
     states = vcat(s.states, t)
@@ -162,16 +170,20 @@ function response(k::Config, m::Repeat, s::Slurp, t, i, r::Success)
     end
 end
 
-function response(k::Config, m::Repeat, s::Slurp, t, i, ::Failure)
+function response(k::Config, m::Greedy, s::Slurp, t, i, ::Failure)
     execute(k, m, Yield(s.results, s.iters, s.states), i)
 end
 
 # yield a result
 
-function execute(k::Config, m::Repeat, s::Yield, i)
+function execute(k::Config, m::Greedy, s::Yield, i)
     n = length(s.results)
-    if n >= m.b
-        Response(Backtrack(s.results, s.iters, s.states), s.iters[end], Success(flatten(s.results)))
+    if n >= m.lo
+        if m.flatten
+            Response(Backtrack(s.results, s.iters, s.states), s.iters[end], Success(flatten(s.results)))
+        else
+            Response(Backtrack(s.results, s.iters, s.states), s.iters[end], Success([s.results;]))
+        end
     else
         Response(DIRTY, i, FAILURE)
     end
@@ -179,7 +191,7 @@ end
 
 # another result is required, so discard and then advance if possible
 
-function execute(k::Config, m::Repeat, s::Backtrack, i)
+function execute(k::Config, m::Greedy, s::Backtrack, i)
     if length(s.iters) < 2  # is this correct?
         Response(DIRTY, i, FAILURE)
     else
@@ -188,40 +200,39 @@ function execute(k::Config, m::Repeat, s::Backtrack, i)
     end
 end
 
-function response(k::Config, m::Repeat, s::Backtrack, t, i, r::Success)
+function response(k::Config, m::Greedy, s::Backtrack, t, i, r::Success)
     execute(k, m, Slurp(Array{Value}[s.results... r.value], vcat(s.iters, i), vcat(s.states, t)), i)
 end
 
-function response(k::Config, m::Repeat, s::Backtrack, t, i, ::Failure)
+function response(k::Config, m::Greedy, s::Backtrack, t, i, ::Failure)
     execute(k, m, Yield(s.results, s.iters, s.states), i)
 end
 
-# see sugar.jl for [] syntax support
-
-Star(m::Matcher) = m[0:end]
-Plus(m::Matcher) = m[1:end]
 
 
 
 # match all in a sequence with backtracking
+
 # there are two nearly identical matchers here - the only difference is 
 # whether results are merged (Seq/+) or Not(And/&).
+
+# unlike Repeat() we need two different types so that we can define + and 
+# & appropriately.  to make the user API more cosnsistent we add flatten
+# to the constructors and choose accordingly.
 
 abstract Serial<:Matcher
 
 immutable Seq<:Serial
     matchers::Array{Matcher,1}
-    Seq(matchers::Matcher...) = new([matchers...])
-    Seq(matchers::Array{Matcher,1}) = new(matchers)    
 end
+Seq(matchers::Matcher...; flatten=true) = flatten ? Seq([matchers...]) : And([matchers...])
 
 serial_success(m::Seq, results) = Success(flatten(results))
 
 immutable And<:Serial
     matchers::Array{Matcher,1}
-    And(matchers::Matcher...) = new([matchers...])
-    And(matchers::Array{Matcher,1}) = new(matchers)    
 end
+And(matchers::Matcher...; flatten=false) = flatten ? Seq([matchers...]) : And([matchers...])
 
 # copy tso that state remains immutable
 serial_success(m::And, results) = Success([results;])

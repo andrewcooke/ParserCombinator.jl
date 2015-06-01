@@ -21,3 +21,11 @@ PFloat64() = Parse(p"-?(\d*\.?\d+|\d+\.\d*)([eE]\d+)?", Float64)
 
 Word() = p"\w+"
 Space() = p"\s+"
+
+
+# TODO - flatten etc and move in exports
+# see sugar.jl for [] syntax support
+
+Star(m::Matcher) = m[0:end]
+Plus(m::Matcher) = m[1:end]
+
