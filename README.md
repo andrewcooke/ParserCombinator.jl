@@ -114,7 +114,8 @@ The advantages of this approach are:
   * Recursion is reduced (repetition and sequential matching are iterative,
     but the grammar itself can still contain loops).
 
-  * Caching can be isolated to within the trampoline
+  * Caching can be isolated to within the trampoline (and has access to exact,
+    explicit state for the matcher, which makes keying the lookup trivial).
 
   * Method dispatch on node types leads to idiomatic Julia code (well,
     as idiomatic as possble, for what is a glorified state machine).
