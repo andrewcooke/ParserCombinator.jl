@@ -1,4 +1,4 @@
-# ParComb
+# ParserCombinator
 
 This is a parser for Julia that tries to strike a balance between being both
 (moderately) efficient and simple (for the end-user and the maintainer).  It
@@ -11,7 +11,7 @@ ParComb can parse any iterable type (not just strings).
 ## Example
 
 ```julia
-using ParComb
+using ParserCombinator
 
 
 # the AST nodes we will construct, with evaluation via calc()
@@ -210,5 +210,5 @@ This has the unfortunate result that `Dot()` returns characters, not strings.
 But in practice that matcher is rarely used.
 
 [![Build
-Status](https://travis-ci.org/andrewcooke/ParComb.jl.png)](https://travis-ci.org/andrewcooke/ParComb.jl)
+Status](https://travis-ci.org/andrewcooke/ParserCombinator.jl.png)](https://travis-ci.org/andrewcooke/ParserCombinator.jl)
 Julia 0.3 and 0.4 (trunk).

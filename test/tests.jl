@@ -29,7 +29,7 @@
 @test parse_one("abc", p"."[3] > tuple) == [("a", "b", "c")]
 @test parse_one("1.2", PFloat64()) == [1.2]
 m1 = Delayed()
-m1.matcher = Nullable{ParComb.Matcher}(Seq(Dot(), Opt(m1)))
+m1.matcher = Nullable{ParserCombinator.Matcher}(Seq(Dot(), Opt(m1)))
 @test parse_one("abc", m1) == ['a', 'b', 'c']
 
 

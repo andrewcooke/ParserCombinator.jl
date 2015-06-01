@@ -1,5 +1,5 @@
 
-module ParComb
+module ParserCombinator
 
 using DataStructures.Stack
 using Compat
