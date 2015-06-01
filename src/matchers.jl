@@ -108,19 +108,19 @@ immutable Slurp<:Greedy
     # associated with an iter and state
     results::Array{Value,1}  # accumulated during slurp
     iters::Array{Any,1}      # at the end of the associated result
-    states::Array{Any,1}     # at the end of the associated result
+    states::Array{State,1}     # at the end of the associated result
 end
 
 immutable Yield<:Greedy
     results::Array{Value,1}
     iters::Array{Any,1}
-    states::Array{Any,1}
+    states::Array{State,1}
 end
 
 immutable Backtrack<:Greedy
     results::Array{Value,1}
     iters::Array{Any,1}
-    states::Array{Any,1}
+    states::Array{State,1}
 end
 
 immutable Lazy<:RepeatState
@@ -201,54 +201,62 @@ Plus(m::Matcher) = m[1:end]
 
 
 
+# match all in a sequence with backtracking
 
-# the state machine for sequencing two matchers
-# + creates nested pairs of these (previously we had Seq, which flattened
-# the tree, but it was not needed once we switched to returning lists)
-
-immutable And<:Matcher
-    left::Matcher
-    right::Matcher
+immutable Seq<:Matcher
+    matchers::Array{Matcher,1}
+    Seq(matchers::Matcher...) = new([matchers...])
+    Seq(matchers::Array{Matcher,1}) = new(matchers)    
+end
+    
+immutable SeqState<:State
+    results::Array{Value,1}
+    iters::Array{Any,1}
+    states::Array{State,1}
 end
 
-abstract AndState<:State
+# when first called, call first matcher
 
-immutable Left<:AndState
-    left_iter
+function execute(m::Seq, s::Clean, i, src) 
+    if length(m.matchers) == 0
+        Response(DIRTY, i, EMPTY)
+    else
+        Execute(m, SeqState(Value[], [i], State[]), m.matchers[1], CLEAN, i)
+    end
 end
 
-immutable Right<:AndState
-    left_iter
-    left_state::State
-    right_iter
-    result
+# if the final matcher matched then return what we have.  otherwise, evaluate
+# the next.
+
+function response(m::Seq, s::SeqState, t, i, src, r::Success)
+    n = length(s.iters)
+    results = Value[s.results..., r.value]
+    iters = vcat(s.iters, i)
+    states = vcat(s.states, t)
+    if n == length(m.matchers)
+        Response(SeqState(results, iters, states), i, Success(flatten(results)))
+    else
+        Execute(m, SeqState(results, iters, states), m.matchers[n+1], CLEAN, i)
+    end
 end
 
-immutable Both<:AndState
-    left_iter
-    left_state::State
-    right_iter
-    right_state::State
-    result
+# if the first matcher failed, fail.  otherwise backtrack
+
+function response(m::Seq, s::SeqState, t, i, src, r::Failure)
+    n = length(s.iters)
+    if n == 1
+        Response(DIRTY, s.iters[1], FAILURE)
+    else
+        Execute(m, SeqState(s.results[1:end-1], s.iters[1:end-1], s.states[1:end-1]), m.matchers[n-1], s.states[end], s.iters[end-1])
+    end
 end
 
-# on initial entry, save iter then call left
-execute(m::And, s::Clean, i, src) = Execute(m, Left(i), m.left, CLEAN, i)
+# try to advance the current match
 
-# if left couldn't match, then we're done
-response(m::And, s::Left, t, i, src, ::Failure) = Response(DIRTY, i, FAILURE)
-
-# if left did match, then save everything and match the right
-response(m::And, s::Left, t, i, src, r::Success) = Execute(m, Right(s.left_iter, t, i, r), m.right, CLEAN, i)
-
-# if right couldn't match, then try again with left
-response(m::And, s::Right, t, i, src, ::Failure) = Execute(m, Left(s.left_iter), m.left, s.left_state, s.left_iter)
-
-# if right did match, then save everything and return
-response(m::And, s::Right, t, i, src, r::Success) = Response(Both(s.left_iter, s.left_state, s.right_iter, t, s.result), i, Success(vcat(s.result.value, r.value)))
-
-# if we're called with Both state, we need to backtrack on the right
-execute(m::And, s::Both, i, src) = Execute(m, Right(s.left_iter, s.left_state, s.right_iter, s.result), m.right, s.right_state, s.right_iter)
+function execute(m::Seq, s::SeqState, i, src)
+    @assert length(s.states) == length(m.matchers)
+    Execute(m, SeqState(s.results[1:end-1], s.iters[1:end-1], s.states[1:end-1]), m.matchers[end], s.states[end], s.iters[end-1])
+end
 
 
 

@@ -32,7 +32,10 @@ Opt(m::Matcher) = Alt(m, Epsilon())
 ~(m::Matcher) = Drop(m)
 
 # match in sequence, result in array
-+(a::Matcher, b::Matcher) = And(a, b)
++(a::Seq, b::Seq) = Seq(vcat(a.matchers, b.matchers))
++(a::Seq, b::Matcher) = Seq(vcat(a.matchers, b))
++(a::Matcher, b::Seq) = Seq(vcat(a, b.matchers))
++(a::Matcher, b::Matcher) = Seq(a, b)
 
 # alternates
 |(a::Alt, b::Alt) = Alt(vcat(a.matchers, b.matchers))

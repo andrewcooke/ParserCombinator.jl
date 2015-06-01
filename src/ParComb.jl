@@ -8,7 +8,7 @@ using Debug
 
 export Cache, NoCache, make_all, make_one, parse_one, parse_all,
 ParserException, Value, Empty, EMPTY,
-Epsilon, Insert, Dot, Drop, Equal, Repeat, Star, Plus, And, Alt, Lookahead, 
+Epsilon, Insert, Dot, Drop, Equal, Repeat, Star, Plus, Seq, Alt, Lookahead, 
 Pattern, Delayed, Eos,
 TransformResult, TransformSuccess, TransformValue,
 @p_str, @P_str, @s_str, @S_str, Opt,

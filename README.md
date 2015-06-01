@@ -60,7 +60,7 @@ parse_one("1+2")
 Some explanation of the above:
 
 * I used rather a lot of "syntactic sugar".  You can use a more verbose,
-  "parser combinator" style if you prefer.  For example, `And(...)` instead of
+  "parser combinator" style if you prefer.  For example, `Seq(...)` instead of
   `+`, or `TransformValue(...)` instead of `>`.
 
 * The matcher `S"xyz"` matches and then discards the string `"xyz"`.
@@ -84,7 +84,8 @@ Some explanation of the above:
   alternative would be `Star(...)`, while `[3:4]` would match only 3 or 4
   values.
 
-And it supports packrat parsing too.
+And it supports packrat parsing too (more exactly, it can memoize results to
+avoid repeating matches).
 
 Still, for large parsing tasks (eg parsing source code for a compiler) it
 would probably be better to use a wrapper around an external parser generator,
