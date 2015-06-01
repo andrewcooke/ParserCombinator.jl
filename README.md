@@ -111,7 +111,8 @@ evaluation (and, possibly, in the future, detect left-recursive grammars).
 
 The advantages of this approach are:
 
-  * Recursion is avoided
+  * Recursion is reduced (repetition and sequential matching are iterative,
+    but the grammar itself can still contain loops).
 
   * Caching can be isolated to within the trampoline
 
