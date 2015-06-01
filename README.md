@@ -93,6 +93,9 @@ like Anltr.
 
 ## Manual
 
+In what follows, remember that the power of parser combinators comes from how
+you combine these.  They can all be nested, refer to each other, etc etc.
+
 ### Basic Matchers
 
 #### Equality
@@ -142,6 +145,8 @@ julia> parse_one("abc", s"a" + s"b")
  "b"
 ```
 
+Note the difference between `&` and `+` above.
+
 #### Empty Values
 
 Often, you want to match something but then discard it.  An empty (or
@@ -167,22 +172,96 @@ julia> parse_one("abc", S"a" + s"b")
  "b"
 ```
 
-Note the `~` and capital `S` in the last two examples, respectively.
+Note the `~` (tilde / home directory) and capital `S` in the last two
+examples, respectively.
 
 #### Alternates
 
 
 ```julia
+julia> parse_one("abc", Alt(s"x", s"a"))
+1-element Array{Any,1}:
+ "a"
+
+julia> parse_one("abc", s"x" | s"a")
+1-element Array{Any,1}:
+ "a"
 ```
 
-```julia
-```
+#### Regular Expressions
 
 ```julia
+julia> parse_one("abc", Pattern(r".b."))
+1-element Array{Any,1}:
+ "abc"
+
+julia> parse_one("abc", p".b.")
+1-element Array{Any,1}:
+ "abc"
+
+julia> parse_one("abc", P"." + p"b.")
+1-element Array{Any,1}:
+ "bc"
 ```
 
+As with equality, a capital prefix to the string literal implies that the
+value is dropped.
+
+#### Reptition
+
+There are some odd details here, so please read on after the examples.
+
 ```julia
+julia> parse_one("abc", Repeat(p".", ALL, 0))
+3-element Array{Any,1}:
+ "a"
+ "b"
+ "c"
+
+julia> parse_one("abc", p"."[0:end])
+3-element Array{Any,1}:
+ "a"
+ "b"
+ "c"
 ```
+
+The first oddity is the order of the arguments in `Repeat(matcher, hi, lo)`.
+The `hi` value comes *before* the `lo` value to indicate that the repeat is
+*greedy*.  In other words, it tries to match `hi` first, then backs down
+towards `lo`.
+
+Non-greedy (minimal, or lazy) matching is not yet supported.  But when it is,
+it will be accessed by `Repeat(matcher, lo, hi)`.
+
+The second oddity is the use of `[]` for repeats.  It is means to look like
+`{}` in regular expressions.  And the third oddity is that here the order is
+*always* `lo:hi`.  This is for obscure julia-related reasons.  Lazy matching
+via `[]` will require a different syntax (TBD).
+
+There are also some well known special cases:
+
+```julia
+julia> parse_one("abc", Plus(p"."))
+3-element Array{Any,1}:
+ "a"
+ "b"
+ "c"
+
+julia> parse_one("abc", Star(p"."))
+3-element Array{Any,1}:
+ "a"
+ "b"
+ "c"
+
+julia> parse_one("abc", Plus(p"...."))
+ERROR: ParserCombinator.ParserException("cannot parse")
+
+julia> parse_one("abc", Star(p"...."))
+0-element Array{Any,1}
+```
+
+Where `Star()` can do zero matches (returning an empty list), but `Plus()`
+cannot.
 
 ```julia
 ```

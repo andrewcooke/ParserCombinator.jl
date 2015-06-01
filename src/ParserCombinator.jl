@@ -7,7 +7,7 @@ import Base: start, endof
 
 export Cache, NoCache, make_all, make_one, parse_one, parse_all,
 ParserException, Value, Empty, EMPTY,
-Epsilon, Insert, Dot, Drop, Equal, Repeat, Star, Plus, Seq, And, Alt, 
+Epsilon, Insert, Dot, Drop, Equal, Repeat, ALL, Star, Plus, Seq, And, Alt, 
 Lookahead, Not, Pattern, Delayed, Debug, Eos,
 TransformResult, TransformSuccess, TransformValue,
 @p_str, @P_str, @s_str, @S_str, Opt,

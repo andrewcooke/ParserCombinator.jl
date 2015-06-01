@@ -99,6 +99,8 @@ immutable Repeat<:Matcher
     b::Integer
 end
 
+ALL = typemax(Int)
+
 abstract RepeatState<:State
 
 abstract Greedy<:RepeatState
