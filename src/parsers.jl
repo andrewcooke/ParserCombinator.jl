@@ -1,12 +1,11 @@
 
-# all subtypes must have attributes:
-#  source
-#  debug::bool
-#  stack
-# and approriate dispatch functions
+function debug(k, p, s, c, t, i)
+    @printf("%04d %30s => %-30s\n", i, typeof(p), typeof(c))
+end
 
-abstract Config
-
+function debug(k, p, s, t, i, r::Result)
+    @printf("%04d %30s <= %-30s\n", i, typeof(p), typeof(r))
+end
 
 # evaluation without a cache (memoization)
 
@@ -18,14 +17,20 @@ type NoCache<:Config
                                        Stack(Tuple{Matcher,State}))
 end
 
-function dispatch(c::NoCache, e::Execute)
-    push!(c.stack, (e.parent, e.state_parent))
-    execute(e.child, e.state_child, e.iter, c.source)
+function dispatch(k::NoCache, e::Execute)
+    push!(k.stack, (e.parent, e.state_parent))
+    if k.debug 
+        debug(k, e.parent, e.state_parent, e.child, e.state_child, e.iter)
+    end
+    execute(k, e.child, e.state_child, e.iter)
 end
 
-function dispatch(c::NoCache, r::Response,)
-    (parent, state_parent) = pop!(c.stack)
-    response(parent, state_parent, r.state_child, r.iter, c.source, r.result)
+function dispatch(k::NoCache, r::Response,)
+    (parent, state_parent) = pop!(k.stack)
+    if k.debug 
+        debug(k, parent, state_parent, r.state_child, r.iter, r.result)
+    end
+    response(k, parent, state_parent, r.state_child, r.iter, r.result)
 end
 
 
@@ -43,20 +48,35 @@ type Cache<:Config
                                      Dict{Key,Message}())
 end
 
-function dispatch(c::Cache, e::Execute)
-    key = (e.child, e.state_child, e.iter)
-    push!(c.stack, (e.parent, e.state_parent, key))
-    if haskey(c.cache, key)
-        c.cache[key]
+function debug(k, p, s, c, t, i, cached::Bool)
+    if cached
+        @printf("%04d %30s CC %-30s\n", i, typeof(p), typeof(c))
     else
-        execute(e.child, e.state_child, e.iter, c.source)
+        debug(k, p, s, c, t, i)
     end
 end
 
-function dispatch(c::Cache, r::Response)
-    parent, state_parent, key = pop!(c.stack)
-    c.cache[key] = r
-    response(parent, state_parent, r.state_child, r.iter, c.source, r.result)
+function dispatch(k::Cache, e::Execute)
+    key = (e.child, e.state_child, e.iter)
+    push!(k.stack, (e.parent, e.state_parent, key))
+    cached = haskey(k.cache, key)
+    if k.debug 
+        debug(k, e.parent, e.state_parent, e.child, e.state_child, e.iter, cached)
+    end
+    if haskey(k.cache, key)
+        k.cache[key]
+    else
+        execute(k, e.child, e.state_child, e.iter)
+    end
+end
+
+function dispatch(k::Cache, r::Response)
+    parent, state_parent, key = pop!(k.stack)
+    k.cache[key] = r
+    if k.debug 
+        debug(k, parent, state_parent, r.state_child, r.iter, r.result)
+    end
+    response(k, parent, state_parent, r.state_child, r.iter, r.result)
 end
 
 
@@ -71,22 +91,22 @@ immutable RootState<:DelegateState
     state::State
 end
 
-response(m::Root, s::State, t::State, i, src, r::Success) = Response(RootState(t), i, r)
-response(m::Root, s::State, t::State, i, src, r::Failure) = Response(DIRTY, i, r)
+response(k::Config, m::Root, s::State, t::State, i, r::Success) = Response(RootState(t), i, r)
+response(k::Config, m::Root, s::State, t::State, i, r::Failure) = Response(DIRTY, i, r)
 
-function producer(c::Config, m::Matcher)
+function producer(k::Config, m::Matcher)
 
     root = Root()
-    msg::Message = Execute(root, CLEAN, m, CLEAN, start(c.source))
+    msg::Message = Execute(root, CLEAN, m, CLEAN, start(k.source))
 
     while true
-        msg = dispatch(c, msg)
-        if isempty(c.stack)
+        msg = dispatch(k, msg)
+        if isempty(k.stack)
             @assert isa(msg, Response)
             if isa(msg.result, Success)
                 produce(msg.result.value)
                 # my head hurts
-                msg = Execute(root, CLEAN, m, msg.state_child.state, start(c.source))
+                msg = Execute(root, CLEAN, m, msg.state_child.state, start(k.source))
             else
                 return
             end

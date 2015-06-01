@@ -2,11 +2,11 @@
 
 # some basic definitions for generic matches
 
-execute(m, s, i, _) = error("$m did not expect to be called with state $s")
+execute(k::Config, m, s, i) = error("$m did not expect to be called with state $s")
 
-response(m, s, t, i, _, r) = error("$m did not expect to receive state $s from $c")
+response(k::Config, m, s, t, i, r) = error("$m did not expect to receive state $s, response $r")
 
-execute(m::Matcher, s::Dirty, i, _) = Response(s, i, FAILURE)
+execute(k::Config, m::Matcher, s::Dirty, i) = Response(s, i, FAILURE)
 
 
 
@@ -21,12 +21,12 @@ abstract Delegate<:Matcher
 # assume this has a state field
 abstract DelegateState<:State
 
-execute(m::Delegate, s::Clean, i, src) = Execute(m, s, m.matcher, CLEAN, i)
+execute(k::Config, m::Delegate, s::Clean, i) = Execute(m, s, m.matcher, CLEAN, i)
 
-execute(m::Delegate, s::DelegateState, i, src) = Execute(m, s, m.matcher, s.state, i)
+execute(k::Config, m::Delegate, s::DelegateState, i) = Execute(m, s, m.matcher, s.state, i)
 
 # this avoids re-calling child on backtracking on failure
-response(m::Delegate, s, t, i, src, r::Failure) = Response(DIRTY, i, FAILURE)
+response(k::Config, m::Delegate, s, t, i, r::Failure) = Response(DIRTY, i, FAILURE)
 
 
 
@@ -34,21 +34,21 @@ response(m::Delegate, s, t, i, src, r::Failure) = Response(DIRTY, i, FAILURE)
 
 immutable Epsilon<:Matcher end
 
-execute(m::Epsilon, s::Clean, i, src) = Response(DIRTY, i, EMPTY)
+execute(k::Config, m::Epsilon, s::Clean, i) = Response(DIRTY, i, EMPTY)
 
 immutable Insert<:Matcher
     text
 end
 
-execute(m::Insert, s::Clean, i, src) = Response(DIRTY, i, Success(m.text))
+execute(k::Config, m::Insert, s::Clean, i) = Response(DIRTY, i, Success(m.text))
 
 immutable Dot<:Matcher end
 
-function execute(m::Dot, s::Clean, i, src)
-    if done(src, i)
+function execute(k::Config, m::Dot, s::Clean, i)
+    if done(k.source, i)
         Response(DIRTY, i, FAILURE)
     else
-        c, i = next(src, i)
+        c, i = next(k.source, i)
         Response(DIRTY, i, Success(c))
     end
 end
@@ -65,7 +65,7 @@ immutable DropState<:DelegateState
     state::State
 end
 
-response(m::Drop, s, t, i, src, rs::Success) = Response(DropState(t), i, EMPTY)
+response(k::Config, m::Drop, s, t, i, rs::Success) = Response(DropState(t), i, EMPTY)
 
 
 
@@ -75,12 +75,12 @@ immutable Equal<:Matcher
     string
 end
 
-function execute(m::Equal, s::Clean, i, src)
+function execute(k::Config, m::Equal, s::Clean, i)
     for x in m.string
-        if done(src, i)
+        if done(k.source, i)
             return Response(DIRTY, i, FAILURE)
         end
-        y, i = next(src, i)
+        y, i = next(k.source, i)
         if x != y
             return Response(DIRTY, i, FAILURE)
         end
@@ -128,12 +128,12 @@ end
 
 # when first called, create base state and make internal transition
 
-function execute(m::Repeat, s::Clean, i, src)
+function execute(k::Config, m::Repeat, s::Clean, i)
     if m.b > m.a
         error("lazy repeat not yet supported")
-        execute(m, Lazy(), i, src)
+        execute(k, m, Lazy(), i)
     else
-        execute(m, Slurp(Array(Value, 0), [i], Any[s]), i, src)
+        execute(k, m, Slurp(Array(Value, 0), [i], Any[s]), i)
     end
 end
 
@@ -141,32 +141,32 @@ end
 
 work_to_do(m::Repeat, results) = m.a > length(results)
 
-function execute(m::Repeat, s::Slurp, i, src)
+function execute(k::Config, m::Repeat, s::Slurp, i)
     if work_to_do(m, s.results)
         Execute(m, s, m.matcher, CLEAN, i)
     else
-        execute(m, Yield(s.results, s.iters, s.states), i, src)
+        execute(k, m, Yield(s.results, s.iters, s.states), i)
     end
 end
 
-function response(m::Repeat, s::Slurp, t, i, src, r::Success)
+function response(k::Config, m::Repeat, s::Slurp, t, i, r::Success)
     results = Value[s.results..., r.value]
     iters = vcat(s.iters, i)
     states = vcat(s.states, t)
     if work_to_do(m, results)
         Execute(m, Slurp(results, iters, states), m.matcher, CLEAN, i)
     else
-        execute(m, Yield(results, iters, states), i, src)
+        execute(k, m, Yield(results, iters, states), i)
     end
 end
 
-function response(m::Repeat, s::Slurp, t, i, src, ::Failure)
-    execute(m, Yield(s.results, s.iters, s.states), i, src)
+function response(k::Config, m::Repeat, s::Slurp, t, i, ::Failure)
+    execute(k, m, Yield(s.results, s.iters, s.states), i)
 end
 
 # yield a result
 
-function execute(m::Repeat, s::Yield, i, src)
+function execute(k::Config, m::Repeat, s::Yield, i)
     n = length(s.results)
     if n >= m.b
         Response(Backtrack(s.results, s.iters, s.states), s.iters[end], Success(flatten(s.results)))
@@ -177,7 +177,7 @@ end
 
 # another result is required, so discard and then advance if possible
 
-function execute(m::Repeat, s::Backtrack, i, src)
+function execute(k::Config, m::Repeat, s::Backtrack, i)
     if length(s.iters) < 2  # is this correct?
         Response(DIRTY, i, FAILURE)
     else
@@ -186,12 +186,12 @@ function execute(m::Repeat, s::Backtrack, i, src)
     end
 end
 
-function response(m::Repeat, s::Backtrack, t, i, src, r::Success)
-    execute(m, Slurp(Array{Value}[s.results... r.value], vcat(s.iters, i), vcat(s.states, t)), i, src)
+function response(k::Config, m::Repeat, s::Backtrack, t, i, r::Success)
+    execute(k, m, Slurp(Array{Value}[s.results... r.value], vcat(s.iters, i), vcat(s.states, t)), i)
 end
 
-function response(m::Repeat, s::Backtrack, t, i, src, ::Failure)
-    execute(m, Yield(s.results, s.iters, s.states), i, src)
+function response(k::Config, m::Repeat, s::Backtrack, t, i, ::Failure)
+    execute(k, m, Yield(s.results, s.iters, s.states), i)
 end
 
 # see sugar.jl for [] syntax support
@@ -202,14 +202,29 @@ Plus(m::Matcher) = m[1:end]
 
 
 # match all in a sequence with backtracking
+# there are two nearly identical matchers here - the only difference is 
+# whether results are merged (Seq/+) or Not(And/&).
 
-immutable Seq<:Matcher
+abstract Serial<:Matcher
+
+immutable Seq<:Serial
     matchers::Array{Matcher,1}
     Seq(matchers::Matcher...) = new([matchers...])
     Seq(matchers::Array{Matcher,1}) = new(matchers)    
 end
-    
-immutable SeqState<:State
+
+serial_success(m::Seq, results) = Success(flatten(results))
+
+immutable And<:Serial
+    matchers::Array{Matcher,1}
+    And(matchers::Matcher...) = new([matchers...])
+    And(matchers::Array{Matcher,1}) = new(matchers)    
+end
+
+# copy tso that state remains immutable
+serial_success(m::And, results) = Success([results;])
+
+immutable SerialState<:State
     results::Array{Value,1}
     iters::Array{Any,1}
     states::Array{State,1}
@@ -217,46 +232,47 @@ end
 
 # when first called, call first matcher
 
-function execute(m::Seq, s::Clean, i, src) 
+function execute(l::Config, m::Serial, s::Clean, i) 
     if length(m.matchers) == 0
         Response(DIRTY, i, EMPTY)
     else
-        Execute(m, SeqState(Value[], [i], State[]), m.matchers[1], CLEAN, i)
+        Execute(m, SerialState(Value[], [i], State[]), m.matchers[1], CLEAN, i)
     end
 end
 
 # if the final matcher matched then return what we have.  otherwise, evaluate
 # the next.
 
-function response(m::Seq, s::SeqState, t, i, src, r::Success)
+function response(k::Config, m::Serial, s::SerialState, t, i, r::Success)
     n = length(s.iters)
     results = Value[s.results..., r.value]
     iters = vcat(s.iters, i)
     states = vcat(s.states, t)
     if n == length(m.matchers)
-        Response(SeqState(results, iters, states), i, Success(flatten(results)))
+        Response(SerialState(results, iters, states), i, serial_success(m, results))
     else
-        Execute(m, SeqState(results, iters, states), m.matchers[n+1], CLEAN, i)
+        Execute(m, SerialState(results, iters, states), m.matchers[n+1], CLEAN, i)
     end
 end
 
 # if the first matcher failed, fail.  otherwise backtrack
 
-function response(m::Seq, s::SeqState, t, i, src, r::Failure)
+function response(k::Config, m::Serial, s::SerialState, t, i, r::Failure)
     n = length(s.iters)
     if n == 1
         Response(DIRTY, s.iters[1], FAILURE)
     else
-        Execute(m, SeqState(s.results[1:end-1], s.iters[1:end-1], s.states[1:end-1]), m.matchers[n-1], s.states[end], s.iters[end-1])
+        Execute(m, SerialState(s.results[1:end-1], s.iters[1:end-1], s.states[1:end-1]), m.matchers[n-1], s.states[end], s.iters[end-1])
     end
 end
 
 # try to advance the current match
 
-function execute(m::Seq, s::SeqState, i, src)
+function execute(k::Config, m::Serial, s::SerialState, i)
     @assert length(s.states) == length(m.matchers)
-    Execute(m, SeqState(s.results[1:end-1], s.iters[1:end-1], s.states[1:end-1]), m.matchers[end], s.states[end], s.iters[end-1])
+    Execute(m, SerialState(s.results[1:end-1], s.iters[1:end-1], s.states[1:end-1]), m.matchers[end], s.states[end], s.iters[end-1])
 end
+
 
 
 
@@ -274,27 +290,27 @@ immutable AltState<:State
     i
 end
 
-function execute(m::Alt, s::Clean, i, src)
+function execute(k::Config, m::Alt, s::Clean, i)
     if length(m.matchers) == 0
         Response(DIRTY, i, FAILURE)
     else
-        execute(m, AltState(CLEAN, i, 1), i, src)
+        execute(k, m, AltState(CLEAN, i, 1), i)
     end
 end
 
-function execute(m::Alt, s::AltState, i, src)
+function execute(k::Config, m::Alt, s::AltState, i)
     Execute(m, s, m.matchers[s.i], s.state, s.iter)
 end
 
-function response(m::Alt, s::AltState, t, i, src, r::Success)
+function response(k::Config, m::Alt, s::AltState, t, i, r::Success)
     Response(AltState(t, s.iter, s.i), i, r)
 end
 
-function response(m::Alt, s::AltState, t, i, src, r::Failure)
+function response(k::Config, m::Alt, s::AltState, t, i, r::Failure)
     if s.i == length(m.matchers)
         Response(DIRTY, i, FAILURE)
     else
-        execute(m, AltState(CLEAN, s.iter, s.i + 1), i, src)
+        execute(k, m, AltState(CLEAN, s.iter, s.i + 1), i)
     end
 end
 
@@ -311,10 +327,29 @@ immutable LookaheadState<:DelegateState
     iter
 end
 
-execute(m::Lookahead, s::Clean, i, src) = Execute(m, LookaheadState(s, i), m.matcher, CLEAN, i)
+execute(k::Config, m::Lookahead, s::Clean, i) = Execute(m, LookaheadState(s, i), m.matcher, CLEAN, i)
 
 response(m::Lookahead, s, t, i, r::Success) = Response(LooakheadState(t, s.iter), s.iter, EMPTY)
 
+
+
+# if the child matches, fail; if the child fails return EMPTY
+# no backtracking of the child is supported (i don't understand how it would
+# work, but feel free to correct me....)
+
+immutable Not<:Matcher
+    matcher::Matcher
+end
+
+immutable NotState<:State
+    iter
+end
+
+execute(k::Config, m::Not, s::Clean, i) = Execute(m, NotState(i), m.matcher, CLEAN, i)
+
+response(k::Config, m::Not, s, t, i, r::Success) = Response(s, s.iter, FAILURE)
+
+response(k::Config, m::Not, s, t, i, r::Failure) = Response(s, s.iter, EMPTY)
 
 
 # match a regular expression.
@@ -334,12 +369,9 @@ immutable Pattern<:Matcher
     Pattern(s::AbstractString) = new(Regex("^" * s * "(.??)"))
 end
 
-function execute(m::Pattern, s::Clean, i, src)
-    error("Pattern matcher works only with strings")
-end
-
-function execute(m::Pattern, s::Clean, i, src::AbstractString)
-    x = match(m.regex, src[i:end])
+function execute(k::Config, m::Pattern, s::Clean, i)
+    @assert isa(k.source, AbstractString)
+    x = match(m.regex, k.source[i:end])
     if x == nothing
         Response(DIRTY, i, FAILURE)
     else
@@ -356,26 +388,60 @@ type Delayed<:Matcher
     Delayed() = new(Nullable{Matcher}())
 end
 
-function execute(m::Delayed, s::Dirty, i, src)
+function execute(k::Config, m::Delayed, s::Dirty, i)
     Response(DIRTY, i, FAILURE)
 end
 
-function execute(m::Delayed, s::State, i, src)
+function execute(k::Config, m::Delayed, s::State, i)
     if isnull(m.matcher)
         error("assign to the Delayed() matcher attribute")
     else
-        execute(get(m.matcher), s, i, src)
+        execute(k, get(m.matcher), s, i)
     end
 end
 
+
+
+# enable debug when in scope of child
+
+immutable Debug<:Delegate
+    matcher::Matcher
+end
+
+immutable DebugState<:DelegateState
+    state::State
+    depth::Int
+end
+
+execute(k::Config, m::Debug, s::Clean, i) = execute(k, m, DebugState(CLEAN, 0), i)
+
+function execute(k::Config, m::Debug, s::DebugState, i)
+    k.debug = true
+    Execute(m, DebugState(s.state, s.depth+1), m.matcher, s.state, i)
+end
+
+function response(k::Config, m::Debug, s::DebugState, t, i, r::Success)
+    if s.depth == 1
+        k.debug = false
+    end
+    Response(DebugState(t, s.depth-1), i, r)
+end
+    
+function response(k::Config, m::Debug, s::DebugState, t, i, r::Failure)
+    if s.depth == 2
+        k.debug = false
+    end
+    Response(DIRTY, i, FAILURE)
+end
+    
 
 
 # end of stream / string
 
 immutable Eos<:Matcher end
 
-function execute(m::Eos, s::Clean, i, src)
-    if done(src, i)
+function execute(k::Config, m::Eos, s::Clean, i)
+    if done(k.source, i)
         Response(DIRTY, i, EMPTY)
     else
         Response(DIRTY, i, FAILURE)

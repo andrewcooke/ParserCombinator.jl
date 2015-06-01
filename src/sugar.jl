@@ -31,11 +31,22 @@ Opt(m::Matcher) = Alt(m, Epsilon())
 # match and discard
 ~(m::Matcher) = Drop(m)
 
+
 # match in sequence, result in array
+
+# merge results
 +(a::Seq, b::Seq) = Seq(vcat(a.matchers, b.matchers))
 +(a::Seq, b::Matcher) = Seq(vcat(a.matchers, b))
 +(a::Matcher, b::Seq) = Seq(vcat(a, b.matchers))
 +(a::Matcher, b::Matcher) = Seq(a, b)
+
+# separate results
+# https://github.com/JuliaLang/julia/issues/11521
+(&)(a::And, b::And) = And(vcat(a.matchers, b.matchers))
+(&)(a::And, b::Matcher) = And(vcat(a.matchers, b))
+(&)(a::Matcher, b::And) = And(vcat(a, b.matchers))
+(&)(a::Matcher, b::Matcher) = And(a, b)
+
 
 # alternates
 |(a::Alt, b::Alt) = Alt(vcat(a.matchers, b.matchers))
@@ -43,10 +54,12 @@ Opt(m::Matcher) = Alt(m, Epsilon())
 |(a::Matcher, b::Alt) = Alt(vcat(a, b.matchers))
 |(a::Matcher, b::Matcher) = Alt(a, b)
 
+
 # repeat via [lo:hi] or [n]
 endof{M<:Matcher}(m::M) = typemax(Int)
 getindex(m::Matcher,r::Int) = Repeat(m, r, r)
 getindex(m::Matcher,r::UnitRange) = Repeat(m, r.stop, r.start)
+
 
 # interpolate multiple values (list or tuple)
 >(m::Matcher, f::Union(Function,DataType)) = TransformSuccess(m, x -> Success(f(x.value...)))

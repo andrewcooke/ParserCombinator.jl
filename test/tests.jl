@@ -11,6 +11,7 @@
 @test parse_one("aa", Repeat(Equal("a"), 2, 2)) == ["a", "a"]
 @test parse_one("aa", Repeat(Equal("a"), 2, 1)) == ["a", "a"]
 @test parse_one("", Repeat(Equal("a"), 0, 0)) == []
+@test parse_one("ab", And(Pattern(r"a"), Dot())) == Any[["a"], ['b']]
 @test parse_one("ab", Seq(Pattern(r"a"), Dot())) == ["a", 'b']
 @test parse_one("abc", Seq(Equal("a"))) == ["a"]
 @test parse_one("abc", Seq(Equal("a"), Equal("b"))) == ["a", "b"]
@@ -27,6 +28,8 @@
 @test length(collect(parse_all("abc", p"."[0:3]))) == 4
 @test length(collect(parse_all("abc", p"."[1:2]))) == 2
 @test parse_one("abc", p"."[3] > tuple) == [("a", "b", "c")]
+@test_throws ParserException parse_one("abc", And(Equal("a"), Lookahead(Equal("c")), Equal("b")))
+@test parse_one("abc", And(Equal("a"), Not(Lookahead(Equal("c"))), Equal("b"))) == Any[["a"], [], ["b"]]
 @test parse_one("1.2", PFloat64()) == [1.2]
 m1 = Delayed()
 m1.matcher = Nullable{ParserCombinator.Matcher}(Seq(Dot(), Opt(m1)))

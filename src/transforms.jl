@@ -20,9 +20,9 @@ end
 
 # TODO - does this even make sense?  wouldn't we need to modify state too?
 
-response(m::TransformResult, s, t, i, src, r::Failure) = Response(TransformState(t), i, m.f(r))
+response(k::Config, m::TransformResult, s, t, i, r::Failure) = Response(TransformState(t), i, m.f(r))
 
-response(m::TransformResult, s, t, i, src, r::Success) = Response(TransformState(t), i, m.f(r))
+response(k::Config, m::TransformResult, s, t, i, r::Success) = Response(TransformState(t), i, m.f(r))
 
 
 
@@ -36,4 +36,4 @@ end
 
 # execute comes from Delegate
 
-response(m::TransformSuccess, s, t, i, src, r::Success) = Response(TransformState(t), i, m.f(r))
+response(k::Config, m::TransformSuccess, s, t, i, r::Success) = Response(TransformState(t), i, m.f(r))
