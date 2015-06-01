@@ -152,19 +152,23 @@ hello_world_grammar = Parent(hello, world)
 ```
 
 Each matcher has some associated types that store state (the matchers
-themselves describe only the *static* grammar; the state describes the
-associated state during matching and backtracking).  Two states, `CLEAN` and
-`DIRTY`, are used globally to indicate that a matcher is uncalled, or has
+instances themselves describe only the *static* grammar; the state describes
+the associated state during matching and backtracking).  Two states, `CLEAN`
+and `DIRTY`, are used globally to indicate that a matcher is uncalled, or has
 exhausted all matches, respectively.
 
-Methods are then associated with combinations of matchers and state.
-Transitions between these methods implement a state machine.
+Transitions between these states are made by calling two methods (one for
+evaluating a match, and one for returning a result - see below).  Functions
+for these methods are associated with combinations of matchers and state to
+implement the necessary logic.
 
-These transitions are triggered via `Message` types.  A method associated with
-a matcher (and state) can return one of the messages and the trampoline will
-call the corresponding code for the target.
+These transitions are triggered via `Message` types - one matching each
+method.  So a method function associated with a matcher (and state) can return
+one of the messages and the trampoline will call the corresponding code for
+the target.
 
-So, for example:
+I've tried to be exact, but that sounds horribly opaque.  In practice, it's
+quite simple.  For example:
 
 ```
 function execute(p::Parent, s::ParentState, iter, source)
