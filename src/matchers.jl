@@ -99,7 +99,7 @@ end
 # possible states (limited by the maximum number of matches), yielding
 # when we have a result within the lo/hi range.
 
-abstract Repeat<:Matcher
+abstract Repeat_<:Matcher   # _ to avoid conflict with abstract type in 0.3
 
 ALL = typemax(Int)
 
@@ -118,7 +118,7 @@ Repeat(m::Matcher; flatten=true, greedy=true) = Repeat(m, 0, ALL; flatten=flatte
 
 # depth-first (greedy) state and logic
 
-immutable Depth<:Repeat
+immutable Depth<:Repeat_
     matcher::Matcher
     lo::Integer
     hi::Integer
@@ -231,7 +231,7 @@ end
 
 # breadth-fisrt specific state and logic
 
-immutable Breadth<:Repeat
+immutable Breadth<:Repeat_
     matcher::Matcher
     lo::Integer
     hi::Integer
