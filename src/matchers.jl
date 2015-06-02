@@ -92,20 +92,46 @@ end
 
 # repetition
 
+# in both cases (Depth and Breadth) we perform a tree search of all
+# possible states (limite dby the maximum number of matches), yielding
+# when we have a result within the lo/hi range given.
+
 abstract Repeat<:Matcher
 
-immutable Minimal<:Repeat
+ALL = typemax(Int)
+
+abstract RepeatState<:State
+
+function Repeat(m::Matcher, lo, hi; flatten=true, greedy=true)
+    if greedy
+        Depth(m, lo, hi, flatten)
+    else
+        Breadth(m, lo, hi, flatten)
+    end
+end
+Repeat(m::Matcher, lo; flatten=true, greedy=true) = Repeat(m, lo, lo; flatten=flatten, greedy=greedy)
+Repeat(m::Matcher; flatten=true, greedy=true) = Repeat(m, 0, ALL; flatten=flatten, greedy=greedy)
+
+
+# depth-first (greedy) state and logic
+
+immutable Depth<:Repeat
     matcher::Matcher
     lo::Integer
     hi::Integer
     flatten::Bool
 end
 
-ALL = typemax(Int)
+# greedy matching is effectively depth first traversal of a tree where:
+# * performing an additional match is moving down to a new level 
+# * performaing an alternate match (backtrack+match) moves across
+# the traversal requires a stack.  the DepthState instances below all
+# store that stack - actually three of them.  the results stack is 
+# unusual / neat in that it is also what we need to return.
 
-abstract RepeatState<:State
+abstract DepthState<:RepeatState
 
-immutable Slurp<:RepeatState
+immutable Slurp<:DepthState
     # there's a mismatch in lengths here because the empty results is
     # associated with an iter and state
     results::Array{Value,1} # accumulated.  starts []
@@ -113,72 +139,52 @@ immutable Slurp<:RepeatState
     states::Array{State,1}  # at the end of the result.  starts {CLEAN]
 end
 
-immutable Yield<:RepeatState
+immutable Yield<:DepthState
     results::Array{Value,1}
     iters::Array{Any,1}
     states::Array{State,1}
 end
 
-immutable Backtrack<:RepeatState
+immutable Backtrack<:DepthState
     results::Array{Value,1}
     iters::Array{Any,1}
     states::Array{State,1}
-end
-
-function Repeat(m::Matcher, lo, hi; flatten=true, minimal=false)
-    if minimal
-        Minimal(m, lo, hi, flatten)
-    else
-        Greedy(m, lo, hi, flatten)
-    end
-end
-Repeat(m::Matcher, lo; flatten=true, minimal=false) = Repeat(m, lo, lo; flatten=flatten, minimal=minimal)
-Repeat(m::Matcher; flatten=true, minimal=false) = Repeat(m, 0, ALL; flatten=flatten, minimal=minimal)
-
-
-# greedy-specific state and logic
-
-immutable Greedy<:Repeat
-    matcher::Matcher
-    lo::Integer
-    hi::Integer
-    flatten::Bool
 end
 
 # when first called, create base state and make internal transition
 
-execute(k::Config, m::Greedy, s::Clean, i) = execute(k, m, Slurp(Array(Value, 0), [i], Any[CLEAN]), i)
+execute(k::Config, m::Depth, s::Clean, i) = execute(k, m, Slurp(Array(Value, 0), [i], Any[CLEAN]), i)
 
-# match until complete
+# Slurp - repeat matching until at bottom of this branch (or maximum depth)
 
-work_to_do(m::Greedy, results) = m.hi > length(results)
+max_depth(m::Depth, results) = m.hi == length(results)
 
-function execute(k::Config, m::Greedy, s::Slurp, i)
-    if work_to_do(m, s.results)
-        Execute(m, s, m.matcher, CLEAN, i)
-    else
+function execute(k::Config, m::Depth, s::Slurp, i)
+    if max_depth(m, s.results)
         execute(k, m, Yield(s.results, s.iters, s.states), i)
+    else
+        Execute(m, s, m.matcher, CLEAN, i)
     end
 end
 
-function response(k::Config, m::Greedy, s::Slurp, t, i, r::Success)
+function response(k::Config, m::Depth, s::Slurp, t, i, r::Success)
     results = Value[s.results..., r.value]
     iters = vcat(s.iters, i)
     states = vcat(s.states, t)
-    if work_to_do(m, results)
-        Execute(m, Slurp(results, iters, states), m.matcher, CLEAN, i)
-    else
+    if max_depth(m, results)
         execute(k, m, Yield(results, iters, states), i)
+    else
+        Execute(m, Slurp(results, iters, states), m.matcher, CLEAN, i)
     end
 end
 
-function response(k::Config, m::Greedy, s::Slurp, t, i, ::Failure)
+function response(k::Config, m::Depth, s::Slurp, t, i, ::Failure)
     execute(k, m, Yield(s.results, s.iters, s.states), i)
 end
 
-# yield a result
+# yield a result and set state to backtrack
 
-function execute(k::Config, m::Greedy, s::Yield, i)
+function execute(k::Config, m::Depth, s::Yield, i)
     n = length(s.results)
     if n >= m.lo
         if m.flatten
@@ -187,14 +193,17 @@ function execute(k::Config, m::Greedy, s::Yield, i)
             Response(Backtrack(s.results, s.iters, s.states), s.iters[end], Success([s.results;]))
         end
     else
-        Response(DIRTY, i, FAILURE)
+        # we need to continue searhcing in case there's some other weird
+        # case that gets us back into valid matches
+        execute(k, m, Backtrack(s.results, s.iters, s.states), i)
     end
 end
 
-# another result is required, so discard and then advance if possible
+# backtrack once and then move down again if possible.  we cannot repeat a
+# path because we always advance child state.
 
-function execute(k::Config, m::Greedy, s::Backtrack, i)
-    if length(s.iters) < 2  # is this correct?
+function execute(k::Config, m::Depth, s::Backtrack, i)
+    if length(s.iters) == 1  # we've exhausted the search space
         Response(DIRTY, i, FAILURE)
     else
         # we need the iter from *before* the result
@@ -202,12 +211,43 @@ function execute(k::Config, m::Greedy, s::Backtrack, i)
     end
 end
 
-function response(k::Config, m::Greedy, s::Backtrack, t, i, r::Success)
+function response(k::Config, m::Depth, s::Backtrack, t, i, r::Success)
+    # backtrack succeeded so move down
     execute(k, m, Slurp(Array{Value}[s.results... r.value], vcat(s.iters, i), vcat(s.states, t)), i)
 end
 
-function response(k::Config, m::Greedy, s::Backtrack, t, i, ::Failure)
+function response(k::Config, m::Depth, s::Backtrack, t, i, ::Failure)
+    # we couldn't move down, so yield this point
     execute(k, m, Yield(s.results, s.iters, s.states), i)
+end
+
+
+# minimal-specific state and logic
+
+immutable Breadth<:Repeat
+    matcher::Matcher
+    lo::Integer
+    hi::Integer
+    flatten::Bool
+end
+
+# when first called, create base state and make internal transition
+
+execute(k::Config, m::Breadth, s::Clean, i) = execute(k, m, Yield(Array(Value, 0), [i], Any[CLEAN]), i)
+
+# yield a result
+
+function execute(k::Config, m::Breadth, s::Yield, i)
+    n = length(s.results)
+    if n >= m.lo
+        if m.flatten
+            Response(Backtrack(s.results, s.iters, s.states), s.iters[end], Success(flatten(s.results)))
+        else
+            Response(Backtrack(s.results, s.iters, s.states), s.iters[end], Success([s.results;]))
+        end
+    else
+        Execute(m, s, m.matcher, s.states, i)
+    end
 end
 
 
