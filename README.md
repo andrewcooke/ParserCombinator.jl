@@ -8,6 +8,9 @@ left-recursive grammars.
 
 ParserCombinator can parse any iterable type (not just strings).
 
+* [Manual](#manual)
+* [Design](#design)
+
 ## Example
 
 ```julia
@@ -95,6 +98,17 @@ like Anltr.
 
 In what follows, remember that the power of parser combinators comes from how
 you combine these.  They can all be nested, refer to each other, etc etc.
+
+* [Basic Matchers](#basic-matchers)
+  * [Equality](#equality)
+  * [Sequences](#sequences)
+  * [Empty Values](#empty-values)
+  * [Alternates](#alternates)
+  * {Regular Expressions](#regular-expressions)
+  * [Repetition](#repetition)
+  * [Full Match](#full-match)
+* [Transforms](#transforms)
+* [More Information](#more-information)
 
 ### Basic Matchers
 
