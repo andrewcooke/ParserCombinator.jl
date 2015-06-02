@@ -93,8 +93,8 @@ end
 # repetition
 
 # in both cases (Depth and Breadth) we perform a tree search of all
-# possible states (limite dby the maximum number of matches), yielding
-# when we have a result within the lo/hi range given.
+# possible states (limited by the maximum number of matches), yielding
+# when we have a result within the lo/hi range.
 
 abstract Repeat<:Matcher
 
@@ -129,6 +129,10 @@ end
 # store that stack - actually three of them.  the results stack is 
 # unusual / neat in that it is also what we need to return.
 
+# unfortunately, things are a little more complex, because it's not just
+# DFS, but also post-order.  which means there's some extra messing around
+# so tha the node ordering is correct.
+
 abstract DepthState<:RepeatState
 
 immutable Slurp<:DepthState
@@ -155,7 +159,7 @@ end
 
 execute(k::Config, m::Depth, s::Clean, i) = execute(k, m, Slurp(Array(Value, 0), [i], Any[CLEAN]), i)
 
-# Slurp - repeat matching until at bottom of this branch (or maximum depth)
+# repeat matching until at bottom of this branch (or maximum depth)
 
 max_depth(m::Depth, results) = m.hi == length(results)
 
@@ -222,7 +226,7 @@ function response(k::Config, m::Depth, s::Backtrack, t, i, ::Failure)
 end
 
 
-# minimal-specific state and logic
+# breadth0-fisrt specific state and logic
 
 immutable Breadth<:Repeat
     matcher::Matcher
@@ -230,6 +234,17 @@ immutable Breadth<:Repeat
     hi::Integer
     flatten::Bool
 end
+
+# minimal matching is effectively breadth dirst traversal of a tree where:
+# * performing an additional match is moving down to a new level 
+# * performaing an alternate match (backtrack+match) moves across
+# the traversal requires a queue.  unfortunately, unlike with greedy,
+# that means we need to store the entire result for each node.
+
+# on the other hand, because the results are pre-order, the logic is simpler
+# than for th egreedy match (wikipedia calls this "level order" so my 
+# terminology may be wrong).
+
 
 # when first called, create base state and make internal transition
 
@@ -473,8 +488,8 @@ execute(k::Config, m::Debug, s::Clean, i) = execute(k, m, DebugState(CLEAN, 0), 
 function execute(k::Config, m::Debug, s::DebugState, i)
     k.debug = true
     Execute(m, DebugState(s.state, s.depth+1), m.matcher, s.state, i)
-end
-
+en
+dr
 function response(k::Config, m::Debug, s::DebugState, t, i, r::Success)
     if s.depth == 1
         k.debug = false
