@@ -307,12 +307,57 @@ julia> parse_one("abc", Equal("ab") + Eos())
 ERROR: ParserCombinator.ParserException("cannot parse")
 ```
 
-```julia
-```
+### Transforms
+
+Use `>` to pass the current results to a function as individual values..
 
 ```julia
+julia> parse_one("abc", Star(p".") > tuple)
+1-element Array{Any,1}:
+ ("a","b","c")
+
+julia> parse_one("abc", Star(p".") > string)
+1-element Array{Any,1}:
+ "abc"
 ```
 
+The action of `|>` is similar, but everything is passed as a single argument
+(a list).
+
+```julia
+julia> type Node children end
+
+julia> parse_one("abc", Star(p".") |> Node)
+1-element Array{Any,1}:
+ Node(Any["a","b","c"])
+
+julia> parse_one("abc", Star(p".") |> x -> map(uppercase, x))
+3-element Array{Any,1}:
+ "A"
+ "B"
+ "C"
+```
+
+### More Information
+
+For more details, I'm afraid your best bet is the source code:
+
+* [types.jl](src/types/jl) introduces the types use throughout the code
+
+* [matchers.jl](src/matchers.jl) defines things like `Seq` and `Repeat`
+
+* [sugar.jl](src/sugar.jl) adds `+`, `[...]` etc
+
+* [extras.jl](src/extras.jl) has parsers for Int, Float, etc
+
+* [parsers.jl](src/parsers.jl) has more info on creating the `parse_one` and
+  `parse_all` functions
+
+* [transforms.jl](src/trasnforms.jl) defines how results can be manipulated
+
+* [tests.jl](test/tests.jl) has a pile of one-liner tests that might be usefu
+
+* [debug.jl](test/debug.jl) shows how to enable debug mode
 
 ## Design
 
