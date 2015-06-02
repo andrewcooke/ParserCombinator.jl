@@ -57,8 +57,21 @@ Opt(m::Matcher) = Alt(m, Epsilon())
 
 # repeat via [lo:hi] or [n]
 endof{M<:Matcher}(m::M) = typemax(Int)
-getindex(m::Matcher,r::Int) = Repeat(m, r, r)
-getindex(m::Matcher,r::UnitRange) = Repeat(m, r.start, r.stop)
+getindex(m::Matcher, r::Int, s::Symbol...) = getindex(m, r:r; s...)
+function getindex(m::Matcher, r::UnitRange, s::Symbol...)
+    greedy = true
+    flatten = true
+    for x in s
+        if x == :?
+            greedy = false
+        elseif x == :&
+            flatten = false
+        else
+            error("bad flag to []: $x")
+        end
+    end
+    Repeat(m, r.start, r.stop; greedy=greedy, flatten=flatten)
+end
 
 
 # interpolate multiple values (list or tuple)

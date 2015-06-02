@@ -3,7 +3,7 @@ module ParserCombinator
 
 using DataStructures.Stack
 using Compat
-import Base: start, endof
+import Base: start, endof, getindex
 
 export Cache, NoCache, make_all, make_one, parse_one, parse_all,
 ParserException, Value, Empty, EMPTY,

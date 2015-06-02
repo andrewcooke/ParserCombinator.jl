@@ -254,10 +254,29 @@ julia> collect(parse_all("abc", Repeat(p".", 0, 3; greedy=false)))
 The sugared version looks like this:
 
 ```julia
+julia> parse_one("abc", p"."[1:2])
+2-element Array{Any,1}:
+ "a"
+ "b"
 
+julia> parse_one("abc", p"."[1:2,:?])
+1-element Array{Any,1}:
+ "a"
+
+julia> parse_one("abc", p"."[1:2,:&])
+2-element Array{Any,1}:
+ Any["a"]
+ Any["b"]
+
+julia> parse_one("abc", p"."[1:2,:&,:?])
+1-element Array{Any,1}:
+ Any["a"]
 ```
 
-There are also some well known special cases:
+Where the `:?` symbol is equivalent to `greedy=false` and `:&` to
+`flatten=false` (compare with `+` and `&` above)..
+
+There are also some well-known special cases:
 
 ```julia
 julia> collect(parse_all("abc", Plus(p".")))

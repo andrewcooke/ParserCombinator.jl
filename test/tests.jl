@@ -24,6 +24,9 @@
 @test parse_one("abc", Seq(p"."[1:2], Equal("c"))) == ["a", "b", "c"]
 @test parse_one("abc", Seq(p"."[1:2], Equal("b"))) == ["a", "b"]
 @test parse_one("abc", Seq(p"."[1:2], p"."[1:2])) == ["a", "b", "c"]
+@test parse_one("abc", Seq(p"."[1:2,:&], p"."[1:2])) == Any[["a"], ["b"], "c"]
+@test parse_one("abc", Seq(p"."[1:2,:&,:?], p"."[1:2])) == Any[["a"], "b", "c"]
+@test_throws ErrorException parse_one("abc", Seq(p"."[1:2,:&,:?,:x], p"."[1:2]))
 @test parse_one("abc", Seq(p"."[1:2], p"."[1:2], Equal("c"))) == ["a", "b", "c"]
 @test parse_one("ab", p"." + s"b") == ["a", "b"]
 @test parse_one("abc", p"." + s"b" + s"c") == ["a", "b", "c"]
