@@ -1,15 +1,17 @@
 # ParserCombinator
 
-A parser combinator library for Julia that tries to strike a balance between being 
-both (moderately) efficient and simple (for the end-user and the maintainer).  It
-is similar to parser combinator libraries in other languages (eg. Haskell's Parsec
-or Python's pyparsing) - it can include caching (memoization) but does not handle
-left-recursive grammars.
-
-ParserCombinator can parse any iterable type (not just strings).
-
+* [Example](#example)
+* [Install](#install)
 * [Manual](#manual)
 * [Design](#design)
+
+A parser combinator library for Julia that tries to strike a balance between
+being both (moderately) efficient and simple (for the end-user and the
+maintainer).  It is similar to parser combinator libraries in other languages
+(eg. Haskell's Parsec or Python's pyparsing) - it can include caching
+(memoization) but does not handle left-recursive grammars.
+
+ParserCombinator can parse any iterable type (not just strings).
 
 ## Example
 
@@ -93,6 +95,12 @@ avoid repeating matches).
 Still, for large parsing tasks (eg parsing source code for a compiler) it
 would probably be better to use a wrapper around an external parser generator,
 like Anltr.
+
+## Install
+
+```julia
+julia> Pkg.add("ParserCombinator")
+```
 
 ## Manual
 
