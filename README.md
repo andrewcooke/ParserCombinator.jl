@@ -112,7 +112,7 @@ you combine these.  They can all be nested, refer to each other, etc etc.
   * [Sequences](#sequences)
   * [Empty Values](#empty-values)
   * [Alternates](#alternates)
-  * {Regular Expressions](#regular-expressions)
+  * [Regular Expressions](#regular-expressions)
   * [Repetition](#repetition)
   * [Full Match](#full-match)
 * [Transforms](#transforms)
