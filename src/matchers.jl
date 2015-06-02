@@ -1,5 +1,4 @@
 
-
 # some basic definitions for generic matches
 
 execute(k::Config, m, s, i) = error("$m did not expect to be called with state $s")
@@ -52,6 +51,10 @@ function execute(k::Config, m::Dot, s::Clean, i)
         Response(DIRTY, i, Success(c))
     end
 end
+
+immutable Fail<:Matcher end
+
+execute(k::Config, m::Fail, s::Clean, i) = Response(DIRTY, i, FAILURE)
 
 
 
@@ -131,7 +134,7 @@ end
 
 # unfortunately, things are a little more complex, because it's not just
 # DFS, but also post-order.  which means there's some extra messing around
-# so tha the node ordering is correct.
+# so that the node ordering is correct.
 
 abstract DepthState<:RepeatState
 
@@ -143,7 +146,7 @@ immutable Slurp<:DepthState
     states::Array{State,1}  # at the end of the result.  starts {CLEAN]
 end
 
-immutable Yield<:DepthState
+immutable DepthYield<:DepthState
     results::Array{Value,1}
     iters::Array{Any,1}
     states::Array{State,1}
@@ -157,7 +160,7 @@ end
 
 # when first called, create base state and make internal transition
 
-execute(k::Config, m::Depth, s::Clean, i) = execute(k, m, Slurp(Array(Value, 0), [i], Any[CLEAN]), i)
+execute(k::Config, m::Depth, s::Clean, i) = execute(k, m, Slurp(Array(Value, 0), [i], State[DIRTY]), i)
 
 # repeat matching until at bottom of this branch (or maximum depth)
 
@@ -165,7 +168,7 @@ max_depth(m::Depth, results) = m.hi == length(results)
 
 function execute(k::Config, m::Depth, s::Slurp, i)
     if max_depth(m, s.results)
-        execute(k, m, Yield(s.results, s.iters, s.states), i)
+        execute(k, m, DepthYield(s.results, s.iters, s.states), i)
     else
         Execute(m, s, m.matcher, CLEAN, i)
     end
@@ -176,19 +179,19 @@ function response(k::Config, m::Depth, s::Slurp, t, i, r::Success)
     iters = vcat(s.iters, i)
     states = vcat(s.states, t)
     if max_depth(m, results)
-        execute(k, m, Yield(results, iters, states), i)
+        execute(k, m, DepthYield(results, iters, states), i)
     else
         Execute(m, Slurp(results, iters, states), m.matcher, CLEAN, i)
     end
 end
 
 function response(k::Config, m::Depth, s::Slurp, t, i, ::Failure)
-    execute(k, m, Yield(s.results, s.iters, s.states), i)
+    execute(k, m, DepthYield(s.results, s.iters, s.states), i)
 end
 
 # yield a result and set state to backtrack
 
-function execute(k::Config, m::Depth, s::Yield, i)
+function execute(k::Config, m::Depth, s::DepthYield, i)
     n = length(s.results)
     if n >= m.lo
         if m.flatten
@@ -222,11 +225,11 @@ end
 
 function response(k::Config, m::Depth, s::Backtrack, t, i, ::Failure)
     # we couldn't move down, so yield this point
-    execute(k, m, Yield(s.results, s.iters, s.states), i)
+    execute(k, m, DepthYield(s.results, s.iters, s.states), i)
 end
 
 
-# breadth0-fisrt specific state and logic
+# breadth-fisrt specific state and logic
 
 immutable Breadth<:Repeat
     matcher::Matcher
@@ -235,7 +238,7 @@ immutable Breadth<:Repeat
     flatten::Bool
 end
 
-# minimal matching is effectively breadth dirst traversal of a tree where:
+# minimal matching is effectively breadth first traversal of a tree where:
 # * performing an additional match is moving down to a new level 
 # * performaing an alternate match (backtrack+match) moves across
 # the traversal requires a queue.  unfortunately, unlike with greedy,
@@ -245,26 +248,65 @@ end
 # than for th egreedy match (wikipedia calls this "level order" so my 
 # terminology may be wrong).
 
+immutable Entry
+    iter
+    state::State
+    results::Array{Value,1}
+end
+
+abstract BreadthState<:RepeatState
+
+immutable Grow<:BreadthState
+    start  # initial iter
+    queue::Array{Entry,1}  # this has to be immutable for caching
+end
+
+immutable BreadthYield<:BreadthState
+    start  # initial iter
+    queue::Array{Entry,1}  # this has to be immutable for caching
+end
 
 # when first called, create base state and make internal transition
 
-execute(k::Config, m::Breadth, s::Clean, i) = execute(k, m, Yield(Array(Value, 0), [i], Any[CLEAN]), i)
+execute(k::Config, m::Breadth, s::Clean, i) = execute(k, m, BreadthYield(i, Entry[Entry(i, CLEAN, [])]), i)
 
-# yield a result
+# yield the top state
 
-function execute(k::Config, m::Breadth, s::Yield, i)
-    n = length(s.results)
+function execute(k::Config, m::Breadth, s::BreadthYield, i)
+    q = s.queue[1]
+    n = length(q.results)
     if n >= m.lo
         if m.flatten
-            Response(Backtrack(s.results, s.iters, s.states), s.iters[end], Success(flatten(s.results)))
+            Response(Grow(s.start, s.queue), q.iter, Success(flatten(q.results)))
         else
-            Response(Backtrack(s.results, s.iters, s.states), s.iters[end], Success([s.results;]))
+            Response(Grow(s.start, s.queue), q.iter, Success([q.results;]))
         end
     else
-        Execute(m, s, m.matcher, s.states, i)
+        execute(k, m, Grow(s.start, s.queue), i)
     end
 end
 
+# add the next row
+
+function execute(k::Config, m::Breadth, s::Grow, i)
+    if length(s.queue[1].results) > m.hi
+        Response(DIRTY, s.start, FAILURE)
+    else
+        Execute(m, s, m.matcher, CLEAN, s.queue[1].iter)
+    end
+end
+
+response(k::Config, m::Breadth, s::Grow, t, i, r::Success) = Execute(m, Grow(s.start, vcat(s.queue, Entry(i, t, Value[s.queue[1].results..., r.value]))), m.matcher, t, i)
+
+# discard what we have yielded and grown
+
+function response(k::Config, m::Breadth, s::Grow, t, i, r::Failure)
+    if (length(s.queue) > 1)
+        execute(k, m, BreadthYield(s.start, s.queue[2:end]), i)
+    else
+        Response(DIRTY, s.start, FAILURE)
+    end
+end
 
 
 
@@ -488,8 +530,8 @@ execute(k::Config, m::Debug, s::Clean, i) = execute(k, m, DebugState(CLEAN, 0), 
 function execute(k::Config, m::Debug, s::DebugState, i)
     k.debug = true
     Execute(m, DebugState(s.state, s.depth+1), m.matcher, s.state, i)
-en
-dr
+end
+
 function response(k::Config, m::Debug, s::DebugState, t, i, r::Success)
     if s.depth == 1
         k.debug = false

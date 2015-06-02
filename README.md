@@ -183,7 +183,6 @@ examples, respectively.
 
 #### Alternates
 
-
 ```julia
 julia> parse_one("abc", Alt(s"x", s"a"))
 1-element Array{Any,1}:
@@ -233,10 +232,23 @@ julia> collect(parse_all("abc", Repeat(p".", 2, 3)))
  Any["a","b"]    
 
 julia> parse_one("abc", Repeat(p".", 2; flatten=false))
-3-element Array{Any,1}:
+2-element Array{Any,1}:
  Any["a"]
  Any["b"]
- Any["c"]
+
+julia> collect(parse_all("abc", Repeat(p".", 0, 3)))
+4-element Array{Any,1}:
+ Any["a","b","c"]
+ Any["a","b"]    
+ Any["a"]        
+ Any[]           
+
+julia> collect(parse_all("abc", Repeat(p".", 0, 3; greedy=false)))
+4-element Array{Any,1}:
+ Any[]           
+ Any["a"]        
+ Any["a","b"]    
+ Any["a","b","c"]
 ```
 
 The sugared version looks like this:
@@ -248,29 +260,32 @@ The sugared version looks like this:
 There are also some well known special cases:
 
 ```julia
-julia> parse_one("abc", Plus(p"."))
+julia> collect(parse_all("abc", Plus(p".")))
 3-element Array{Any,1}:
- "a"
- "b"
- "c"
+ Any["a","b","c"]
+ Any["a","b"]    
+ Any["a"]        
 
-julia> parse_one("abc", Star(p"."))
-3-element Array{Any,1}:
- "a"
- "b"
- "c"
-
-julia> parse_one("abc", Plus(p"...."))
-ERROR: ParserCombinator.ParserException("cannot parse")
-
-julia> parse_one("abc", Star(p"...."))
-0-element Array{Any,1}
+julia> collect(parse_all("abc", Star(p".")))
+4-element Array{Any,1}:
+ Any["a","b","c"]
+ Any["a","b"]    
+ Any["a"]        
+ Any[]           
 ```
 
-Where `Star()` can do zero matches (returning an empty list), but `Plus()`
-cannot.
+#### Full Match
+
+To ensure that all the input is matched, add `Eos()` to the end of the
+grammar.
 
 ```julia
+julia> parse_one("abc", Equal("abc") + Eos())
+1-element Array{Any,1}:
+ "abc"
+
+julia> parse_one("abc", Equal("ab") + Eos())
+ERROR: ParserCombinator.ParserException("cannot parse")
 ```
 
 ```julia

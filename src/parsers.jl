@@ -1,14 +1,29 @@
 
+function short_typeof(x)
+    s = string(typeof(x))
+    i = rsearchindex(s, ".")
+    if i > 0
+        return s[i+1:end]
+    else
+        return s
+    end
+end
+
 function debug(k, p, s, c, t, i, cached)
     if cached
-        @printf("%04d %30s <> %-30s\n", i, typeof(p), typeof(c))
+        @printf("%04d %20s <> %-20s\n", 
+                i, short_typeof(p) * "/" * short_typeof(s), 
+                short_typeof(c) * "/" * short_typeof(t))
     else
-        @printf("%04d %30s => %-30s\n", i, typeof(p), typeof(c))
+        @printf("%04d %20s => %-20s\n", 
+                i, short_typeof(p) * "/" * short_typeof(s), 
+                short_typeof(c) * "/" * short_typeof(t))
     end
 end
 
 function debug(k, p, s, t, i, r)
-    @printf("%04d %30s <= %-30s\n", i, typeof(p), typeof(r))
+    @printf("%04d %20s <= %-20s\n", 
+            i, short_typeof(p) * "/" * short_typeof(s), short_typeof(r))
 end
 
 # evaluation without a cache (memoization)
@@ -16,7 +31,7 @@ end
 type NoCache<:Config
     source::Any
     debug::Bool
-    stack  # DataStructures.Stack has a dumb type
+    stack::Stack  # DataStructures.Stack has a dumb type
     NoCache(source; debug=false) = new(source, debug,
                                        Stack(Tuple{Matcher,State}))
 end

@@ -11,6 +11,11 @@
 @test parse_one("aa", Repeat(Equal("a"), 2, 2)) == ["a", "a"]
 @test parse_one("aa", Repeat(Equal("a"), 1, 2)) == ["a", "a"]
 @test parse_one("", Repeat(Equal("a"), 0, 0)) == []
+@test_throws ParserException parse_one("a", Repeat(Equal("a"), 2, 2; greedy=false))
+@test parse_one("aa", Repeat(Equal("a"), 2, 2; greedy=false)) == ["a", "a"]
+@test parse_one("aa", Repeat(Equal("a"), 1, 2; greedy=false)) == ["a"]
+@test parse_one("", Repeat(Equal("a"), 0, 0; greedy=false)) == []
+
 @test parse_one("ab", And(Pattern(r"a"), Dot())) == Any[["a"], ['b']]
 @test parse_one("ab", Seq(Pattern(r"a"), Dot(); flatten=false)) == Any[["a"], ['b']]
 @test parse_one("ab", Seq(Pattern(r"a"), Dot())) == ["a", 'b']
@@ -25,6 +30,7 @@
 @test parse_one("abc", p"." + S"b" + s"c") == ["a", "c"]
 @test parse_one("b", Alt(s"a", s"b", s"c")) == ["b"]
 @test collect(parse_all("b", Alt(Epsilon(), Repeat(s"b", 0, 1)))) == Array[[], ["b"], []]
+@test collect(parse_all("b", Alt(Epsilon(), Repeat(s"b", 0, 1; greedy=false)))) == Array[[], [], ["b"]]
 @test parse_one("abc", p"." + (s"b" | s"c")) == ["a", "b"]
 @test length(collect(parse_all("abc", p"."[0:3]))) == 4
 @test length(collect(parse_all("abc", p"."[1:2]))) == 2
@@ -35,22 +41,26 @@
 m1 = Delayed()
 m1.matcher = Nullable{ParserCombinator.Matcher}(Seq(Dot(), Opt(m1)))
 @test parse_one("abc", m1) == ['a', 'b', 'c']
+@test collect(parse_all("abc", Repeat(Fail(); flatten=false))) == Any[[]]
+@test collect(parse_all("abc", Repeat(Fail(); flatten=false, greedy=false))) == Any[[]]
 
 
-# check that greedy repeat is exactly the same as regexp
+# check that repeat is exactly the same as regexp
 
 for i in 1:10
-    lo = rand(0:3)
-    hi = lo + rand(0:2)
-    r = Regex("a{$lo,$hi}")
-    n = rand(0:4)
-    s = repeat("a", n)
-    m = match(r, s)
-    println("$lo $hi $s $r")
-    if m == nothing
-        @test_throws ParserException parse_one(s, Repeat(Equal("a"), lo, hi))
-    else
-        @test length(m.match) == length(parse_one(s, Repeat(Equal("a"), lo, hi)))
+    for greedy in (true, false)
+        lo = rand(0:3)
+        hi = lo + rand(0:2)
+        r = Regex("a{$lo,$hi}" * (greedy ? "" : "?"))
+        n = rand(0:4)
+        s = repeat("a", n)
+        m = match(r, s)
+        println("$lo $hi $s $r")
+        if m == nothing
+            @test_throws ParserException parse_one(s, Repeat(Equal("a"), lo, hi; greedy=greedy))
+        else
+            @test length(m.match) == length(parse_one(s, Repeat(Equal("a"), lo, hi; greedy=greedy)))
+        end
     end
 end
 
@@ -67,6 +77,14 @@ end
                                       [2,1],[2,0],
                                       [1,2],[1,1],[1,0],
                                       [0,3],[0,2],[0,1],[0,0]]
+@test map(x -> [length(x[1]), length(x[2])],
+          collect(parse_all("aaa", 
+                            Seq((Repeat(Equal("a"), 0, 3; greedy=false) > tuple),
+                                (Repeat(Equal("a"), 0, 3; greedy=false) > tuple))))) == 
+                                Array[[0,0],[0,1],[0,2],[0,3],
+                                      [1,0],[1,1],[1,2],
+                                      [2,0],[2,1],
+                                      [3,0]]
 
 
 # is caching useful?  only in extreme cases, apparently
@@ -75,17 +93,21 @@ end
 function slow(n)
 #    matcher = Repeat(Repeat(Equal("a"), 0, n), n, 0)
 #    matcher = Seq(Repeat(Equal("a"), 0, ), Repeat(Equal("a"), 0, n))
-    matcher = Repeat(Equal("a"), 0, n)
-    for i in 1:n
-        matcher = Seq(Repeat(Equal("a"), 0, n), matcher)
-    end
-    source = repeat("a", n)
-    for config in (Cache, NoCache)
-        println("$(config)")
-        all = make_all(config)
-        @time collect(all(source, matcher))
-        @time n = length(collect(all(source, matcher)))
-        println(n)
+#    for greedy in (true, false)
+    for greedy in (true,)  # false just eats memory
+        println("greedy $greedy")
+        matcher = Repeat(Equal("a"), 0, n; greedy=greedy)
+        for i in 1:n
+            matcher = Seq(Repeat(Equal("a"), 0, n; greedy=greedy), matcher)
+        end
+        source = repeat("a", n)
+        for config in (Cache, NoCache)
+            println("$(config)")
+            all = make_all(config)
+            @time collect(all(source, matcher))
+            @time n = length(collect(all(source, matcher)))
+            println(n)
+        end
     end
 end
 slow(3)
