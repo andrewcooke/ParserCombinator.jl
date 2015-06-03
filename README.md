@@ -426,7 +426,7 @@ For more details, I'm afraid your best bet is the source code:
 
 * [transforms.jl](src/trasnforms.jl) defines how results can be manipulated
 
-* [tests.jl](test/tests.jl) has a pile of one-liner tests that might be usefu
+* [tests.jl](test/tests.jl) has a pile of one-liner tests that might be useful
 
 * [debug.jl](test/debug.jl) shows how to enable debug mode
 
