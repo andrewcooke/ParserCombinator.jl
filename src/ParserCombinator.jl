@@ -7,13 +7,13 @@ import Base: start, endof, getindex
 
 export Cache, NoCache, make_all, make_one, parse_one, parse_all,
 ParserException, Value, Empty, EMPTY,
-Epsilon, Insert, Dot, Fail, Drop, Equal, Repeat, ALL, Star, Plus, 
-Series, Seq, And, Alt, Lookahead, Not, Pattern, Delayed, Debug, Eos,
+Epsilon, Insert, Dot, Fail, Drop, Equal, Repeat, ALL, Series, Seq, And, Alt, 
+Lookahead, Not, Pattern, Delayed, Debug, Eos,
 TransformResult, TransformSuccess, TransformValue,
 @p_str, @P_str, @s_str, @S_str, Opt,
 Parse, PUInt, PUInt8, PUInt16, PUInt32, PUInt64, 
 PInt, PInt8, PInt16, PInt32, PInt64, PFloat32, PFloat64,
-Word, Space
+Word, Space, Star, Plus
 
 include("types.jl")
 include("matchers.jl")

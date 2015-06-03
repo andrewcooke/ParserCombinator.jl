@@ -23,9 +23,8 @@ Word() = p"\w+"
 Space() = p"\s+"
 
 
-# TODO - flatten etc and move in exports
 # see sugar.jl for [] syntax support
 
-Star(m::Matcher) = m[0:end]
-Plus(m::Matcher) = m[1:end]
+Star(m::Matcher; flatten=true) = flatten ? m[0:end] : m[0:end,:&] 
+Plus(m::Matcher; flatten=true) = flatten ? m[1:end] : m[1:end,:&] 
 
