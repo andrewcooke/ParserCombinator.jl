@@ -1,3 +1,11 @@
+[![Build
+Status](https://travis-ci.org/andrewcooke/ParserCombinator.jl.png)](https://travis-ci.org/andrewcooke/ParserCombinator.jl)
+0.3 + 0.4 (trunk)
+[![Coverage](https://img.shields.io/coveralls/andrewcooke/ParserCombinator.jl.svg)](https://coveralls.io/andrewcooke/ParserCombinator.jl)
+[![Package](https://pkg.julialang.org/badges/ParserCombinator_release.svg)](https://pkg.julialang.org/?pkg=ParserCombinator&ver=release)
+
+
+
 # ParserCombinator
 
 * [Example](#example)
@@ -504,6 +512,3 @@ This has the unfortunate result that `Dot()` returns characters, not strings.
 But in practice that matcher is rarely used (particularly since, with strings,
 you can use regular expressions - `p"pattern"` for example).
 
-[![Build
-Status](https://travis-ci.org/andrewcooke/ParserCombinator.jl.png)](https://travis-ci.org/andrewcooke/ParserCombinator.jl)
-Julia 0.3 and 0.4 (trunk).
