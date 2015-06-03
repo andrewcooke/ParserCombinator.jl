@@ -316,7 +316,7 @@ end
 # whether results are merged (Seq/+) or not (And/&).
 
 # we need two different types so that we can define + and & appropriately.  
-# to make the user API more cosnsistent we add flatten to the constructors 
+# to make the user API more conssistent we add flatten to the constructors 
 # and choose accordingly.
 
 abstract Serial<:Matcher
