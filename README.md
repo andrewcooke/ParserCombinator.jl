@@ -123,6 +123,7 @@ you combine these.  They can all be nested, refer to each other, etc etc.
   * [Repetition](#repetition)
   * [Full Match](#full-match)
   * [Transforms](#transforms)
+  * [Lookahead And Negation](#lookahead-and-negation)
 * [Other](#other)
   * [Coding Style](#coding-style)
   * [Adding Matchers](#adding-matchers)
