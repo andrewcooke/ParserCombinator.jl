@@ -1,4 +1,7 @@
 
+
+# debug functions for printing trace
+
 function short_typeof(x)
     s = string(typeof(x))
     i = rsearchindex(s, ".")
@@ -26,6 +29,8 @@ function debug(k, p, s, t, i, r)
             i, short_typeof(p) * "/" * short_typeof(s), short_typeof(r))
 end
 
+
+
 # evaluation without a cache (memoization)
 
 type NoCache<:Config
@@ -51,6 +56,7 @@ function dispatch(k::NoCache, r::Response,)
     end
     response(k, parent, state_parent, r.state_child, r.iter, r.result)
 end
+
 
 
 # evaluation with a complete cache (all intermediate results memoized)
@@ -91,7 +97,9 @@ function dispatch(k::Cache, r::Response)
 end
 
 
+
 # TODO - some kind of MRU cache?
+
 
 
 # a dummy matcher used by the parser
@@ -104,6 +112,13 @@ end
 
 response(k::Config, m::Root, s::State, t::State, i, r::Success) = Response(RootState(t), i, r)
 response(k::Config, m::Root, s::State, t::State, i, r::Failure) = Response(DIRTY, i, r)
+
+
+
+# the core loop that drives the parser, calling the appropriate dispatch
+# functions (above) depending on which Config was used.
+# to modify th ebehaviour you can create a new Config sub-type and then
+# add your own dispatch functions.
 
 function producer(k::Config, m::Matcher)
 
@@ -127,6 +142,9 @@ function producer(k::Config, m::Matcher)
 end
 
 
+
+# helper functions to generate the parsers from the above
+
 # these assume that any config construct takes a single source argument 
 # plus optional keyword args
 
@@ -149,8 +167,11 @@ function make_one(config)
 end
 
 
-# by default, we use the cache only when matching multiple results
-# but obviously motivated users are free to constuct their own...
+
+# the default parsers
+
+# we use the cache only when matching multiple results but obviously motivated
+# users are free to constuct their own...
 
 parse_all = make_all(Cache)
 parse_one = make_one(NoCache)

@@ -315,9 +315,9 @@ end
 # there are two nearly identical matchers here - the only difference is 
 # whether results are merged (Seq/+) or Not(And/&).
 
-# unlike Repeat() we need two different types so that we can define + and 
-# & appropriately.  to make the user API more cosnsistent we add flatten
-# to the constructors and choose accordingly.
+# we need two different types so that we can define + and & appropriately.  
+# to make the user API more cosnsistent we add flatten to the constructors 
+# and choose accordingly.
 
 abstract Serial<:Matcher
 
