@@ -154,25 +154,30 @@ Matchers return lists of values.  Multiple matchers can return lists of lists,
 or the results can be "flattened" a level (usually more useful):
 
 ```julia
+julia> parse_one("abc", Series(Equal("a"), Equal("b")))
+2-element Array{Any,1}:
+ "a"
+ "b"
+
+julia> parse_one("abc", Series(Equal("a"), Equal("b"); flatten=false))
+2-element Array{Any,1}:
+ Any["a"]
+ Any["b"]
+
 julia> parse_one("abc", Seq(Equal("a"), Equal("b")))
 2-element Array{Any,1}:
  "a"
  "b"
 
-julia> parse_one("abc", s"a" + s"b")
-2-element Array{Any,1}:
- "a"
- "b"
-
-julia> parse_one("abc", Seq(Equal("a"), Equal("b"); flatten=false))
-2-element Array{Any,1}:
- Any["a"]
- Any["b"]
-
 julia> parse_one("abc", And(Equal("a"), Equal("b")))
 2-element Array{Any,1}:
  Any["a"]
  Any["b"]
+
+julia> parse_one("abc", s"a" + s"b")
+2-element Array{Any,1}:
+ "a"
+ "b"
 
 julia> parse_one("abc", s"a" & s"b")
 2-element Array{Any,1}:
@@ -280,6 +285,9 @@ julia> collect(parse_all("abc", Repeat(p".", 0, 3; greedy=false)))
  Any["a","b","c"]
 ```
 
+You can also use `Depth()` and `Breadth()` for greedy and non-greedy repeats
+directly (but `Repeat()` is more readable, I think).
+
 The sugared version looks like this:
 
 ```julia
@@ -303,7 +311,7 @@ julia> parse_one("abc", p"."[1:2,:&,:?])
 ```
 
 Where the `:?` symbol is equivalent to `greedy=false` and `:&` to
-`flatten=false` (compare with `+` and `&` above)..
+`flatten=false` (compare with `+` and `&` above).
 
 There are also some well-known special cases:
 

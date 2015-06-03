@@ -107,9 +107,9 @@ abstract RepeatState<:State
 
 function Repeat(m::Matcher, lo, hi; flatten=true, greedy=true)
     if greedy
-        Depth(m, lo, hi, flatten)
+        Depth(m, lo, hi; flatten=flatten)
     else
-        Breadth(m, lo, hi, flatten)
+        Breadth(m, lo, hi; flatten=flatten)
     end
 end
 Repeat(m::Matcher, lo; flatten=true, greedy=true) = Repeat(m, lo, lo; flatten=flatten, greedy=greedy)
@@ -123,6 +123,7 @@ immutable Depth<:Repeat_
     lo::Integer
     hi::Integer
     flatten::Bool
+    Depth(m, lo, hi; flatten=true) = new(m, lo, hi, flatten)
 end
 
 # greedy matching is effectively depth first traversal of a tree where:
@@ -236,6 +237,7 @@ immutable Breadth<:Repeat_
     lo::Integer
     hi::Integer
     flatten::Bool
+    Breadth(m, lo, hi; flatten=true) = new(m, lo, hi, flatten)
 end
 
 # minimal matching is effectively breadth first traversal of a tree where:
@@ -319,24 +321,34 @@ end
 # to make the user API more conssistent we add flatten to the constructors 
 # and choose accordingly.
 
-abstract Serial<:Matcher
+abstract Series_<:Matcher
 
-immutable Seq<:Serial
-    matchers::Array{Matcher,1}
+function Series(m::Matcher...; flatten=true)
+    if flatten
+        Seq(m...)
+    else
+        And(m...)
+    end
 end
-Seq(matchers::Matcher...; flatten=true) = flatten ? Seq([matchers...]) : And([matchers...])
+
+immutable Seq<:Series_
+    matchers::Array{Matcher,1}
+    Seq(m::Matcher...) = new([m...])
+    Seq(m::Array{Matcher,1}) = new(m)
+end
 
 serial_success(m::Seq, results) = Success(flatten(results))
 
-immutable And<:Serial
+immutable And<:Series_
     matchers::Array{Matcher,1}
+    And(m::Matcher...) = new([m...])
+    And(m::Array{Matcher,1}) = new(m)
 end
-And(matchers::Matcher...; flatten=false) = flatten ? Seq([matchers...]) : And([matchers...])
 
-# copy tso that state remains immutable
+# copy so that state remains immutable
 serial_success(m::And, results) = Success([results;])
 
-immutable SerialState<:State
+immutable SeriesState<:State
     results::Array{Value,1}
     iters::Array{Any,1}
     states::Array{State,1}
@@ -344,45 +356,45 @@ end
 
 # when first called, call first matcher
 
-function execute(l::Config, m::Serial, s::Clean, i) 
+function execute(l::Config, m::Series_, s::Clean, i) 
     if length(m.matchers) == 0
         Response(DIRTY, i, EMPTY)
     else
-        Execute(m, SerialState(Value[], [i], State[]), m.matchers[1], CLEAN, i)
+        Execute(m, SeriesState(Value[], [i], State[]), m.matchers[1], CLEAN, i)
     end
 end
 
 # if the final matcher matched then return what we have.  otherwise, evaluate
 # the next.
 
-function response(k::Config, m::Serial, s::SerialState, t, i, r::Success)
+function response(k::Config, m::Series_, s::SeriesState, t, i, r::Success)
     n = length(s.iters)
     results = Value[s.results..., r.value]
     iters = vcat(s.iters, i)
     states = vcat(s.states, t)
     if n == length(m.matchers)
-        Response(SerialState(results, iters, states), i, serial_success(m, results))
+        Response(SeriesState(results, iters, states), i, serial_success(m, results))
     else
-        Execute(m, SerialState(results, iters, states), m.matchers[n+1], CLEAN, i)
+        Execute(m, SeriesState(results, iters, states), m.matchers[n+1], CLEAN, i)
     end
 end
 
 # if the first matcher failed, fail.  otherwise backtrack
 
-function response(k::Config, m::Serial, s::SerialState, t, i, r::Failure)
+function response(k::Config, m::Series_, s::SeriesState, t, i, r::Failure)
     n = length(s.iters)
     if n == 1
         Response(DIRTY, s.iters[1], FAILURE)
     else
-        Execute(m, SerialState(s.results[1:end-1], s.iters[1:end-1], s.states[1:end-1]), m.matchers[n-1], s.states[end], s.iters[end-1])
+        Execute(m, SeriesState(s.results[1:end-1], s.iters[1:end-1], s.states[1:end-1]), m.matchers[n-1], s.states[end], s.iters[end-1])
     end
 end
 
 # try to advance the current match
 
-function execute(k::Config, m::Serial, s::SerialState, i)
+function execute(k::Config, m::Series_, s::SeriesState, i)
     @assert length(s.states) == length(m.matchers)
-    Execute(m, SerialState(s.results[1:end-1], s.iters[1:end-1], s.states[1:end-1]), m.matchers[end], s.states[end], s.iters[end-1])
+    Execute(m, SeriesState(s.results[1:end-1], s.iters[1:end-1], s.states[1:end-1]), m.matchers[end], s.states[end], s.iters[end-1])
 end
 
 

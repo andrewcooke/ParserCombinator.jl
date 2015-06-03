@@ -37,3 +37,7 @@ end
 # execute comes from Delegate
 
 response(k::Config, m::TransformSuccess, s, t, i, r::Success) = Response(TransformState(t), i, m.f(r))
+
+
+
+# TODO - equivalent of > and |> (what names?)  App Appl ?

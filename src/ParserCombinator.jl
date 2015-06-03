@@ -7,8 +7,8 @@ import Base: start, endof, getindex
 
 export Cache, NoCache, make_all, make_one, parse_one, parse_all,
 ParserException, Value, Empty, EMPTY,
-Epsilon, Insert, Dot, Fail, Drop, Equal, Repeat, ALL, Star, Plus, Seq, And, 
-Alt, Lookahead, Not, Pattern, Delayed, Debug, Eos,
+Epsilon, Insert, Dot, Fail, Drop, Equal, Repeat, ALL, Star, Plus, 
+Series, Seq, And, Alt, Lookahead, Not, Pattern, Delayed, Debug, Eos,
 TransformResult, TransformSuccess, TransformValue,
 @p_str, @P_str, @s_str, @S_str, Opt,
 Parse, PUInt, PUInt8, PUInt16, PUInt32, PUInt64, 

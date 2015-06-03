@@ -16,8 +16,8 @@
 @test parse_one("aa", Repeat(Equal("a"), 1, 2; greedy=false)) == ["a"]
 @test parse_one("", Repeat(Equal("a"), 0, 0; greedy=false)) == []
 
-@test parse_one("ab", And(Pattern(r"a"), Dot())) == Any[["a"], ['b']]
-@test parse_one("ab", Seq(Pattern(r"a"), Dot(); flatten=false)) == Any[["a"], ['b']]
+@test parse_one("ab", Series(Pattern(r"a"), Dot(); flatten=false)) == Any[["a"], ['b']]
+@test parse_one("ab", Series(Pattern(r"a"), Dot())) == Any["a", 'b']
 @test parse_one("ab", Seq(Pattern(r"a"), Dot())) == ["a", 'b']
 @test parse_one("abc", Seq(Equal("a"))) == ["a"]
 @test parse_one("abc", Seq(Equal("a"), Equal("b"))) == ["a", "b"]
