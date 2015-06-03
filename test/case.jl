@@ -19,7 +19,7 @@ immutable CaseState<:DelegateState
 end
 
 # the Delegate code handles the initial call (with CLEAN), and failure.  all
-# we need to do is add handlig for success
+# we need to do is add handling for success
 
 function response(k::Config, m::Case, s, t, i, r::Success)
     # we don't care about the old state for this matcher (s), but we need to
