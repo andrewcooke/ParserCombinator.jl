@@ -313,7 +313,7 @@ end
 # match all in a sequence with backtracking
 
 # there are two nearly identical matchers here - the only difference is 
-# whether results are merged (Seq/+) or Not(And/&).
+# whether results are merged (Seq/+) or not (And/&).
 
 # we need two different types so that we can define + and & appropriately.  
 # to make the user API more cosnsistent we add flatten to the constructors 
