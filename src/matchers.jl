@@ -229,7 +229,7 @@ function response(k::Config, m::Depth, s::Backtrack, t, i, ::Failure)
 end
 
 
-# breadth-fisrt specific state and logic
+# breadth-first specific state and logic
 
 immutable Breadth<:Repeat_
     matcher::Matcher
