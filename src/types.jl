@@ -44,7 +44,7 @@ hash(x::Success) = hash(x.value)
 
 # Message sub-types
 
-# parent and state_paprent are popped from the stack.  a call is made to
+# parent and state_parent are popped from the stack.  a call is made to
 # response(config, parent, state_parent, state_child, iter, result)
 immutable Response{SC<:State,R<:Result}<:Message
     state_child::SC   # parent to store, passed in next call for backtracking

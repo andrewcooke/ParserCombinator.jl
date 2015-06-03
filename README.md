@@ -122,8 +122,11 @@ you combine these.  They can all be nested, refer to each other, etc etc.
   * [Regular Expressions](#regular-expressions)
   * [Repetition](#repetition)
   * [Full Match](#full-match)
-* [Transforms](#transforms)
-* [More Information](#more-information)
+  * [Transforms](#transforms)
+* [Other](#other)
+  * [Coding Style](#coding-style)
+  * [Adding Matchers](#adding-matchers)
+  * [More Information](#more-information)
 
 ### Basic Matchers
 
@@ -345,12 +348,13 @@ julia> parse_one("abc", Equal("ab") + Eos())
 ERROR: ParserCombinator.ParserException("cannot parse")
 ```
 
-### Transforms
+#### Transforms
 
-Use `>` to pass the current results to a function as individual values..
+Use `App()` or `>` to pass the current results to a function (or datatype
+constructor) as individual values..
 
 ```julia
-julia> parse_one("abc", Star(p".") > tuple)
+julia> parse_one("abc", App(Star(p"."), tuple))
 1-element Array{Any,1}:
  ("a","b","c")
 
@@ -359,13 +363,13 @@ julia> parse_one("abc", Star(p".") > string)
  "abc"
 ```
 
-The action of `|>` is similar, but everything is passed as a single argument
-(a list).
+The action of `Appl()` and `|>` is similar, but everything is passed as a
+single argument (a list).
 
 ```julia
 julia> type Node children end
 
-julia> parse_one("abc", Star(p".") |> Node)
+julia> parse_one("abc", Appl(Star(p"."), Node))
 1-element Array{Any,1}:
  Node(Any["a","b","c"])
 
@@ -376,7 +380,36 @@ julia> parse_one("abc", Star(p".") |> x -> map(uppercase, x))
  "C"
 ```
 
-### More Information
+### Other
+
+#### Coding Style
+
+Don't go reinventing regexps.  The built-in regexp engine is way, way more
+efficient than this library could ever be.  So call out to regexps liberally.
+The `p"..."` syntax makes it easy.
+
+Drop stuff you don't need.
+
+Transform things into containers so that your result has nice types.  Look at
+how the [example](#example) works.
+
+#### Adding Matchers
+
+First, are you sure you need to add a matcher?  You can do a *lot* with
+[transforms](#transforms).
+
+If you do, here are some places to get started:
+
+* `Equal()` in [matchers.jl](src/matchers.jl) is a great example for
+  something that does a simple, single thing, and returns success or failure.
+
+* Most matchers that call to a sub-matcher can be implemented as transforms.
+  But if you insist, there's an example in [case.jl](test/case.jl).
+
+* If you want to write complex, stateful matchers then I'm afraid you're going
+  to have to learn from the code for `Repeat()` and `Series()`.  Enjoy!
+
+#### More Information
 
 For more details, I'm afraid your best bet is the source code:
 

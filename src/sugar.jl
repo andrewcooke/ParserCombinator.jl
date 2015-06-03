@@ -74,9 +74,9 @@ function getindex(m::Matcher, r::UnitRange, s::Symbol...)
 end
 
 
-# interpolate multiple values (list or tuple)
->(m::Matcher, f::Union(Function,DataType)) = TransformSuccess(m, x -> Success(f(x.value...)))
-# a single value
-|>(m::Matcher, f::Union(Function,DataType)) = TransformSuccess(m, x -> Success(f(x.value)))
 # the raw Result instance
->=(m::Matcher, f::Function) = TransformResult(m, f)
+>=(m::Matcher, f::Union(Function, DataType)) = TransformResult(m, f)
+# interpolate multiple values (list or tuple)
+>(m::Matcher, f::Union(Function, DataType)) = App(m, f)
+# a single value
+|>(m::Matcher, f::Union(Function, DataType)) = Appl(m, f)

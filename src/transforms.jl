@@ -40,4 +40,8 @@ response(k::Config, m::TransformSuccess, s, t, i, r::Success) = Response(Transfo
 
 
 
-# TODO - equivalent of > and |> (what names?)  App Appl ?
+# simplified version for transforming Success (remove and re-add the Success
+# wrapper).
+
+App(m::Matcher, f::Union(Function,DataType)) = TransformSuccess(m, x -> Success(f(x.value...)))
+Appl(m::Matcher, f::Union(Function,DataType)) = TransformSuccess(m, x -> Success(f(x.value)))
