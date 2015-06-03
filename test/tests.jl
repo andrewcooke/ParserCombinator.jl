@@ -46,7 +46,9 @@ m1.matcher = Nullable{ParserCombinator.Matcher}(Seq(Dot(), Opt(m1)))
 @test parse_one("abc", m1) == ['a', 'b', 'c']
 @test collect(parse_all("abc", Repeat(Fail(); flatten=false))) == Any[[]]
 @test collect(parse_all("abc", Repeat(Fail(); flatten=false, greedy=false))) == Any[[]]
-
+@test parse_one("12c", Lookahead(p"\d") + PInt()) == [12]
+@test parse_one("12c", Lookahead(p"\d") + PInt() + Dot()) == [12, 'c']
+@test_throws ParserException parse_one("12c", Not(Lookahead(p"\d")) + PInt() + Dot())
 
 # check that repeat is exactly the same as regexp
 

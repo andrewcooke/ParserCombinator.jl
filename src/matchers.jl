@@ -453,7 +453,7 @@ end
 
 execute(k::Config, m::Lookahead, s::Clean, i) = Execute(m, LookaheadState(s, i), m.matcher, CLEAN, i)
 
-response(m::Lookahead, s, t, i, r::Success) = Response(LooakheadState(t, s.iter), s.iter, EMPTY)
+response(k::Config, m::Lookahead, s, t, i, r::Success) = Response(LookaheadState(t, s.iter), s.iter, EMPTY)
 
 
 

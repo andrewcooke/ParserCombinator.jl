@@ -380,6 +380,28 @@ julia> parse_one("abc", Star(p".") |> x -> map(uppercase, x))
  "C"
 ```
 
+#### Lookahead And Negation
+
+Sometimes you can't write a clean grammar that just consumes data: you need to
+check ahead to avoid something.  Or you need to check ahead to make sure
+something works a certain way.
+
+```julia
+julia> parse_one("12c", Lookahead(p"\d") + PInt() + Dot())
+2-element Array{Any,1}:
+ 12   
+   'c'
+
+julia> parse_one("12c", Not(Lookahead(p"[a-z]")) + PInt() + Dot())
+2-element Array{Any,1}:
+ 12   
+   'c'
+```
+
+More generally, `Not()` replaces any match with failure, and failure with an
+empty match (ie the empty list).
+
+
 ### Other
 
 #### Coding Style
