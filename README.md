@@ -185,7 +185,8 @@ julia> parse_one("abc", s"a" & s"b")
  Any["b"]
 ```
 
-Note the difference between `&` and `+` above.
+Where `Series()` is implemented as `Seq()` or `And()`, depending on the value
+of `flatten` (default `true`).
 
 #### Empty Values
 
