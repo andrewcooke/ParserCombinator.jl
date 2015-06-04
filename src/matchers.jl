@@ -219,26 +219,12 @@ function execute(k::Config, m::Depth, s::Backtrack, i)
     end
 end
 
-function response(k::Config, m::Depth, s::Backtrack, t, i, r::Success)
-    # backtrack succeeded so move down
-    println(s.results)
-    println(r.value)
-    println(vcat(s.results, r.value))
-    x = vcat(s.results, r.value)
-    y = vcat(s.iters, i)
-    z = vcat(s.states, t)
-    println(typeof(x))
-    println(typeof(y))
-    println(typeof(z))
-    println("*********")
-    println(Slurp(x, y, z))
-    execute(k, m, Slurp(vcat(s.results, r.value), vcat(s.iters, i), vcat(s.states, t)), i)
-end
+# backtrack succeeded so move down
+response(k::Config, m::Depth, s::Backtrack, t, i, r::Success) = execute(k, m, Slurp(Value[s.results..., r.value], vcat(s.iters, i), vcat(s.states, t)), i)
 
-function response(k::Config, m::Depth, s::Backtrack, t, i, ::Failure)
-    # we couldn't move down, so yield this point
-    execute(k, m, DepthYield(s.results, s.iters, s.states), i)
-end
+# we couldn't move down, so yield this point
+response(k::Config, m::Depth, s::Backtrack, t, i, ::Failure) = execute(k, m, DepthYield(s.results, s.iters, s.states), i)
+
 
 
 # breadth-first specific state and logic
