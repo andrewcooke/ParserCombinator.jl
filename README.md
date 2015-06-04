@@ -73,7 +73,7 @@ Some explanation of the above:
 
 * I used rather a lot of "syntactic sugar".  You can use a more verbose,
   "parser combinator" style if you prefer.  For example, `Seq(...)` instead of
-  `+`, or `TransformValue(...)` instead of `>`.
+  `+`, or `App(...)` instead of `>`.
 
 * The matcher `S"xyz"` matches and then discards the string `"xyz"`.
 
