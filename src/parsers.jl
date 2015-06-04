@@ -155,7 +155,7 @@ function make_all(config)
 end
 
 function make_one(config)
-    function f(source, matcher::Matcher; kargs...)
+    function single_result(source, matcher::Matcher; kargs...)
         task = make_all(config)(source, matcher; kargs...)
         result = consume(task)
         if task.state == :done

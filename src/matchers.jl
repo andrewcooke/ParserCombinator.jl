@@ -221,7 +221,18 @@ end
 
 function response(k::Config, m::Depth, s::Backtrack, t, i, r::Success)
     # backtrack succeeded so move down
-    execute(k, m, Slurp(Array{Value}[s.results... r.value], vcat(s.iters, i), vcat(s.states, t)), i)
+    println(s.results)
+    println(r.value)
+    println(vcat(s.results, r.value))
+    x = vcat(s.results, r.value)
+    y = vcat(s.iters, i)
+    z = vcat(s.states, t)
+    println(typeof(x))
+    println(typeof(y))
+    println(typeof(z))
+    println("*********")
+    println(Slurp(x, y, z))
+    execute(k, m, Slurp(vcat(s.results, r.value), vcat(s.iters, i), vcat(s.states, t)), i)
 end
 
 function response(k::Config, m::Depth, s::Backtrack, t, i, ::Failure)

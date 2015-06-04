@@ -352,7 +352,7 @@ ERROR: ParserCombinator.ParserException("cannot parse")
 #### Transforms
 
 Use `App()` or `>` to pass the current results to a function (or datatype
-constructor) as individual values..
+constructor) as individual values.
 
 ```julia
 julia> parse_one("abc", App(Star(p"."), tuple))
