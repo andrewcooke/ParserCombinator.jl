@@ -515,7 +515,7 @@ end
 
 function execute(k::Config, m::Delayed, s::State, i)
     if isnull(m.matcher)
-        error("assign to the Delayed() matcher attribute")
+        println(2)
     else
         execute(k, get(m.matcher), s, i)
     end

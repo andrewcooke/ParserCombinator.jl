@@ -21,7 +21,7 @@ b.matcher = a | (S"-" + b > Neg) # things that can be added or multiplied
 c = b + ((S"*" + b) | (S"/" + b > Inv))[0:end] |> Prd
 
 d = c + ((S"*" + c) | (S"-" + c > Neg))[0:end] |> Sum
-z.matcher = Nullable{ParserCombinator.Matcher}(z)
+z.matcher = d
 
 all = z + Eos()
 
