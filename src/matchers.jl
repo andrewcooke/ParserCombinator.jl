@@ -1,4 +1,9 @@
 
+# in general, use immutable for types with no or a single pointer content, and
+# mutable for everything else.  but need to take care to define equality,
+# hash, and to not actually mutate anything.  see discussion in types.jl.
+
+
 # some basic definitions for generic matches
 
 execute(k::Config, m, s, i) = error("$m did not expect to be called with state $s")
@@ -17,8 +22,15 @@ execute(k::Config, m::Matcher, s::Dirty, i) = Response(s, i, FAILURE)
 # assume this has a matcher field
 abstract Delegate<:Matcher
 
+==(a::Delegate, b::Delegate) = a.matcher == b.matcher
+hash(a::Delegate) = hash(a.matcher)
+
+
 # assume this has a state field
 abstract DelegateState<:State
+
+==(a::DelegateState, b::DelegateState) = a.state == b.state
+hash(a::DelegateState) = hash(a.state)
 
 execute(k::Config, m::Delegate, s::Clean, i) = Execute(m, s, m.matcher, CLEAN, i)
 
@@ -38,6 +50,9 @@ execute(k::Config, m::Epsilon, s::Clean, i) = Response(DIRTY, i, EMPTY)
 immutable Insert<:Matcher
     text
 end
+
+==(a::Insert, b::Insert) = a.text == b.text
+hash(a::Insert) = hash(a)
 
 execute(k::Config, m::Insert, s::Clean, i) = Response(DIRTY, i, Success(m.text))
 
@@ -74,9 +89,12 @@ response(k::Config, m::Drop, s, t, i, rs::Success) = Response(DropState(t), i, E
 
 # exact match
 
-immutable Equal{T}<:Matcher
-    string::T
+immutable Equal<:Matcher
+    string
 end
+
+==(a::Equal, b::Equal) = a.string == b.string
+hash(a::Equal) = hash(a.string)
 
 function execute(k::Config, m::Equal, s::Clean, i)
     for x in m.string
@@ -101,6 +119,9 @@ end
 
 abstract Repeat_<:Matcher   # _ to avoid conflict with abstract type in 0.3
 
+==(a::Repeat_, b::Repeat_) = typeof(a) == typeof(b) && a,matcher == b.matcher && a.lo == b.lo && a.hi = b.hi && a.flatten == b.flatten
+hash(a::Repeat_) = hash(typeof(a), hash(a.matcher, hash(a.lo, hash(a.hi, hash(a.flatten)))))
+
 ALL = typemax(Int)
 
 abstract RepeatState<:State
@@ -118,13 +139,15 @@ Repeat(m::Matcher; flatten=true, greedy=true) = Repeat(m, 0, ALL; flatten=flatte
 
 # depth-first (greedy) state and logic
 
-immutable Depth<:Repeat_
+type Depth<:Repeat_
     matcher::Matcher
     lo::Integer
     hi::Integer
     flatten::Bool
     Depth(m, lo, hi; flatten=true) = new(m, lo, hi, flatten)
 end
+
+# hash and == defined earlier for Repeat_
 
 # greedy matching is effectively depth first traversal of a tree where:
 # * performing an additional match is moving down to a new level 
@@ -139,7 +162,10 @@ end
 
 abstract DepthState<:RepeatState
 
-immutable Slurp<:DepthState
+==(a::DepthState, b::DepthState) = typeof(a) == typeof(b) && a.results == b.results && a.iters == b.iters && a.states == b.states
+hash(a::DepthState) = hash(typeof(a), hash(a.results, hash(a.iters, hash(a.states))))
+
+type Slurp<:DepthState
     # there's a mismatch in lengths here because the empty results is
     # associated with an iter and state
     results::Array{Value,1} # accumulated.  starts []
@@ -147,13 +173,13 @@ immutable Slurp<:DepthState
     states::Array{State,1}  # at the end of the result.  starts {CLEAN]
 end
 
-immutable DepthYield<:DepthState
+type DepthYield<:DepthState
     results::Array{Value,1}
     iters::Array{Any,1}
     states::Array{State,1}
 end
 
-immutable Backtrack<:DepthState
+type Backtrack<:DepthState
     results::Array{Value,1}
     iters::Array{Any,1}
     states::Array{State,1}
@@ -229,13 +255,15 @@ response(k::Config, m::Depth, s::Backtrack, t, i, ::Failure) = execute(k, m, Dep
 
 # breadth-first specific state and logic
 
-immutable Breadth<:Repeat_
+type Breadth<:Repeat_
     matcher::Matcher
     lo::Integer
     hi::Integer
     flatten::Bool
     Breadth(m, lo, hi; flatten=true) = new(m, lo, hi, flatten)
 end
+
+# hash and == defined earlier for Repeat_
 
 # minimal matching is effectively breadth first traversal of a tree where:
 # * performing an additional match is moving down to a new level 
@@ -247,20 +275,26 @@ end
 # than for th egreedy match (wikipedia calls this "level order" so my 
 # terminology may be wrong).
 
-immutable Entry
+type Entry
     iter
     state::State
     results::Array{Value,1}
 end
 
+==(a::Entry, b::Entry) = a.iter == b.iter && a.state == b.stat && a.results == b.results
+hash(a::Entry) = hash(a.iter, hash(a.state, hash(a.results)))
+
 abstract BreadthState<:RepeatState
 
-immutable Grow<:BreadthState
+==(a::BreadthState, b::BreadthState) = typeof(a) == typeof(b) && a.start == b.start && a.queue == b.queue
+hash(a::BreadthState) = hash(typeof(a), hash(a.start, hash(a.queue)))
+
+type Grow<:BreadthState
     start  # initial iter
-    queue::Array{Entry,1}  # this has to be immutable for caching
+    queue::Array{Entry,1}  # this has to be type for caching
 end
 
-immutable BreadthYield<:BreadthState
+type BreadthYield<:BreadthState
     start  # initial iter
     queue::Array{Entry,1}  # this has to be immutable for caching
 end
@@ -328,6 +362,9 @@ function Series(m::Matcher...; flatten=true)
     end
 end
 
+==(a::Series_, b::Series_) = typeof(a) == typeof(b) && a.matchers == b.matchers
+hash(a::Series_) = hash(typeof(a), hash(a.matchers))
+
 immutable Seq<:Series_
     matchers::Array{Matcher,1}
     Seq(m::Matcher...) = new([m...])
@@ -345,11 +382,14 @@ end
 # copy so that state remains immutable
 serial_success(m::And, results) = Success([results;])
 
-immutable SeriesState<:State
+type SeriesState<:State
     results::Array{Value,1}
     iters::Array{Any,1}
     states::Array{State,1}
 end
+
+==(a::SeriesState, b::SeriesState) = a.results == b.results && a.iters == b.iters && a.states == b.states
+hash(a::SeriesState) = hash(a.results, hash(a.iters, hash(a.states)))
 
 # when first called, call first matcher
 
@@ -405,11 +445,17 @@ immutable Alt<:Matcher
     Alt(matchers::Array{Matcher,1}) = new(matchers)    
 end
 
-immutable AltState<:State
+==(a::Alt, b::Alt) = a.matchers == b.matchers
+hash(a::Alt) = hash(matchers)
+
+type AltState<:State
     state::State
     iter
-    i
+    i  # index into current alternative
 end
+
+==(a::AltState, b::AltState) = a.state == b.state && a.iter == b.iter && a.i == b.i
+hash(a::AltState) = hash(a.state, hash(a.iter, hash(a.i)))
 
 function execute(k::Config, m::Alt, s::Clean, i)
     if length(m.matchers) == 0
