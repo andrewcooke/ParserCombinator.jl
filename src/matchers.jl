@@ -74,8 +74,8 @@ response(k::Config, m::Drop, s, t, i, rs::Success) = Response(DropState(t), i, E
 
 # exact match
 
-immutable Equal<:Matcher
-    string
+immutable Equal{T}<:Matcher
+    string::T
 end
 
 function execute(k::Config, m::Equal, s::Clean, i)

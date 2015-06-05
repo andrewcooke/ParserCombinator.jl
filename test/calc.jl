@@ -25,6 +25,20 @@ z.matcher = d
 
 all = z + Eos()
 
+@test typeof(a) == Alt
+@test length(a.matchers) == 2
+@test typeof(b) == Delayed
+@test typeof(get(b.matcher)) == Alt
+@test length(get(b.matcher).matchers) == 3  # flattening
+@test typeof(c) == TransformSuccess
+@test typeof(c.matcher) == Seq
+@test length(c.matcher.matchers) == 2
+@test typeof(c.matcher.matchers[2]) == Depth
+@test typeof(d) == TransformSuccess
+@test typeof(d.matcher) == Seq
+@test length(d.matcher.matchers) == 2
+@test typeof(d.matcher.matchers[2]) == Depth
+
 println("******")
 
 for (src, val) in [
@@ -34,7 +48,7 @@ for (src, val) in [
                    ("1-1", 0),
                    ("-1-1", -2)
                    ]
-    @test_approx_eq calc(parse_one(src, all)[1]) val
+    @test_approx_eq calc(parse_one(src, Debug(all))[1]) val
     println("$src = $val")
 end
 
