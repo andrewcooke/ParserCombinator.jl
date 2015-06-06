@@ -1,7 +1,7 @@
 [![Build
 Status](https://travis-ci.org/andrewcooke/ParserCombinator.jl.png)](https://travis-ci.org/andrewcooke/ParserCombinator.jl)
 [![Coverage Status](https://coveralls.io/repos/andrewcooke/ParserCombinator.jl/badge.svg)](https://coveralls.io/r/andrewcooke/ParserCombinator.jl)
-[![Package](https://pkg.julialang.org/badges/ParserCombinator_release.svg)](https://pkg.julialang.org/?pkg=ParserCombinator&ver=release)
+[![ParserCombinator](http://pkg.julialang.org/badges/ParserCombinator_release.svg)](http://pkg.julialang.org/?pkg=ParserCombinator&ver=release)
 
 
 
