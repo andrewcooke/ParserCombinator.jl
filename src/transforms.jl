@@ -4,10 +4,12 @@
 # note that the function will receive a Result instance (Failure, Empty or
 # Value) and that the value returned must also be a Result
 
-@auto type TransformResult<:Delegate
+@auto type TransformResult{N}<:Delegate{N}
+    name::N
     matcher::Matcher
     f::Function
 end
+TransformResult(matcher, f) = TransformResult{Void}(ANON, matcher, f)
 
 @auto immutable TransformState<:DelegateState
     state::State
@@ -29,10 +31,12 @@ response(k::Config, m::TransformResult, s, t, i, r::Success) = Response(Transfor
 # transform successes (Empty and Value)
 # again, function must return a Result instance
 
-@auto type TransformSuccess<:Delegate
+@auto type TransformSuccess{N}<:Delegate{N}
+    name::N
     matcher::Matcher
     f::Function
 end
+TransformSuccess(matcher, f) = TransformSuccess{Void}(ANON, matcher, f)
 
 # execute comes from Delegate
 

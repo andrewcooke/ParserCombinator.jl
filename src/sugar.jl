@@ -21,7 +21,6 @@ macro S_str(s)
 end
 
 
-
 Opt(m::Matcher) = Alt(m, Epsilon())
 
 

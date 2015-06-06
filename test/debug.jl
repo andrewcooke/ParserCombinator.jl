@@ -3,3 +3,5 @@
 # should see appropriate output to stdout.
 
 parse_one("ab", Equal("a") + Debug(Dot()[0:end]) + Equal("b"))
+
+println("debug ok")

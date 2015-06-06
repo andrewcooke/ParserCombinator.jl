@@ -6,10 +6,13 @@ function short_typeof(x)
     s = string(typeof(x))
     i = rsearchindex(s, ".")
     if i > 0
-        return s[i+1:end]
-    else
-        return s
+        s = s[i+1:end]
     end
+    i = searchindex(s, "{")
+    if i > 0
+        s = s[1:i-1]
+    end
+    s
 end
 
 function debug(k, p, s, c, t, i, cached)

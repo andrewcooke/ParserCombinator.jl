@@ -20,3 +20,13 @@ abstract B
 
 @test CLEAN == CLEAN
 @test CLEAN != DIRTY
+
+abstract D{N<:Union(Void,Int)}
+type G{N}<:D{N} e::N end
+hash(g::G) = hash(g.e)
+@auto type E{N}<:D{N} e::N end
+@auto type F{N}<:D{N} e::N 
+    F() = new(nothing)
+end
+
+println("auto ok")

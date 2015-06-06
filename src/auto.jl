@@ -1,4 +1,6 @@
 
+# TODO - isequal?  handle zero size.  add typeto hash.
+
 # add == and hash() to composite types (ie type and immutable blocks).
 
 # @auto type Foo
@@ -50,26 +52,37 @@ function auto_equals(name, names)
     end
 end
 
+type UnpackException <: Exception 
+    msg
+end
+
+function unpack_name(node)
+    if isa(node, Symbol)
+        node
+    else
+        i = node.head == :type ? 2 : 1   # skip mutable flag
+        if isa(node.args[i], Symbol)
+            node.args[i]
+        elseif isa(node.args[i], Expr) && node.args[i].head in (:(<:), :(::))
+            unpack_name(node.args[i].args[1])
+        else
+            throw(UnpackException("cannot find name in $(node)"))
+        end
+    end
+end
+
 
 macro auto(typ)
 
     @assert typ.head == :type
+    name = unpack_name(typ)
 
-    if typeof(typ.args[2]) == Symbol
-        name = typ.args[2]
-    elseif typeof(typ.args[2]) == Expr && typ.args[2].head == :(<:)
-        name = typ.args[2].args[1]
-    else
-        error("Cannot find name for $typ")
-    end
-
-    fields = typ.args[3].args
     names = Array(Symbol,0)
-    for i in 1:length(fields)
-        if typeof(fields[i]) == Symbol
-            push!(names, fields[i])
-        elseif typeof(fields[i]) == Expr && fields[i].head == :(::)
-            push!(names, fields[i].args[1])
+    for field in typ.args[3].args
+        try
+            push!(names, unpack_name(field))
+        catch ParseException
+            # not a field
         end
     end
     @assert length(names) > 0

@@ -13,7 +13,7 @@ function slow(n)
             matcher = Seq(Repeat(Equal("a"), 0, n; greedy=greedy), matcher)
         end
         source = repeat("a", n)
-        for config in (Cache, NoCache)
+        for config in (NoCache, Cache)
             println("$(config)")
             all = make_all(config)
             @time collect(all(source, matcher))
@@ -24,3 +24,5 @@ function slow(n)
 end
 slow(3)
 # slow(6)  # not for travis!
+
+println("slow ok")

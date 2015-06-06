@@ -44,3 +44,5 @@ end
 #0001           Case/Clean => Pattern/Clean       
 #0004           Case/Clean <= Success             
 #0004     Debug/DebugState <= Success             
+
+println("case ok")

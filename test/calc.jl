@@ -25,19 +25,19 @@ z.matcher = d
 
 all = z + Eos()
 
-@test typeof(a) == Alt
+@test typeof(a) == Alt{Void}
 @test length(a.matchers) == 2
-@test typeof(b) == Delayed
-@test typeof(get(b.matcher)) == Alt
+@test typeof(b) == Delayed{Void}
+@test typeof(get(b.matcher)) == Alt{Void}
 @test length(get(b.matcher).matchers) == 3  # flattening
-@test typeof(c) == TransformSuccess
-@test typeof(c.matcher) == Seq
+@test typeof(c) == TransformSuccess{Void}
+@test typeof(c.matcher) == Seq{Void}
 @test length(c.matcher.matchers) == 2
-@test typeof(c.matcher.matchers[2]) == Depth
-@test typeof(d) == TransformSuccess
-@test typeof(d.matcher) == Seq
+@test typeof(c.matcher.matchers[2]) == Depth{Void}
+@test typeof(d) == TransformSuccess{Void}
+@test typeof(d.matcher) == Seq{Void}
 @test length(d.matcher.matchers) == 2
-@test typeof(d.matcher.matchers[2]) == Depth
+@test typeof(d.matcher.matchers[2]) == Depth{Void}
 
 println("******")
 
@@ -119,4 +119,4 @@ for i in 1:20
     end
 end
 
-
+println("calc ok")

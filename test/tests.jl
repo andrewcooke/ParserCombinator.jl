@@ -91,3 +91,5 @@ end
                                       [2,0],[2,1],
                                       [3,0]]
 
+
+println("tests ok")

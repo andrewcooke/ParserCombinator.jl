@@ -5,7 +5,7 @@ using DataStructures.Stack
 using Compat
 import Base: start, endof, getindex
 
-export @auto,
+export @auto, @with_names, name,
 Config, Cache, NoCache, make_all, make_one, parse_one, parse_all,
 Matcher, State, Result, Success, Execute, Response, 
 Failure, EMPTY, FAILURE, Clean, CLEAN, Dirty, DIRTY,
@@ -20,6 +20,7 @@ Word, Space, Star, Plus
 
 include("auto.jl")
 include("types.jl")
+include("names.jl")
 include("matchers.jl")
 include("parsers.jl")
 include("transforms.jl")
