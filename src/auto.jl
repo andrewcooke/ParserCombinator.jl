@@ -50,6 +50,7 @@ function auto_equals(name, names)
     end
 end
 
+
 macro auto(typ)
 
     @assert typ.head == :type

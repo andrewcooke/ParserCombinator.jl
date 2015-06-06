@@ -22,15 +22,8 @@ execute(k::Config, m::Matcher, s::Dirty, i) = Response(s, i, FAILURE)
 # assume this has a matcher field
 abstract Delegate<:Matcher
 
-==(a::Delegate, b::Delegate) = a.matcher == b.matcher
-hash(a::Delegate) = hash(a.matcher)
-
-
 # assume this has a state field
 abstract DelegateState<:State
-
-==(a::DelegateState, b::DelegateState) = a.state == b.state
-hash(a::DelegateState) = hash(a.state)
 
 execute(k::Config, m::Delegate, s::Clean, i) = Execute(m, s, m.matcher, CLEAN, i)
 
@@ -72,11 +65,11 @@ execute(k::Config, m::Fail, s::Clean, i) = Response(DIRTY, i, FAILURE)
 
 # evaluate the sub-matcher, but replace the result with EMPTY
 
-immutable Drop<:Delegate
+@auto immutable Drop<:Delegate
     matcher::Matcher
 end
 
-immutable DropState<:DelegateState
+@auto immutable DropState<:DelegateState
     state::State
 end
 
@@ -451,7 +444,7 @@ end
 
 # evaluate the child, but discard values and do not advance the iter
 
-immutable Lookahead<:Delegate
+@auto immutable Lookahead<:Delegate
     matcher::Matcher
 end
 
@@ -537,7 +530,7 @@ end
 
 # enable debug when in scope of child
 
-immutable Debug<:Delegate
+@auto immutable Debug<:Delegate
     matcher::Matcher
 end
 

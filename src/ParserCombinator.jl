@@ -5,9 +5,10 @@ using DataStructures.Stack
 using Compat
 import Base: start, endof, getindex
 
-export Config, Cache, NoCache, make_all, make_one, parse_one, parse_all,
+export @auto,
+Config, Cache, NoCache, make_all, make_one, parse_one, parse_all,
 Matcher, State, Result, Success, Execute, Response, 
-Failure, EMPTY, FAILURE, Clean, CLEAN,
+Failure, EMPTY, FAILURE, Clean, CLEAN, Dirty, DIRTY,
 ParserException, Value, Empty, EMPTY, Delegate, DelegateState,
 Epsilon, Insert, Dot, Fail, Drop, Equal, Repeat, Depth, Breadth, ALL, 
 Series, Seq, And, Alt, Lookahead, Not, Pattern, Delayed, Debug, Eos,

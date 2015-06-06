@@ -43,12 +43,14 @@ abstract Config
 
 # 5b - structurally identical states must be equal, and hash equally.  this is
 # critical for efficienct caching.  so it it likely that custom hash and
-# equality methods will be needed (see above).
+# equality methods will be needed (see above and auto.jl).
 
 
-# defaults for mismatching types
+# defaults for mismatching types and types with no content
 ==(a::Matcher, b::Matcher) = false
+=={T<:Matcher}(a::T, b::T) = true
 ==(a::State, b::State) = false
+=={T<:State}(a::T, b::T) = true
 
 
 # Result sub-types

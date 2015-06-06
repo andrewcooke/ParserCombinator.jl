@@ -9,7 +9,7 @@
     f::Function
 end
 
-immutable TransformState<:DelegateState
+@auto immutable TransformState<:DelegateState
     state::State
 end
 
