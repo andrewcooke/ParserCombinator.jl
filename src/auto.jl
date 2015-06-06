@@ -8,7 +8,7 @@
 
 # becomes
 
-# @auto type Foo
+# type Foo
 #     a::Int
 #     b
 # end
