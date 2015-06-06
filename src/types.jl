@@ -66,14 +66,13 @@ function flatten(x::Array{Value,1})
     return y
 end
 
-immutable Success<:Result
+@auto immutable Success<:Result
     value::Value  # immutable!
     Success(x::Any...) = new(vcat(x...))
+    # TODO - should a constructor take an array?
 end
 
 EMPTY = Success()
-==(x::Success, y::Success) = x.value == y.value
-hash(x::Success) = hash(x.value)
 
 
 

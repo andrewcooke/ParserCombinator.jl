@@ -4,7 +4,7 @@
 # note that the function will receive a Result instance (Failure, Empty or
 # Value) and that the value returned must also be a Result
 
-immutable TransformResult<:Delegate
+@auto type TransformResult<:Delegate
     matcher::Matcher
     f::Function
 end
@@ -29,7 +29,7 @@ response(k::Config, m::TransformResult, s, t, i, r::Success) = Response(Transfor
 # transform successes (Empty and Value)
 # again, function must return a Result instance
 
-immutable TransformSuccess<:Delegate
+@auto type TransformSuccess<:Delegate
     matcher::Matcher
     f::Function
 end

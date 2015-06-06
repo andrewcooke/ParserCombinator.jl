@@ -47,12 +47,9 @@ immutable Epsilon<:Matcher end
 
 execute(k::Config, m::Epsilon, s::Clean, i) = Response(DIRTY, i, EMPTY)
 
-immutable Insert<:Matcher
+@auto immutable Insert<:Matcher
     text
 end
-
-==(a::Insert, b::Insert) = a.text == b.text
-hash(a::Insert) = hash(a)
 
 execute(k::Config, m::Insert, s::Clean, i) = Response(DIRTY, i, Success(m.text))
 
@@ -89,12 +86,9 @@ response(k::Config, m::Drop, s, t, i, rs::Success) = Response(DropState(t), i, E
 
 # exact match
 
-immutable Equal<:Matcher
+@auto immutable Equal<:Matcher
     string
 end
-
-==(a::Equal, b::Equal) = a.string == b.string
-hash(a::Equal) = hash(a.string)
 
 function execute(k::Config, m::Equal, s::Clean, i)
     for x in m.string
@@ -119,9 +113,6 @@ end
 
 abstract Repeat_<:Matcher   # _ to avoid conflict with abstract type in 0.3
 
-==(a::Repeat_, b::Repeat_) = typeof(a) == typeof(b) && a,matcher == b.matcher && a.lo == b.lo && a.hi = b.hi && a.flatten == b.flatten
-hash(a::Repeat_) = hash(typeof(a), hash(a.matcher, hash(a.lo, hash(a.hi, hash(a.flatten)))))
-
 ALL = typemax(Int)
 
 abstract RepeatState<:State
@@ -139,15 +130,13 @@ Repeat(m::Matcher; flatten=true, greedy=true) = Repeat(m, 0, ALL; flatten=flatte
 
 # depth-first (greedy) state and logic
 
-type Depth<:Repeat_
+@auto type Depth<:Repeat_
     matcher::Matcher
     lo::Integer
     hi::Integer
     flatten::Bool
     Depth(m, lo, hi; flatten=true) = new(m, lo, hi, flatten)
 end
-
-# hash and == defined earlier for Repeat_
 
 # greedy matching is effectively depth first traversal of a tree where:
 # * performing an additional match is moving down to a new level 
@@ -162,10 +151,7 @@ end
 
 abstract DepthState<:RepeatState
 
-==(a::DepthState, b::DepthState) = typeof(a) == typeof(b) && a.results == b.results && a.iters == b.iters && a.states == b.states
-hash(a::DepthState) = hash(typeof(a), hash(a.results, hash(a.iters, hash(a.states))))
-
-type Slurp<:DepthState
+@auto type Slurp<:DepthState
     # there's a mismatch in lengths here because the empty results is
     # associated with an iter and state
     results::Array{Value,1} # accumulated.  starts []
@@ -173,13 +159,13 @@ type Slurp<:DepthState
     states::Array{State,1}  # at the end of the result.  starts {CLEAN]
 end
 
-type DepthYield<:DepthState
+@auto type DepthYield<:DepthState
     results::Array{Value,1}
     iters::Array{Any,1}
     states::Array{State,1}
 end
 
-type Backtrack<:DepthState
+@auto type Backtrack<:DepthState
     results::Array{Value,1}
     iters::Array{Any,1}
     states::Array{State,1}
@@ -255,15 +241,13 @@ response(k::Config, m::Depth, s::Backtrack, t, i, ::Failure) = execute(k, m, Dep
 
 # breadth-first specific state and logic
 
-type Breadth<:Repeat_
+@auto type Breadth<:Repeat_
     matcher::Matcher
     lo::Integer
     hi::Integer
     flatten::Bool
     Breadth(m, lo, hi; flatten=true) = new(m, lo, hi, flatten)
 end
-
-# hash and == defined earlier for Repeat_
 
 # minimal matching is effectively breadth first traversal of a tree where:
 # * performing an additional match is moving down to a new level 
@@ -275,26 +259,20 @@ end
 # than for th egreedy match (wikipedia calls this "level order" so my 
 # terminology may be wrong).
 
-type Entry
+@auto type Entry
     iter
     state::State
     results::Array{Value,1}
 end
 
-==(a::Entry, b::Entry) = a.iter == b.iter && a.state == b.stat && a.results == b.results
-hash(a::Entry) = hash(a.iter, hash(a.state, hash(a.results)))
-
 abstract BreadthState<:RepeatState
 
-==(a::BreadthState, b::BreadthState) = typeof(a) == typeof(b) && a.start == b.start && a.queue == b.queue
-hash(a::BreadthState) = hash(typeof(a), hash(a.start, hash(a.queue)))
-
-type Grow<:BreadthState
+@auto type Grow<:BreadthState
     start  # initial iter
     queue::Array{Entry,1}  # this has to be type for caching
 end
 
-type BreadthYield<:BreadthState
+@auto type BreadthYield<:BreadthState
     start  # initial iter
     queue::Array{Entry,1}  # this has to be immutable for caching
 end
@@ -362,10 +340,7 @@ function Series(m::Matcher...; flatten=true)
     end
 end
 
-==(a::Series_, b::Series_) = typeof(a) == typeof(b) && a.matchers == b.matchers
-hash(a::Series_) = hash(typeof(a), hash(a.matchers))
-
-immutable Seq<:Series_
+@auto immutable Seq<:Series_
     matchers::Array{Matcher,1}
     Seq(m::Matcher...) = new([m...])
     Seq(m::Array{Matcher,1}) = new(m)
@@ -373,7 +348,7 @@ end
 
 serial_success(m::Seq, results) = Success(flatten(results))
 
-immutable And<:Series_
+@auto immutable And<:Series_
     matchers::Array{Matcher,1}
     And(m::Matcher...) = new([m...])
     And(m::Array{Matcher,1}) = new(m)
@@ -382,14 +357,11 @@ end
 # copy so that state remains immutable
 serial_success(m::And, results) = Success([results;])
 
-type SeriesState<:State
+@auto type SeriesState<:State
     results::Array{Value,1}
     iters::Array{Any,1}
     states::Array{State,1}
 end
-
-==(a::SeriesState, b::SeriesState) = a.results == b.results && a.iters == b.iters && a.states == b.states
-hash(a::SeriesState) = hash(a.results, hash(a.iters, hash(a.states)))
 
 # when first called, call first matcher
 
@@ -439,23 +411,17 @@ end
 
 # backtracked alternates
 
-immutable Alt<:Matcher
+@auto immutable Alt<:Matcher
     matchers::Array{Matcher,1}
     Alt(matchers::Matcher...) = new([matchers...])
     Alt(matchers::Array{Matcher,1}) = new(matchers)    
 end
 
-==(a::Alt, b::Alt) = a.matchers == b.matchers
-hash(a::Alt) = hash(matchers)
-
-type AltState<:State
+@auto type AltState<:State
     state::State
     iter
     i  # index into current alternative
 end
-
-==(a::AltState, b::AltState) = a.state == b.state && a.iter == b.iter && a.i == b.i
-hash(a::AltState) = hash(a.state, hash(a.iter, hash(a.i)))
 
 function execute(k::Config, m::Alt, s::Clean, i)
     if length(m.matchers) == 0
@@ -489,7 +455,7 @@ immutable Lookahead<:Delegate
     matcher::Matcher
 end
 
-immutable LookaheadState<:DelegateState
+@auto type LookaheadState<:DelegateState
     state::State
     iter
 end
@@ -504,11 +470,11 @@ response(k::Config, m::Lookahead, s, t, i, r::Success) = Response(LookaheadState
 # no backtracking of the child is supported (i don't understand how it would
 # work, but feel free to correct me....)
 
-immutable Not<:Matcher
+@auto immutable Not<:Matcher
     matcher::Matcher
 end
 
-immutable NotState<:State
+@auto immutable NotState<:State
     iter
 end
 
@@ -530,7 +496,7 @@ response(k::Config, m::Not, s, t, i, r::Failure) = Response(s, s.iter, EMPTY)
 
 # we also prepend ^ to anchor the match
 
-immutable Pattern<:Matcher
+@auto immutable Pattern<:Matcher
     regex::Regex
     Pattern(r::Regex) = new(Regex("^" * r.pattern * "(.??)"))
     Pattern(s::AbstractString) = new(Regex("^" * s * "(.??)"))
@@ -550,7 +516,7 @@ end
 
 # support loops
 
-type Delayed<:Matcher
+@auto type Delayed<:Matcher
     matcher::Nullable{Matcher}
     Delayed() = new(Nullable{Matcher}())
 end
@@ -575,7 +541,7 @@ immutable Debug<:Delegate
     matcher::Matcher
 end
 
-immutable DebugState<:DelegateState
+@auto type DebugState<:DelegateState
     state::State
     depth::Int
 end
@@ -614,5 +580,3 @@ function execute(k::Config, m::Eos, s::Clean, i)
         Response(DIRTY, i, FAILURE)
     end
 end
-
-
