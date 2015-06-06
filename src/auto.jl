@@ -1,5 +1,20 @@
 
-# see http://acooke.org/cute/AUsefulJul0.html
+# add == and hash() to composite types (ie type and immutable blocks).
+
+# @auto type Foo
+#     a::Int
+#     b
+# end
+
+# becomes
+
+# @auto type Foo
+#     a::Int
+#     b
+# end
+# hash(a::Foo) = hash(a.a, hash(a.b))
+# ==(a::Foo, b::Foo) = a.a == b.a && a.b == b.b
+
 
 function auto_hash(name, names)
 
@@ -58,6 +73,7 @@ macro auto(typ)
             push!(names, fields[i].args[1])
         end
     end
+    @assert length(names) > 0
 
     quote
         $(esc(typ))
