@@ -31,7 +31,6 @@ function auto_hash(name, names)
             $(expand(1))
         end
     end
-
 end
 
 function auto_equals(name, names)
@@ -49,7 +48,6 @@ function auto_equals(name, names)
             $(expand(1))
         end
     end
-
 end
 
 macro auto(typ)
