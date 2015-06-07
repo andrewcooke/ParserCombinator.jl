@@ -637,6 +637,10 @@ Some things to note here:
 * The message flow shows execute as `->` and response as `<-`.  Matcher names
   are replaced by variable names (eg `sum`) where approrpiate.
 
+* This functionality is implemented as a separate parser `Config` instance, so
+  has no performance penalty when not used.  See [debug.jl](src/debug.jl) for
+  more details.
+
 #### More Information
 
 For more details, I'm afraid your best bet is the source code:
