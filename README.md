@@ -440,11 +440,12 @@ really helps to have a simple view "inside" what is happening.  This is
 supported by `parse_dbg` which will print a record of all messages (execute
 and response - see [design](#design)) for matchers inside a `Trace()` matcher.
 
-In addition, if the grammr is defined inside a `@with_names` macro, the
+In addition, if the grammar is defined inside a `@with_names` macro, the
 symbols used to identify various parts of the grammar (the variable name's)
 are displayed when appropriate.
 
-Here's a full example:
+Here's a full example (you can view less by applying `Trace()` to only the
+matchers you care about):
 
 ```julia
 @with_names begin
@@ -490,32 +491,32 @@ which gives:
   2:+2*3/4     06       Seq<-[1.0]                                   
   2:+2*3/4     05      prd<-[1.0]                                   
   2:+2*3/4     05      Seq->Depth
-  2:+2*3/4     06       Depth->alt
-  2:+2*3/4     07        alt->mul
+  2:+2*3/4     06       Depth->Alt
+  2:+2*3/4     07        Alt->mul
   2:+2*3/4     08         mul->Drop
   2:+2*3/4     09          Drop->Equal
   3:2*3/4      09          mul<-!!!                                     
-  3:2*3/4      08         alt<-!!!                                     
+  3:2*3/4      08         Alt<-!!!                                     
   2:+2*3/4     07        Depth<-!!!                                     
-  2:+2*3/4     07        alt->div
+  2:+2*3/4     07        Alt->div
   2:+2*3/4     08         div->Seq
   2:+2*3/4     09          Seq->Drop
   2:+2*3/4     10 Drop->Equal
   3:2*3/4      10 Seq<-!!!                                     
   3:2*3/4      09          div<-!!!                                     
-  2:+2*3/4     08         alt<-!!!                                     
+  2:+2*3/4     08         Alt<-!!!                                     
   2:+2*3/4     07        Depth<-!!!                                     
   2:+2*3/4     06       Seq<-!!!                                     
   2:+2*3/4     05      prd<-[]                                      
   2:+2*3/4     04     Seq<-[1.0]                                   
   2:+2*3/4     03    TransSuccess<-[Prd(Any[1.0])]                         
   2:+2*3/4     03    Seq->Depth
-  2:+2*3/4     04     Depth->alt
-  2:+2*3/4     05      alt->add
+  2:+2*3/4     04     Depth->Alt
+  2:+2*3/4     05      Alt->add
   2:+2*3/4     06       add->Drop
   2:+2*3/4     07        Drop->Equal
   3:2*3/4      07        add<-["+"]                                   
-  3:2*3/4      06       alt<-[]                                      
+  3:2*3/4      06       Alt<-[]                                      
   3:2*3/4      06       add->prd
   3:2*3/4      07        prd->Seq
   3:2*3/4      08         Seq->neg
@@ -531,12 +532,12 @@ which gives:
   4:*3/4       09          Seq<-[2.0]                                   
   4:*3/4       08         prd<-[2.0]                                   
   4:*3/4       08         Seq->Depth
-  4:*3/4       09          Depth->alt
-  4:*3/4       10 alt->mul
+  4:*3/4       09          Depth->Alt
+  4:*3/4       10 Alt->mul
   4:*3/4       11  mul->Drop
   4:*3/4       12   Drop->Equal
   5:3/4        12   mul<-["*"]                                   
-  5:3/4        11  alt<-[]                                      
+  5:3/4        11  Alt<-[]                                      
   5:3/4        11  mul->neg
   5:3/4        12   Alt->Seq
   5:3/4        13    Seq->Drop
@@ -548,17 +549,17 @@ which gives:
   5:3/4        13    TransSuccess->Pattern
   6:/4         13    Alt<-["3"]                                   
   6:/4         12   mul<-[3.0]                                   
-  6:/4         11  alt<-[3.0]                                   
+  6:/4         11  Alt<-[3.0]                                   
   6:/4         10 Depth<-[3.0]                                   
   6:/4         09          Seq<-[3.0]                                   
-  6:/4         09          Depth->alt
-  6:/4         10 alt->mul
+  6:/4         09          Depth->Alt
+  6:/4         10 Alt->mul
   6:/4         11  mul->Drop
   6:/4         12   Drop->Equal
   7:4          12   mul<-!!!                                     
-  7:4          11  alt<-!!!                                     
+  7:4          11  Alt<-!!!                                     
   6:/4         10 Depth<-!!!                                     
-  6:/4         10 alt->div
+  6:/4         10 Alt->div
   6:/4         11  div->Seq
   6:/4         12   Seq->Drop
   6:/4         13    Drop->Equal
@@ -576,44 +577,44 @@ which gives:
   8:           14     Alt<-["4"]                                   
   8:           13    Seq<-[4.0]                                   
   8:           12   div<-[4.0]                                   
-  8:           11  alt<-[4.0]                                   
+  8:           11  Alt<-[4.0]                                   
   8:           10 Depth<-[Inv(4.0)]                              
   8:           09          Seq<-[Inv(4.0)]                              
-  8:           09          Depth->alt
-  8:           10 alt->mul
+  8:           09          Depth->Alt
+  8:           10 Alt->mul
   8:           11  mul->Drop
   8:           12   Drop->Equal
   8:           12   mul<-!!!                                     
-  8:           11  alt<-!!!                                     
+  8:           11  Alt<-!!!                                     
   8:           10 Depth<-!!!                                     
-  8:           10 alt->div
+  8:           10 Alt->div
   8:           11  div->Seq
   8:           12   Seq->Drop
   8:           13    Drop->Equal
   8:           13    Seq<-!!!                                     
   8:           12   div<-!!!                                     
-  8:           11  alt<-!!!                                     
+  8:           11  Alt<-!!!                                     
   8:           10 Depth<-!!!                                     
   8:           09          Seq<-!!!                                     
   8:           08         prd<-[3.0,Inv(4.0)]                          
   8:           07        add<-[2.0,3.0,Inv(4.0)]                      
-  8:           06       alt<-[Prd(Any[2.0,3.0,Inv(4.0)])]            
+  8:           06       Alt<-[Prd(Any[2.0,3.0,Inv(4.0)])]            
   8:           05      Depth<-[Prd(Any[2.0,3.0,Inv(4.0)])]            
   8:           04     Seq<-[Prd(Any[2.0,3.0,Inv(4.0)])]            
-  8:           04     Depth->alt
-  8:           05      alt->add
+  8:           04     Depth->Alt
+  8:           05      Alt->add
   8:           06       add->Drop
   8:           07        Drop->Equal
   8:           07        add<-!!!                                     
-  8:           06       alt<-!!!                                     
+  8:           06       Alt<-!!!                                     
   8:           05      Depth<-!!!                                     
-  8:           05      alt->sub
+  8:           05      Alt->sub
   8:           06       sub->Seq
   8:           07        Seq->Drop
   8:           08         Drop->Equal
   8:           08         Seq<-!!!                                     
   8:           07        sub<-!!!                                     
-  8:           06       alt<-!!!                                     
+  8:           06       Alt<-!!!                                     
   8:           05      Depth<-!!!                                     
   8:           04     Seq<-!!!                                     
   8:           03    TransSuccess<-[Prd(Any[2.0,3.0,Inv(4.0)])]            
@@ -623,6 +624,18 @@ which gives:
   8:           01  Trace<-[]                                      
   8:           00 Root<-[Sum(Any[Prd(Any[1.0]),P...(Any[2.0,3.0,Inv(4.0)])])]
 ```
+
+Some things to note here:
+
+* The number on the left is the current iterator, followed by the source
+  at the current offset.
+
+* The second column of numbers is the depth (relative to `Trace()`).  The
+  indentation of the messages to the right reflects this, but "wraps" every
+  10 levels.
+
+* The message flow shows execute as `->` and response as `<-`.  Matcher names
+  are replaced by variable names (eg `sum`) where approrpiate.
 
 #### More Information
 

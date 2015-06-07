@@ -429,7 +429,7 @@ end
 @auto type Alt<:Matcher
     name::Symbol
     matchers::Array{Matcher,1}
-    Alt(matchers::Matcher...) = new(:alt, [matchers...])
+    Alt(matchers::Matcher...) = new(:Alt, [matchers...])
     Alt(matchers::Array{Matcher,1}) = new(:Alt, matchers)    
 end
 
