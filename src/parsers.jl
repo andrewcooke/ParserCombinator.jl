@@ -11,8 +11,8 @@ parent(k::Config) = k.stack[end][1]
 
 type NoCache<:Config
     source::Any
-    stack::Array{Tuple{Matcher, State},1}
-    NoCache(source) = new(source, Array(Tuple{Matcher,State}, 0))
+    @compat stack::Array{Tuple{Matcher, State},1}
+    @compat NoCache(source) = new(source, Array(Tuple{Matcher,State}, 0))
 end
 
 function dispatch(k::NoCache, e::Execute)
@@ -28,13 +28,13 @@ end
 
 # evaluation with a complete cache (all intermediate results memoized)
 
-typealias Key @compat Tuple{Matcher,State,Any}  # final type is iter
+@compat typealias Key Tuple{Matcher,State,Any}  # final type is iter
 
 type Cache<:Config
     source::Any
-    stack::Array{Tuple{Matcher,State,Key}}
+    @compat stack::Array{Tuple{Matcher,State,Key}}
     cache::Dict{Key,Message}
-    Cache(source) = new(source, Array(Tuple{Matcher,State,Key}, 0), Dict{Key,Message}())
+    @compat Cache(source) = new(source, Array(Tuple{Matcher,State,Key}, 0), Dict{Key,Message}())
 end
 
 function dispatch(k::Cache, e::Execute)

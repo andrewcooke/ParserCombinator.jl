@@ -104,6 +104,11 @@ Still, for large parsing tasks (eg parsing source code for a compiler) it
 would probably be better to use a wrapper around an external parser generator,
 like Anltr.
 
+**Note:** There's an [issue](https://github.com/JuliaLang/Compat.jl/issues/94)
+  with the Compat library which means the code above (the assignment to
+  `Delayed.matcher`) doesn't work with 0.3.  See [calc.jl](src/calc.jl) for
+  the uglier, hopefully temporary, 0.3 version.
+
 ## Install
 
 ```julia

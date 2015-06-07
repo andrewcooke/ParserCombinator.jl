@@ -17,7 +17,7 @@ calc(s::Sum) = Base.sum(map(calc, s.val))
     val = S"(" + sum + S")" | PFloat64()
 
     neg = Delayed()             # allow multiple negations (eg ---3)
-    neg.matcher = val | (S"-" + neg > Neg)
+    neg.matcher = Nullable{Matcher}(val | (S"-" + neg > Neg))
     
     mul = S"*" + neg
     div = S"/" + neg > Inv
@@ -25,7 +25,7 @@ calc(s::Sum) = Base.sum(map(calc, s.val))
     
     add = S"+" + prd
     sub = S"-" + prd > Neg
-    sum.matcher = prd + (add | sub)[0:end] |> Sum
+    sum.matcher = Nullable{Matcher}(prd + (add | sub)[0:end] |> Sum)
     
     all = sum + Eos()
 
