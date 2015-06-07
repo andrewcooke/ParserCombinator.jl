@@ -12,34 +12,39 @@ type Sum<:Node val end
 calc(s::Sum) = Base.sum(map(calc, s.val))
 
 @with_names begin
-    num = PFloat64()
-    z = Delayed()
 
-    a = S"(" + z + S")" | num        # things that can be negated
-    b = Delayed()
-    b.matcher = a | (S"-" + b > Neg) # things that can be added or multiplied
+    sum = Delayed()
+
+    val = S"(" + sum + S")" | PFloat64()
+
+    neg = Delayed()  # allow multiple negations (eg ---3)
+    neg.matcher = val | (S"-" + neg > Neg)
     
-    c = b + ((S"*" + b) | (S"/" + b > Inv))[0:end] |> Prd
+    prd = neg + ((S"*" + neg) | (S"/" + neg > Inv))[0:end] |> Prd
     
-    d = c + ((S"+" + c) | (S"-" + c > Neg))[0:end] |> Sum
-    z.matcher = d
+    sum.matcher = prd + ((S"+" + prd) | (S"-" + prd > Neg))[0:end] |> Sum
     
-    all = z + Eos()
+    all = sum + Eos()
+
 end
 
-@test typeof(a) == Alt
-@test length(a.matchers) == 2
-@test typeof(b) == Delayed
-@test typeof(get(b.matcher)) == Alt
-@test length(get(b.matcher).matchers) == 3  # flattening
-@test typeof(c) == TransSuccess
-@test typeof(c.matcher) == Seq
-@test length(c.matcher.matchers) == 2
-@test typeof(c.matcher.matchers[2]) == Depth
-@test typeof(d) == TransSuccess
-@test typeof(d.matcher) == Seq
-@test length(d.matcher.matchers) == 2
-@test typeof(d.matcher.matchers[2]) == Depth
+@test val.name == :val
+@test typeof(val) == Alt
+@test length(val.matchers) == 2
+@test neg.name == :neg
+@test typeof(neg) == Delayed
+@test typeof(get(neg.matcher)) == Alt
+@test length(get(neg.matcher).matchers) == 3  # flattening
+@test prd.name == :prd
+@test typeof(prd) == TransSuccess
+@test typeof(prd.matcher) == Seq
+@test length(prd.matcher.matchers) == 2
+@test typeof(prd.matcher.matchers[2]) == Depth
+@test sum.name == :sum
+@test typeof(sum) == Delayed
+@test typeof(get(sum.matcher).matcher) == Seq
+@test length(get(sum.matcher).matcher.matchers) == 2
+@test typeof(get(sum.matcher).matcher.matchers[2]) == Depth
 
 for (src, val) in [
                    ("1", 1),
@@ -48,16 +53,17 @@ for (src, val) in [
                    ("1-1", 0),
                    ("-1-1", -2)
                    ]
+#    @test_approx_eq calc(parse_dbg(src, Trace(all))[1]) val
     @test_approx_eq calc(parse_one(src, Trace(all))[1]) val
     println("$src = $val")
 end
 
 for (src, ast, val) in 
     [
-#     ("1.0", Sum([Prd([1.0])]), 1.0)
-#     ("-1.0", Sum([Prd([-1.0])]), -1.0)
-#     ("--1.0", Sum([Neg(Prd([-1.0]))]), 1.0)
-#     ("1+2", Sum([Prd([1.0]),Prd([2.0])]), 3.0)
+     ("1.0", Sum([Prd([1.0])]), 1.0)
+     ("-1.0", Sum([Prd([-1.0])]), -1.0)
+     ("--1.0", Sum([Prd([Neg(-1.0)])]), 1.0)
+     ("1+2", Sum([Prd([1.0]),Prd([2.0])]), 3.0)
      ("1+2*3/4", nothing, 2.5)
      ]
     if ast != nothing
