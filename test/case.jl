@@ -10,8 +10,10 @@ import ParserCombinator: execute, response
 # matcher with a matcher field and a state with a state field (they can have
 # more fields - those are the minimal requirements).
 
-immutable Case<:Delegate
+type Case<:Delegate
+    name::Symbol
     matcher::Matcher
+    Case(matcher) = new(:Case, matcher)
 end
 
 immutable CaseState<:DelegateState
@@ -38,7 +40,7 @@ end
 @test parse_one("foo", Case(p".*")) == ["Foo"]
 
 # to see what's happening in more detail, add debug logging:
-@test parse_one("foo", Debug(Case(p".*"))) == ["Foo"]
+@test parse_one("foo", Trace(Case(p".*"))) == ["Foo"]
 # which gives
 #0001     Debug/DebugState => Case/Clean          
 #0001           Case/Clean => Pattern/Clean       

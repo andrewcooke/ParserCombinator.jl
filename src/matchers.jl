@@ -36,7 +36,7 @@ response(k::Config, m::Delegate, s, t, i, r::Failure) = Response(DIRTY, i, FAILU
 
 # various weird things for completeness
 
-@auto immutable Epsilon<:Matcher
+@auto type Epsilon<:Matcher
     name::Symbol
     Epsilon() = new(:Epsilon)
 end
@@ -79,7 +79,7 @@ execute(k::Config, m::Fail, s::Clean, i) = Response(DIRTY, i, FAILURE)
 
 # evaluate the sub-matcher, but replace the result with EMPTY
 
-@auto immutable Drop<:Delegate
+@auto type Drop<:Delegate
     name::Symbol
     matcher::Matcher
     Drop(matcher) = new(:Drop, matcher)
@@ -555,42 +555,6 @@ function execute(k::Config, m::Delayed, s::State, i)
     end
 end
 
-
-
-# enable debug when in scope of child
-
-@auto type Debug<:Delegate
-    name::Symbol
-    matcher::Matcher
-    Debug(matcher) = new(:Debug, matcher)
-end
-
-@auto type DebugState<:DelegateState
-    state::State
-    depth::Int
-end
-
-execute(k::Config, m::Debug, s::Clean, i) = execute(k, m, DebugState(CLEAN, 0), i)
-
-function execute(k::Config, m::Debug, s::DebugState, i)
-    k.debug = true
-    Execute(m, DebugState(s.state, s.depth+1), m.matcher, s.state, i)
-end
-
-function response(k::Config, m::Debug, s::DebugState, t, i, r::Success)
-    if s.depth == 1
-        k.debug = false
-    end
-    Response(DebugState(t, s.depth-1), i, r)
-end
-    
-function response(k::Config, m::Debug, s::DebugState, t, i, r::Failure)
-    if s.depth == 2
-        k.debug = false
-    end
-    Response(DIRTY, i, FAILURE)
-end
-    
 
 
 # end of stream / string

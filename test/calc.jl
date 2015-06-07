@@ -11,19 +11,21 @@ calc(n::Neg) = -calc(n.val)
 type Sum<:Node val end
 calc(s::Sum) = Base.sum(map(calc, s.val))
 
-num = PFloat64()
-z = Delayed()
+@with_names begin
+    num = PFloat64()
+    z = Delayed()
 
-a = S"(" + z + S")" | num        # things that can be negated
-b = Delayed()
-b.matcher = a | (S"-" + b > Neg) # things that can be added or multiplied
-
-c = b + ((S"*" + b) | (S"/" + b > Inv))[0:end] |> Prd
-
-d = c + ((S"*" + c) | (S"-" + c > Neg))[0:end] |> Sum
-z.matcher = d
-
-all = z + Eos()
+    a = S"(" + z + S")" | num        # things that can be negated
+    b = Delayed()
+    b.matcher = a | (S"-" + b > Neg) # things that can be added or multiplied
+    
+    c = b + ((S"*" + b) | (S"/" + b > Inv))[0:end] |> Prd
+    
+    d = c + ((S"*" + c) | (S"-" + c > Neg))[0:end] |> Sum
+    z.matcher = d
+    
+    all = z + Eos()
+end
 
 @test typeof(a) == Alt
 @test length(a.matchers) == 2
@@ -48,7 +50,7 @@ for (src, val) in [
                    ("1-1", 0),
                    ("-1-1", -2)
                    ]
-    @test_approx_eq calc(parse_one(src, Debug(all))[1]) val
+    @test_approx_eq calc(parse_one(src, Trace(all))[1]) val
     println("$src = $val")
 end
 
