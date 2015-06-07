@@ -2,6 +2,8 @@
 
 # debug functions for printing trace
 
+short_typeof(m::Matcher) = m.name
+
 function short_typeof(x)
     s = string(typeof(x))
     i = rsearchindex(s, ".")
