@@ -103,15 +103,20 @@ end
 # these assume that any config construct takes a single source argument 
 # plus optional keyword args
 
-function make_all(config)
-    function f(source, matcher::Matcher; kargs...)
-        Task(() -> producer(config(source; kargs...), matcher))
+function make_all(config; kargs_make...)
+    function multiple_results(source, matcher::Matcher; kargs_parse...)
+        function startup()
+            kargs = vcat(kargs_make, kargs_parse)
+            k = config(source; kargs...)
+            producer(k, matcher)
+        end
+        Task(startup)
     end
 end
 
-function make_one(config)
-    function single_result(source, matcher::Matcher; kargs...)
-        task = make_all(config)(source, matcher; kargs...)
+function make_one(config; kargs_make...)
+    function single_result(source, matcher::Matcher; kargs_parse...)
+        task = make_all(config, kargs_make...)(source, matcher; kargs_parse...)
         result = consume(task)
         if task.state == :done
             throw(ParserException("cannot parse"))

@@ -7,7 +7,7 @@ import Base: start, endof, getindex
 
 export @auto, @with_names, set_name,
 Config, Cache, NoCache, make_all, make_one, parse_one, parse_all,
-Trace,
+Debug, Trace,
 Matcher, State, Result, Success, Execute, Response, 
 Failure, EMPTY, FAILURE, Clean, CLEAN, Dirty, DIRTY,
 ParserException, Value, Empty, EMPTY, Delegate, DelegateState,

@@ -1,9 +1,14 @@
 
 
 type Debug<:Config
+    source::Any
+    stack::Stack
     delegate::Config
     nested::Int
-    Debug(delegate::Config) = new(delegate, 0)
+    function Debug(source; delegate=NoCache, kargs...)
+        k = delegate(source; kargs...)
+        new(k.source, k.stack, k, 0)
+    end
 end
 
 function dispatch(k::Debug, e::Execute)
@@ -11,7 +16,7 @@ function dispatch(k::Debug, e::Execute)
 end
 
 function dispatch(k::Debug, r::Response)
-    dispatch(k.dlegate, r)
+    dispatch(k.delegate, r)
 end
 
 
