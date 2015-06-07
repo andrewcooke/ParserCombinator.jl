@@ -794,5 +794,7 @@ you can use regular expressions - `p"pattern"` for example).
 
 ## Releases
 
+1.1.0 - 2015-06-07 - Fixed calc example; debug mode; much rewriting.
+
 1.0.0 - ~2015-06-03 - More or less feature complete.
 
