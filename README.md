@@ -11,6 +11,7 @@ Status](https://travis-ci.org/andrewcooke/ParserCombinator.jl.png)](https://trav
 * [Install](#install)
 * [Manual](#manual)
 * [Design](#design)
+* [Releases](#releases)
 
 A parser combinator library for Julia that tries to strike a balance between
 being both (moderately) efficient and simple (for the end-user and the
@@ -785,4 +786,8 @@ protocol](http://julia.readthedocs.org/en/latest/stdlib/collections/?highlight=i
 This has the unfortunate result that `Dot()` returns characters, not strings.
 But in practice that matcher is rarely used (particularly since, with strings,
 you can use regular expressions - `p"pattern"` for example).
+
+## Releases
+
+1.0.0 - ~2015-06-03 - More or less feature complete.
 
