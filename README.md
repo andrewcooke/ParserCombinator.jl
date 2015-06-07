@@ -106,7 +106,7 @@ like Anltr.
 
 **Note:** There's an [issue](https://github.com/JuliaLang/Compat.jl/issues/94)
   with the Compat library which means the code above (the assignment to
-  `Delayed.matcher`) doesn't work with 0.3.  See [calc.jl](src/calc.jl) for
+  `Delayed.matcher`) doesn't work with 0.3.  See [calc.jl](test/calc.jl) for
   the uglier, hopefully temporary, 0.3 version.
 
 ## Install
