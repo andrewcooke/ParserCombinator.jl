@@ -14,7 +14,9 @@ abstract Message   # data sente between trampoline and methods
 abstract State     # state associated with Matchers during evaluation
 
 # used to configure the parser.  all Config subtypes must have associated
-# dispatch functions (see parser.jl) and have a constructor that takes the sorce as first argumen and additional arguments as keyword.
+# dispatch functions (see parser.jl), a parent() function, and have a
+# constructor that takes the sorce as first argumen and additional arguments
+# as keyword.
 abstract Config
 
 

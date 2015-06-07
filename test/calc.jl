@@ -21,7 +21,7 @@ calc(s::Sum) = Base.sum(map(calc, s.val))
     
     c = b + ((S"*" + b) | (S"/" + b > Inv))[0:end] |> Prd
     
-    d = c + ((S"*" + c) | (S"-" + c > Neg))[0:end] |> Sum
+    d = c + ((S"+" + c) | (S"-" + c > Neg))[0:end] |> Sum
     z.matcher = d
     
     all = z + Eos()
@@ -41,8 +41,6 @@ end
 @test length(d.matcher.matchers) == 2
 @test typeof(d.matcher.matchers[2]) == Depth
 
-println("******")
-
 for (src, val) in [
                    ("1", 1),
                    ("-1", -1),
@@ -53,8 +51,6 @@ for (src, val) in [
     @test_approx_eq calc(parse_one(src, Trace(all))[1]) val
     println("$src = $val")
 end
-
-error()
 
 for (src, ast, val) in 
     [
@@ -84,7 +80,7 @@ end
 @test_approx_eq calc(parse_one("5.0/3.0*(-6.0/5.0)", all)[1]) -2.0
 @test_approx_eq calc(parse_one("3*6-9*1", all)[1]) 9
 @test_approx_eq calc(parse_one("4.0-5.0-0.0/8.0/5.0/3.0*(-6.0/5.0)-9.0*3.0*-((0.0-9.0))*9.0", all)[1]) -2188.0
-@test_approx_eq calc(parse_one("((-6.0/6.0+7.0))*((-1.0-3.0/5.0))+-(9.0)", all)[1]) 0
+@test_approx_eq calc(parse_one("((-6.0/6.0+7.0))*((-1.0-3.0/5.0))+-(9.0)", all)[1]) -18.6
 
 
 # generate random expressions, parse them, and compare the results to
@@ -110,8 +106,8 @@ for i in 1:20
     for _ in 1:rand(0:4)
         expr = expr * string("+-*/"[rand(1:4)]) * subexpr()
     end
-    # julia desn't likerepeated -
-    expr = replace(expr, "r\-+", "-")
+    # julia desn't like repeated -
+    expr = replace(expr, r"-+", "-")
     println(expr)
     try
         @test_approx_eq eval(parse(expr)) calc(parse_one(expr, all)[1])

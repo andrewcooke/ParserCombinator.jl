@@ -484,8 +484,9 @@ It would also have been possible to use Julia tasks (coroutines).  I avoided
 this approach because my understanding is (although I have no proof) that
 tasks are significantly "heavier".
 
-Note - this is not a magic bullet.  There is still a "stack" in the
-trampoline, although in user-space and significantly more compact.
+Note - this is not a magic bullet.  There is still a "stack" in the trampoline
+(effectively a "continuation"), although in user-space and significantly more
+compact.
 
 ### Matcher Protocol
 

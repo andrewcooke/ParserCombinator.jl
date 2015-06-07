@@ -1,11 +1,18 @@
 
+# TODO - return config too, so that debug can return calls made etc
+
+
+# this works for all configs defined so far
+
+parent(k::Config) = k.stack[end][1]
+
 
 # evaluation without a cache (memoization)
 
 type NoCache<:Config
     source::Any
-    stack::Stack  # DataStructures.Stack has a dumb type
-    NoCache(source) = new(source, Stack(Tuple{Matcher,State}))
+    stack::Array{Tuple{Matcher, State},1}
+    NoCache(source) = new(source, Array(Tuple{Matcher,State}, 0))
 end
 
 function dispatch(k::NoCache, e::Execute)
@@ -19,16 +26,15 @@ function dispatch(k::NoCache, r::Response)
 end
 
 
-
 # evaluation with a complete cache (all intermediate results memoized)
 
 typealias Key @compat Tuple{Matcher,State,Any}  # final type is iter
 
 type Cache<:Config
     source::Any
-    stack  # DataStructures.Stack has a dumb type
+    stack::Array{Tuple{Matcher,State,Key}}
     cache::Dict{Key,Message}
-    Cache(source) = new(source, Stack(Tuple{Matcher,State,Key}), Dict{Key,Message}())
+    Cache(source) = new(source, Array(Tuple{Matcher,State,Key}, 0), Dict{Key,Message}())
 end
 
 function dispatch(k::Cache, e::Execute)
