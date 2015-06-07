@@ -20,7 +20,7 @@ execute(k::Config, m::Matcher, s::Dirty, i) = Response(s, i, FAILURE)
 # response) and (2) anything unusual (ie what the matcher actually does)
 
 # assume this has a matcher field
-abstract Delegate{N}<:NamedMatcher{N}
+abstract Delegate<:Matcher
 
 # assume this has a state field
 abstract DelegateState<:State
@@ -36,27 +36,27 @@ response(k::Config, m::Delegate, s, t, i, r::Failure) = Response(DIRTY, i, FAILU
 
 # various weird things for completeness
 
-@auto immutable Epsilon{N}<:NamedMatcher{N}
-    name::N
+@auto immutable Epsilon<:Matcher
+    name::Symbol
+    Epsilon() = new(:Epsilon)
 end
-Epsilon() = Epsilon{Void}(ANON)
 
 execute(k::Config, m::Epsilon, s::Clean, i) = Response(DIRTY, i, EMPTY)
 
 
-@auto type Insert{N}<:NamedMatcher{N}
-    name::N
+@auto type Insert<:Matcher
+    name::Symbol
     text
+    Insert(text) = new(:Insert, text)
 end
-Insert(text) = Insert{Void}(ANON, text)
 
 execute(k::Config, m::Insert, s::Clean, i) = Response(DIRTY, i, Success(m.text))
 
 
-immutable Dot{N}<:NamedMatcher{N} 
-    name::N
+immutable Dot<:Matcher 
+    name::Symbol
+    Dot() = new(:Dot)
 end
-Dot() = Dot{Void}(ANON)
 
 function execute(k::Config, m::Dot, s::Clean, i)
     if done(k.source, i)
@@ -68,10 +68,10 @@ function execute(k::Config, m::Dot, s::Clean, i)
 end
 
 
-immutable Fail{N}<:NamedMatcher{N}
-    name::N
+immutable Fail<:Matcher
+    name::Symbol
+    Fail() = new(:Fail)
 end
-Fail() = Fail{Void}(ANON)
 
 execute(k::Config, m::Fail, s::Clean, i) = Response(DIRTY, i, FAILURE)
 
@@ -79,11 +79,11 @@ execute(k::Config, m::Fail, s::Clean, i) = Response(DIRTY, i, FAILURE)
 
 # evaluate the sub-matcher, but replace the result with EMPTY
 
-@auto immutable Drop{N}<:Delegate{N}
-    name::N
+@auto immutable Drop<:Delegate
+    name::Symbol
     matcher::Matcher
+    Drop(matcher) = new(:Drop, matcher)
 end
-Drop(matcher) = Drop{Void}(ANON, matcher)
 
 @auto immutable DropState<:DelegateState
     state::State
@@ -95,11 +95,11 @@ response(k::Config, m::Drop, s, t, i, rs::Success) = Response(DropState(t), i, E
 
 # exact match
 
-@auto type Equal{N}<:NamedMatcher{N}
-    name::N
+@auto type Equal<:Matcher
+    name::Symbol
     string
+    Equal(string) = new(:Equal, string)
 end
-Equal(string) = Equal{Name}(ANON, string)
 
 function execute(k::Config, m::Equal, s::Clean, i)
     for x in m.string
@@ -122,7 +122,7 @@ end
 # possible states (limited by the maximum number of matches), yielding
 # when we have a result within the lo/hi range.
 
-abstract Repeat_{N}<:NamedMatcher{N}   # _ to avoid conflict with abstract in 0.3
+abstract Repeat_<:Matcher   # _ to avoid conflict with abstract in 0.3
 
 ALL = typemax(Int)
 
@@ -141,14 +141,14 @@ Repeat(m::Matcher; flatten=true, greedy=true) = Repeat(m, 0, ALL; flatten=flatte
 
 # depth-first (greedy) state and logic
 
-@auto type Depth{N}<:Repeat_{N}
-    name::N
+@auto type Depth<:Repeat_
+    name::Symbol
     matcher::Matcher
     lo::Integer
     hi::Integer
     flatten::Bool
+    Depth(m, lo, hi; flatten=true) = new(:Depth, m, lo, hi, flatten)
 end
-Depth(m, lo, hi; flatten=true) = Depth{Name}(ANON, m, lo, hi, flatten)
 
 # greedy matching is effectively depth first traversal of a tree where:
 # * performing an additional match is moving down to a new level 
@@ -253,14 +253,14 @@ response(k::Config, m::Depth, s::Backtrack, t, i, ::Failure) = execute(k, m, Dep
 
 # breadth-first specific state and logic
 
-@auto type Breadth{N}<:Repeat_{N}
-    name::N
+@auto type Breadth<:Repeat_
+    name::Symbol
     matcher::Matcher
     lo::Integer
     hi::Integer
     flatten::Bool
+    Breadth(m, lo, hi; flatten=true) = new(:Breadth, m, lo, hi, flatten)
 end
-Breadth(m, lo, hi; flatten=true) = Breadth{Name}(ANON, m, lo, hi, flatten)
 
 # minimal matching is effectively breadth first traversal of a tree where:
 # * performing an additional match is moving down to a new level 
@@ -343,7 +343,7 @@ end
 # to make the user API more conssistent we add flatten to the constructors 
 # and choose accordingly.
 
-abstract Series_{N}<:NamedMatcher{N}
+abstract Series_<:Matcher
 
 function Series(m::Matcher...; flatten=true)
     if flatten
@@ -353,21 +353,21 @@ function Series(m::Matcher...; flatten=true)
     end
 end
 
-@auto type Seq{N}<:Series_{N}
-    name::N
+@auto type Seq<:Series_
+    name::Symbol
     matchers::Array{Matcher,1}
+    Seq(m::Matcher...) = new(:Seq, [m...])
+    Seq(m::Array{Matcher,1}) = new(:Seq, m)
 end
-Seq(m::Matcher...) = Seq{Name}(ANON, [m...])
-Seq(m::Array{Matcher,1}) = Seq{Name}(ANON, m)
 
 serial_success(m::Seq, results) = Success(flatten(results))
 
-@auto type And{N}<:Series_{N}
-    name::N
+@auto type And<:Series_
+    name::Symbol
     matchers::Array{Matcher,1}
+    And(m::Matcher...) = new(:And, [m...])
+    And(m::Array{Matcher,1}) = new(:And,m)
 end
-And(m::Matcher...) = And{Name}(ANON, [m...])
-And(m::Array{Matcher,1}) = And{Name}(ANON, m)
 
 # copy so that state remains immutable
 serial_success(m::And, results) = Success([results;])
@@ -426,12 +426,12 @@ end
 
 # backtracked alternates
 
-@auto type Alt{N}<:NamedMatcher{N}
-    name::N
+@auto type Alt<:Matcher
+    name::Symbol
     matchers::Array{Matcher,1}
+    Alt(matchers::Matcher...) = new(:alt, [matchers...])
+    Alt(matchers::Array{Matcher,1}) = new(:Alt, matchers)    
 end
-Alt(matchers::Matcher...) = Alt{Name}(ANON, [matchers...])
-Alt(matchers::Array{Matcher,1}) = Alt{Name}(ANON, matchers)    
 
 @auto type AltState<:State
     state::State
@@ -467,11 +467,11 @@ end
 
 # evaluate the child, but discard values and do not advance the iter
 
-@auto type Lookahead{N}<:Delegate{N}
-    name::N
+@auto type Lookahead<:Delegate
+    name::Symbol
     matcher::Matcher
+    Lookahead(matcher) = new(:Lookahead, matcher)
 end
-Lookahead(matcher) = Lookahead{Name}(ANON, matcher)
 
 @auto type LookaheadState<:DelegateState
     state::State
@@ -488,11 +488,11 @@ response(k::Config, m::Lookahead, s, t, i, r::Success) = Response(LookaheadState
 # no backtracking of the child is supported (i don't understand how it would
 # work, but feel free to correct me....)
 
-@auto type Not{N}<:NamedMatcher{N}
-    name::N
+@auto type Not<:Matcher
+    name::Symbol
     matcher::Matcher
+    Not(matcher) = new(:Not ,matcher)
 end
-Not(matcher) = Not{Name}(ANON, matcher)
 
 @auto immutable NotState<:State
     iter
@@ -516,12 +516,12 @@ response(k::Config, m::Not, s, t, i, r::Failure) = Response(s, s.iter, EMPTY)
 
 # we also prepend ^ to anchor the match
 
-@auto type Pattern{N}<:NamedMatcher{N}
-    name::N
+@auto type Pattern<:Matcher
+    name::Symbol
     regex::Regex
+    Pattern(r::Regex) = new(:Pattern, Regex("^" * r.pattern * "(.??)"))
+    Pattern(s::AbstractString) = new(:Patterm. Regex("^" * s * "(.??)"))
 end
-Pattern(r::Regex) = Pattern{Name}(ANON, Regex("^" * r.pattern * "(.??)"))
-Pattern(s::AbstractString) = Pattern{Name}(ANON, Regex("^" * s * "(.??)"))
 
 function execute(k::Config, m::Pattern, s::Clean, i)
     @assert isa(k.source, AbstractString)
@@ -537,11 +537,11 @@ end
 
 # support loops
 
-@auto type Delayed{N}<:NamedMatcher{N}
-    name::N
+@auto type Delayed<:Matcher
+    name::Symbol
     matcher::Nullable{Matcher}
+    Delayed() = new(:Delayed, Nullable{Matcher}())
 end
-Delayed() = Delayed{Name}(ANON, Nullable{Matcher}())
 
 function execute(k::Config, m::Delayed, s::Dirty, i)
     Response(DIRTY, i, FAILURE)
@@ -559,11 +559,11 @@ end
 
 # enable debug when in scope of child
 
-@auto type Debug{N}<:Delegate{N}
-    name::N
+@auto type Debug<:Delegate
+    name::Symbol
     matcher::Matcher
+    Debug(matcher) = new(:Debug, matcher)
 end
-Debug(matcher) = Debug{Name}(ANON, matcher)
 
 @auto type DebugState<:DelegateState
     state::State
@@ -595,10 +595,10 @@ end
 
 # end of stream / string
 
-immutable Eos{N}<:NamedMatcher{N} 
-    name::N
+immutable Eos<:Matcher 
+    name::Symbol
+    Eos() = new(:Eos)
 end
-Eos() = Eos{Name}(ANON)
 
 function execute(k::Config, m::Eos, s::Clean, i)
     if done(k.source, i)

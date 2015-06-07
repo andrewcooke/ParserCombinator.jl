@@ -32,7 +32,7 @@
 @test parse_one("abc", p"." + s"b" + s"c") == ["a", "b", "c"]
 @test parse_one("abc", p"." + S"b" + s"c") == ["a", "c"]
 @test parse_one("b", Alt(s"a", s"b", s"c")) == ["b"]
-@test collect(parse_all("b", Alt(Epsilon(), Repeat(s"b", 0, 1)))) == Array[[], ["b"], []]
+@test collect(parse_all("b", Debug(Alt(Epsilon(), Repeat(s"b", 0, 1))))) == Array[[], ["b"], []]
 @test collect(parse_all("b", Alt(Epsilon(), Repeat(s"b", 0, 1; greedy=false)))) == Array[[], [], ["b"]]
 @test parse_one("abc", p"." + (s"b" | s"c")) == ["a", "b"]
 @test length(collect(parse_all("abc", p"."[0:3]))) == 4

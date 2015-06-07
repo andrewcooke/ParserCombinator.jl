@@ -29,4 +29,5 @@ hash(g::G) = hash(g.e)
     F() = new(nothing)
 end
 
+
 println("auto ok")

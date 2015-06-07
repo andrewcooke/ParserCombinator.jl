@@ -2,12 +2,18 @@
 
 # fundamental types (expanded below)
 
-abstract Matcher   # nodes in the AST that describe the grammar
+# nodes in the AST that describe the grammar.  all Matcher instacnes must be
+# mutable and have an attribute
+#  name::Symbol
+# which is set automatically to the matcher type by the constructor.
+# (re-set to a more useful type inside with_names() - see names.jl)
+abstract Matcher
+
 abstract Result    # result of a particular matcher's matching
 abstract Message   # data sente between trampoline and methods
 abstract State     # state associated with Matchers during evaluation
 
-# all Config subtypes must have attributes:
+# used to configure the parser.  all Config subtypes must have attributes:
 #  source
 #  debug::bool
 #  stack
