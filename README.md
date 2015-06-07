@@ -43,19 +43,19 @@ calc(s::Sum) = Base.sum(map(calc, s.val))
 
 # the grammar
 
-num = PFloat64()
 sum = Delayed()
+val = S"(" + sum + S")" | PFloat64()
 
-par = S"(" + sum + S")"
-val = par | num
+neg = Delayed()             # allow multiple negations (eg ---3)
+neg.matcher = val | (S"-" + neg > Neg)
 
-inv = (S"/" + val) > Inv
-dir = (S"*" + val)
-prd = val + (inv | dir)[0:end] |> Prd
+mul = S"*" + neg
+div = S"/" + neg > Inv
+prd = neg + (mul | div)[0:end] |> Prd
 
-neg = (S"-" + prd) > Neg
-pos = (S"+" + prd)
-sum.matcher = (prd | neg | pos) + (neg | pos)[0:end] |> Sum
+add = S"+" + prd
+sub = S"-" + prd > Neg
+sum.matcher = prd + (add | sub)[0:end] |> Sum
 
 all = sum + Eos()
 
