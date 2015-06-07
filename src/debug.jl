@@ -41,7 +41,7 @@ end
 # debug functions for printing trace
 
 MAX_RES = 40
-MAX_SRC = 20
+MAX_SRC = 10
 MAX_PAD = 10
 
 function truncate(s::AbstractString, n=10)
@@ -49,7 +49,7 @@ function truncate(s::AbstractString, n=10)
     if l < n
         s * repeat(" ", n-l)
     else
-        j = div(n,2) - 2
+        j = 2 * div(n,3) - 2
         k = l - j - 3
         s[1:j] * "..." * s[end-k:end]
     end

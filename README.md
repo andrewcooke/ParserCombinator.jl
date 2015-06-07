@@ -127,6 +127,7 @@ you combine these.  They can all be nested, refer to each other, etc etc.
 * [Other](#other)
   * [Coding Style](#coding-style)
   * [Adding Matchers](#adding-matchers)
+  * [Debugging](#debugging)
   * [More Information](#more-information)
 
 ### Basic Matchers
@@ -431,6 +432,197 @@ If you do, here are some places to get started:
 
 * If you want to write complex, stateful matchers then I'm afraid you're going
   to have to learn from the code for `Repeat()` and `Series()`.  Enjoy!
+
+#### Debugging
+
+Debugging a grammar can be a frustrating experience - there are times when it
+really helps to have a simple view "inside" what is happening.  This is
+supported by `parse_dbg` which will print a record of all messages (execute
+and response - see [design](#design)) for matchers inside a `Trace()` matcher.
+
+In addition, if the grammr is defined inside a `@with_names` macro, the
+symbols used to identify various parts of the grammar (the variable name's)
+are displayed when appropriate.
+
+Here's a full example:
+
+```julia
+@with_names begin
+
+    sum = Delayed()
+    val = S"(" + sum + S")" | PFloat64()
+
+    neg = Delayed()             # allow multiple negations (eg ---3)
+    neg.matcher = val | (S"-" + neg > Neg)
+    
+    mul = S"*" + neg
+    div = S"/" + neg > Inv
+    prd = neg + (mul | div)[0:end] |> Prd
+    
+    add = S"+" + prd
+    sub = S"-" + prd > Neg
+    sum.matcher = prd + (add | sub)[0:end] |> Sum
+    
+    all = sum + Eos()
+end
+
+parse_dbg("1+2*3/4", Trace(all))
+```
+
+which gives:
+
+```
+  1:1+2*3/4    00 Trace->all
+  1:1+2*3/4    01  all->sum
+  1:1+2*3/4    02   TransSuccess->Seq
+  1:1+2*3/4    03    Seq->prd
+  1:1+2*3/4    04     prd->Seq
+  1:1+2*3/4    05      Seq->neg
+  1:1+2*3/4    06       Alt->Seq
+  1:1+2*3/4    07        Seq->Drop
+  1:1+2*3/4    08         Drop->Equal
+  2:+2*3/4     08         Seq<-!!!                                     
+  2:+2*3/4     07        Alt<-!!!                                     
+  1:1+2*3/4    06       Seq<-!!!                                     
+  1:1+2*3/4    06       Alt->TransSuccess
+  1:1+2*3/4    07        TransSuccess->Pattern
+  2:+2*3/4     07        Alt<-["1"]                                   
+  2:+2*3/4     06       Seq<-[1.0]                                   
+  2:+2*3/4     05      prd<-[1.0]                                   
+  2:+2*3/4     05      Seq->Depth
+  2:+2*3/4     06       Depth->alt
+  2:+2*3/4     07        alt->mul
+  2:+2*3/4     08         mul->Drop
+  2:+2*3/4     09          Drop->Equal
+  3:2*3/4      09          mul<-!!!                                     
+  3:2*3/4      08         alt<-!!!                                     
+  2:+2*3/4     07        Depth<-!!!                                     
+  2:+2*3/4     07        alt->div
+  2:+2*3/4     08         div->Seq
+  2:+2*3/4     09          Seq->Drop
+  2:+2*3/4     10 Drop->Equal
+  3:2*3/4      10 Seq<-!!!                                     
+  3:2*3/4      09          div<-!!!                                     
+  2:+2*3/4     08         alt<-!!!                                     
+  2:+2*3/4     07        Depth<-!!!                                     
+  2:+2*3/4     06       Seq<-!!!                                     
+  2:+2*3/4     05      prd<-[]                                      
+  2:+2*3/4     04     Seq<-[1.0]                                   
+  2:+2*3/4     03    TransSuccess<-[Prd(Any[1.0])]                         
+  2:+2*3/4     03    Seq->Depth
+  2:+2*3/4     04     Depth->alt
+  2:+2*3/4     05      alt->add
+  2:+2*3/4     06       add->Drop
+  2:+2*3/4     07        Drop->Equal
+  3:2*3/4      07        add<-["+"]                                   
+  3:2*3/4      06       alt<-[]                                      
+  3:2*3/4      06       add->prd
+  3:2*3/4      07        prd->Seq
+  3:2*3/4      08         Seq->neg
+  3:2*3/4      09          Alt->Seq
+  3:2*3/4      10 Seq->Drop
+  3:2*3/4      11  Drop->Equal
+  4:*3/4       11  Seq<-!!!                                     
+  4:*3/4       10 Alt<-!!!                                     
+  3:2*3/4      09          Seq<-!!!                                     
+  3:2*3/4      09          Alt->TransSuccess
+  3:2*3/4      10 TransSuccess->Pattern
+  4:*3/4       10 Alt<-["2"]                                   
+  4:*3/4       09          Seq<-[2.0]                                   
+  4:*3/4       08         prd<-[2.0]                                   
+  4:*3/4       08         Seq->Depth
+  4:*3/4       09          Depth->alt
+  4:*3/4       10 alt->mul
+  4:*3/4       11  mul->Drop
+  4:*3/4       12   Drop->Equal
+  5:3/4        12   mul<-["*"]                                   
+  5:3/4        11  alt<-[]                                      
+  5:3/4        11  mul->neg
+  5:3/4        12   Alt->Seq
+  5:3/4        13    Seq->Drop
+  5:3/4        14     Drop->Equal
+  6:/4         14     Seq<-!!!                                     
+  6:/4         13    Alt<-!!!                                     
+  5:3/4        12   mul<-!!!                                     
+  5:3/4        12   Alt->TransSuccess
+  5:3/4        13    TransSuccess->Pattern
+  6:/4         13    Alt<-["3"]                                   
+  6:/4         12   mul<-[3.0]                                   
+  6:/4         11  alt<-[3.0]                                   
+  6:/4         10 Depth<-[3.0]                                   
+  6:/4         09          Seq<-[3.0]                                   
+  6:/4         09          Depth->alt
+  6:/4         10 alt->mul
+  6:/4         11  mul->Drop
+  6:/4         12   Drop->Equal
+  7:4          12   mul<-!!!                                     
+  7:4          11  alt<-!!!                                     
+  6:/4         10 Depth<-!!!                                     
+  6:/4         10 alt->div
+  6:/4         11  div->Seq
+  6:/4         12   Seq->Drop
+  6:/4         13    Drop->Equal
+  7:4          13    Seq<-["/"]                                   
+  7:4          12   div<-[]                                      
+  7:4          12   Seq->neg
+  7:4          13    Alt->Seq
+  7:4          14     Seq->Drop
+  7:4          15      Drop->Equal
+  8:           15      Seq<-!!!                                     
+  8:           14     Alt<-!!!                                     
+  7:4          13    Seq<-!!!                                     
+  7:4          13    Alt->TransSuccess
+  7:4          14     TransSuccess->Pattern
+  8:           14     Alt<-["4"]                                   
+  8:           13    Seq<-[4.0]                                   
+  8:           12   div<-[4.0]                                   
+  8:           11  alt<-[4.0]                                   
+  8:           10 Depth<-[Inv(4.0)]                              
+  8:           09          Seq<-[Inv(4.0)]                              
+  8:           09          Depth->alt
+  8:           10 alt->mul
+  8:           11  mul->Drop
+  8:           12   Drop->Equal
+  8:           12   mul<-!!!                                     
+  8:           11  alt<-!!!                                     
+  8:           10 Depth<-!!!                                     
+  8:           10 alt->div
+  8:           11  div->Seq
+  8:           12   Seq->Drop
+  8:           13    Drop->Equal
+  8:           13    Seq<-!!!                                     
+  8:           12   div<-!!!                                     
+  8:           11  alt<-!!!                                     
+  8:           10 Depth<-!!!                                     
+  8:           09          Seq<-!!!                                     
+  8:           08         prd<-[3.0,Inv(4.0)]                          
+  8:           07        add<-[2.0,3.0,Inv(4.0)]                      
+  8:           06       alt<-[Prd(Any[2.0,3.0,Inv(4.0)])]            
+  8:           05      Depth<-[Prd(Any[2.0,3.0,Inv(4.0)])]            
+  8:           04     Seq<-[Prd(Any[2.0,3.0,Inv(4.0)])]            
+  8:           04     Depth->alt
+  8:           05      alt->add
+  8:           06       add->Drop
+  8:           07        Drop->Equal
+  8:           07        add<-!!!                                     
+  8:           06       alt<-!!!                                     
+  8:           05      Depth<-!!!                                     
+  8:           05      alt->sub
+  8:           06       sub->Seq
+  8:           07        Seq->Drop
+  8:           08         Drop->Equal
+  8:           08         Seq<-!!!                                     
+  8:           07        sub<-!!!                                     
+  8:           06       alt<-!!!                                     
+  8:           05      Depth<-!!!                                     
+  8:           04     Seq<-!!!                                     
+  8:           03    TransSuccess<-[Prd(Any[2.0,3.0,Inv(4.0)])]            
+  8:           02   all<-[Prd(Any[1.0]),Prd(Any[2...,3.0,Inv(4.0)])]
+  8:           01  Trace<-[Sum(Any[Prd(Any[1.0]),P...(Any[2.0,3.0,Inv(4.0)])])]
+  8:           01  all->Eos
+  8:           01  Trace<-[]                                      
+  8:           00 Root<-[Sum(Any[Prd(Any[1.0]),P...(Any[2.0,3.0,Inv(4.0)])])]
+```
 
 #### More Information
 

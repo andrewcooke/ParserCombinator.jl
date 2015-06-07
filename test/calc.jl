@@ -49,6 +49,8 @@ end
 @test length(get(sum.matcher).matcher.matchers) == 2
 @test typeof(get(sum.matcher).matcher.matchers[2]) == Depth
 
+parse_dbg("1+2*3/4", Trace(all))
+
 for (src, val) in [
                    ("1", 1),
                    ("-1", -1),
