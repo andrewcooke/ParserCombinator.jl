@@ -124,7 +124,7 @@ for i in 1:20
         @test_approx_eq eval(parse(expr)) calc(parse_one(expr, all)[1])
     catch
         @test_throws Exception parse(expr)
-        @test_throws Exception parse_one(expr, all)
+        @test_throws Exception calc(parse_one(expr, all)[1])
     end
 end
 
