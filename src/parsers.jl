@@ -1,5 +1,6 @@
 
 # TODO - return config too, so that debug can return calls made etc
+# maybe deepest match, too?
 
 
 # this works for all configs defined so far
@@ -75,7 +76,6 @@ response(k::Config, m::Root, s::State, t::State, i, r::Success) = Response(RootS
 response(k::Config, m::Root, s::State, t::State, i, r::Failure) = Response(DIRTY, i, r)
 
 
-
 # the core loop that drives the parser, calling the appropriate dispatch
 # functions (above) depending on which Config was used.
 # to modify th ebehaviour you can create a new Config sub-type and then
@@ -109,26 +109,31 @@ end
 # these assume that any config construct takes a single source argument 
 # plus optional keyword args
 
+function make(config, source, matcher; kargs...)
+    k = config(source; kargs...)
+    (k, Task(() -> producer(k, matcher)))
+end
+
 function make_all(config; kargs_make...)
     function multiple_results(source, matcher::Matcher; kargs_parse...)
-        function startup()
-            kargs = vcat(kargs_make, kargs_parse)
-            k = config(source; kargs...)
-            producer(k, matcher)
-        end
-        Task(startup)
+        kargs = vcat(kargs_make, kargs_parse)
+        make(config, source, matcher; kargs...)[2]
+    end
+end
+
+function once(task)
+    result = consume(task)
+    if task.state == :done
+        throw(ParserException("cannot parse"))
+    else
+        return result
     end
 end
 
 function make_one(config; kargs_make...)
     function single_result(source, matcher::Matcher; kargs_parse...)
-        task = make_all(config, kargs_make...)(source, matcher; kargs_parse...)
-        result = consume(task)
-        if task.state == :done
-            throw(ParserException("cannot parse"))
-        else
-            return result
-        end
+        kargs = vcat(kargs_make, kargs_parse)
+        once(make(config, source, matcher; kargs...)[2])
     end
 end
 

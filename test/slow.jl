@@ -15,14 +15,19 @@ function slow(n)
         source = repeat("a", n)
         for config in (NoCache, Cache)
             println("$(config)")
-            all = make_all(config)
-            @time collect(all(source, matcher))
-            @time n = length(collect(all(source, matcher)))
-            println(n)
+            all1 = make_all(config)
+            @time collect(all1(source, matcher))
+            @time n = length(collect(all1(source, matcher)))
+            println("n results: $n")
+            debug, all2 = make(Debug, source, matcher; delegate=config)
+            collect(all2)
+            println("max depth: $(debug.max_depth)")
+            println("max iter: $(debug.max_iter)")
+            println("n calls: $(debug.n_calls)")
         end
     end
 end
 slow(3)
-# slow(6)  # not for travis!
+#slow(7)  # not for travis!
 
 println("slow ok")

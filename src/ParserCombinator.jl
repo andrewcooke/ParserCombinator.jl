@@ -5,7 +5,7 @@ using Compat
 import Base: start, endof, getindex
 
 export @auto, @with_names, set_name,
-Config, Cache, NoCache, make_all, make_one, parse_one, parse_all,
+Config, Cache, NoCache, make, make_all, make_one, parse_one, parse_all,
 Debug, Trace, parse_dbg,
 Matcher, State, Result, Success, Execute, Response, 
 Failure, EMPTY, FAILURE, Clean, CLEAN, Dirty, DIRTY,
