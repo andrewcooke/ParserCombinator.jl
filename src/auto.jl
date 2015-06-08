@@ -1,36 +1,37 @@
 
-# TODO - isequal?  handle zero size.  add typeto hash.
 
 # add == and hash() to composite types (ie type and immutable blocks):
-#
-# @auto type Foo
-#     a::Int
-#     b
-# end
-#
+#   @auto type Foo
+#       a::Int
+#       b
+#   end
 # becomes
-#
-# type Foo
-#     a::Int
-#     b
-# end
-# hash(a::Foo) = hash(a.a, hash(a.b))
-# ==(a::Foo, b::Foo) = a.a == b.a && a.b == b.b
+#   type Foo
+#       a::Int
+#       b
+#   end
+#   hash(a::Foo) = hash(a.b, hash(a.a, hash(:Foo)))
+#   ==(a::Foo, b::Foo) = isequal(a.b, b.b) && isequal(a.a, b.a) && true
+# where:
+# * we use isequal because we want to match cached Inf values, etc.
+# * we include the type in the hash so that different types with the same
+#   contents don't collide
+# * the type and "true" make it simple to generate code for empty types
 
 
 function auto_hash(name, names)
 
     function expand(i)
-        if i == length(names)
-            :(hash(a.$(names[i])))
+        if i == 0
+            :(hash($(QuoteNode(name))))
         else
-            :(hash(a.$(names[i]), $(expand(i+1))))
+            :(hash(a.$(names[i]), $(expand(i-1))))
         end
     end
 
     quote
         function hash(a::$(name)) 
-            $(expand(1))
+            $(expand(length(names)))
         end
     end
 end
@@ -38,16 +39,16 @@ end
 function auto_equals(name, names)
 
     function expand(i)
-        if i == length(names)
-            :(a.$(names[i]) == b.$(names[i]))
+        if i == 0
+            :true
         else
-            :(a.$(names[i]) == b.$(names[i]) && $(expand(i+1)))
+            :(isequal(a.$(names[i]), b.$(names[i])) && $(expand(i-1)))
         end
     end
 
     quote
         function ==(a::$(name), b::$(name)) 
-            $(expand(1))
+            $(expand(length(names)))
         end
     end
 end
@@ -56,9 +57,11 @@ type UnpackException <: Exception
     msg
 end
 
-function unpack_name(node)
-    if isa(node, Symbol)
-        node
+unpack_name(node::Symbol) = node
+
+function unpack_name(node::Expr)
+    if node.head == :macrocall
+        unpack_name(node.args[2])
     else
         i = node.head == :type ? 2 : 1   # skip mutable flag
         if isa(node.args[i], Symbol)
