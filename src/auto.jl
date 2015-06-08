@@ -1,7 +1,7 @@
 
 # TODO - isequal?  handle zero size.  add typeto hash.
 
-# add == and hash() to composite types (ie type and immutable blocks).
+# add == and hash() to composite types (ie type and immutable blocks):
 #
 # @auto type Foo
 #     a::Int
