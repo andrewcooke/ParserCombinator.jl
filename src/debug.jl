@@ -1,7 +1,15 @@
 
 
+# a Config instance that delegates to another, printing information about messages
+# as they are sent.  WARNING: makes a pile of assumptions about the source being
+# a string.
+
+# the default parse_dbg uses a simple no-caching delegate, but you can construct
+# your own with any type by using the delegate=... keyword.  see test/calc.j for
+# an example.
+
 type Debug<:Config
-    source::Any
+    source::AbstractString
     stack::Array
     delegate::Config
     depth::Array{Int,1}
@@ -9,7 +17,7 @@ type Debug<:Config
     max_depth::Int
     max_iter::Any
     n_calls::Int
-    function Debug(source; delegate=NoCache, kargs...)
+    function Debug(source::AbstractString; delegate=NoCache, kargs...)
         k = delegate(source; kargs...)
         new(k.source, k.stack, k, Array(Int, 0), 0, 0, start(k.source), 0)
     end
