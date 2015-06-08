@@ -624,11 +624,11 @@ which gives:
   8:           05      Depth<-!!!                                     
   8:           04     Seq<-!!!                                     
   8:           03    TransSuccess<-[Prd(Any[2.0,3.0,Inv(4.0)])]            
-  8:           02   all<-[Prd(Any[1.0]),Prd(Any[2...,3.0,Inv(4.0)])]
-  8:           01  Trace<-[Sum(Any[Prd(Any[1.0]),P...(Any[2.0,3.0,Inv(4.0)])])]
+  8:           02   all<-[Prd(Any[1.0]),Prd(Any[2....,Inv(4.0)])]
+  8:           01  Trace<-[Sum(Any[Prd(Any[1.0]),Pr...nv(4.0)])])]
   8:           01  all->Eos
   8:           01  Trace<-[]                                      
-  8:           00 Root<-[Sum(Any[Prd(Any[1.0]),P...(Any[2.0,3.0,Inv(4.0)])])]
+  8:           00 Root<-[Sum(Any[Prd(Any[1.0]),Pr...nv(4.0)])])]
 ```
 
 Some things to note here:

@@ -46,12 +46,13 @@ MAX_PAD = 10
 
 function truncate(s::AbstractString, n=10)
     l = length(s)
-    if l < n
+    if l <= n
         s * repeat(" ", n-l)
     else
-        j = 2 * div(n,3) - 2
-        k = l - j - 3
-        s[1:j] * "..." * s[end-k:end]
+        j = div(2*n+1,3) - 2
+        # j + 3 + (l - k + 1) = n
+        k = j + 3 + l + 1 - n
+        s[1:j] * "..." * s[k:end]
     end
 end
 

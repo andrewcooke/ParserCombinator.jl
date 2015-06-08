@@ -2,6 +2,14 @@
 # not really a test, since it's not verified.  but if you run this you
 # should see appropriate output to stdout.
 
+@test ParserCombinator.truncate("1234567890", 10) == "1234567890"
+@test ParserCombinator.truncate("1234567890",  9) == "1234...90"
+@test ParserCombinator.truncate("1234567890",  8) == "123...90"
+@test ParserCombinator.truncate("1234567890",  7) == "123...0"
+@test ParserCombinator.truncate("1234567890",  6) == "12...0"
+@test ParserCombinator.truncate("1234567890",  5) == "1...0"
+
+
 println("one level")
 parse_dbg("ab", Trace(Dot()))
 
