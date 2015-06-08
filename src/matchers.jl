@@ -336,8 +336,9 @@ end
 # whether results are merged (Seq/+) or not (And/&).
 
 # we need two different types so that we can define + and & appropriately.  
-# to make the user API more conssistent we add flatten to the constructors 
-# and choose accordingly.
+# to make the user API more conssistent we also define Series (similar to
+# Repeat) that takes a flatten argument.  finally, both are so similar
+# that they can share the same state.
 
 abstract Series_<:Matcher
 
@@ -499,6 +500,7 @@ execute(k::Config, m::Not, s::Clean, i) = Execute(m, NotState(i), m.matcher, CLE
 response(k::Config, m::Not, s, t, i, r::Success) = Response(s, s.iter, FAILURE)
 
 response(k::Config, m::Not, s, t, i, r::Failure) = Response(s, s.iter, EMPTY)
+
 
 
 # match a regular expression.
