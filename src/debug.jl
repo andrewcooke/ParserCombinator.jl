@@ -33,7 +33,6 @@ function dispatch(k::Debug, e::Execute)
 end
 
 function dispatch(k::Debug, r::Response)
-    msg = dispatch(k.delegate, r)
     if isa(r.state_child, TraceState)
         @assert 0 == pop!(k.depth)
     end
@@ -47,7 +46,7 @@ function dispatch(k::Debug, r::Response)
     catch
         # max() may not be defined for this type
     end
-    msg
+    dispatch(k.delegate, r)
 end
 
 
