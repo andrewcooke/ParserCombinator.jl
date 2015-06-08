@@ -447,7 +447,7 @@ supported by `parse_dbg` which will print a record of all messages (execute
 and response - see [design](#design)) for matchers inside a `Trace()` matcher.
 
 In addition, if the grammar is defined inside a `@with_names` macro, the
-symbols used to identify various parts of the grammar (the variable name's)
+symbols used to identify various parts of the grammar (the variable names)
 are displayed when appropriate.
 
 Here's a full example (you can view less by applying `Trace()` to only the
