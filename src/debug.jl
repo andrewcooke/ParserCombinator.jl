@@ -15,7 +15,7 @@ type Debug<:Config
     depth::Array{Int,1}
     abs_depth::Int
     max_depth::Int
-    max_iter::Any
+    max_iter::Int
     n_calls::Int
     function Debug(source::AbstractString; delegate=NoCache, kargs...)
         k = delegate(source; kargs...)
@@ -49,11 +49,7 @@ function dispatch(k::Debug, r::Response)
         debug(k, r)
     end
     k.abs_depth -= 1
-    try
-        k.max_iter = max(k.max_iter, r.iter)
-    catch
-        # max() may not be defined for this type
-    end
+    k.max_iter = max(k.max_iter, r.iter)
     dispatch(k.delegate, r)
 end
 
