@@ -21,6 +21,7 @@ abstract B
 @test C(1) == C(1)
 @test hash(C(1)) == hash(C(1))
 
+if VERSION < v"0.4-" typealias Void Nothing end
 abstract E{N<:Union(Void,Int)}
 @auto type F{N}<:E{N} e::N end
 @auto type G{N}<:E{N}
