@@ -1,8 +1,4 @@
 
-# in general, use immutable for types with no or a single pointer content, and
-# mutable for everything else.  but need to take care to define equality,
-# hash, and to not actually mutate anything.  see discussion in types.jl.
-
 
 # some basic definitions for generic matches
 
