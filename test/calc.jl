@@ -1,15 +1,19 @@
 
+# https://github.com/JuliaLang/julia/issues/11618
+signed_prod(lst) = length(lst) == 1 ? lst[1] : Base.prod(lst)
+signed_sum(lst) = length(lst) == 1 ? lst[1] : Base.sum(lst)
+
 abstract Node
-==(n1::Node, n2::Node) = n1.val == n2.val
+==(n1::Node, n2::Node) = isequal(n1.val, n2.val)
 calc(n::Float64) = n
 type Inv<:Node val end
 calc(i::Inv) = 1.0/calc(i.val)
 type Prd<:Node val end
-calc(p::Prd) = Base.prod(map(calc, p.val))
+calc(p::Prd) = signed_prod(map(calc, p.val))
 type Neg<:Node val end
 calc(n::Neg) = -calc(n.val)
 type Sum<:Node val end
-calc(s::Sum) = Base.sum(map(calc, s.val))
+calc(s::Sum) = signed_sum(map(calc, s.val))
 
 @with_names begin
 
@@ -93,6 +97,45 @@ end
 @test_approx_eq calc(parse_one("4.0-5.0-0.0/8.0/5.0/3.0*(-6.0/5.0)-9.0*3.0*-((0.0-9.0))*9.0", all)[1]) -2188.0
 @test_approx_eq calc(parse_one("((-6.0/6.0+7.0))*((-1.0-3.0/5.0))+-(9.0)", all)[1]) -18.6
 
+x = Neg(Prd(Any[7.0,
+                Inv(0.0),
+                Inv(2.0),
+                Inv(Neg(0.0))]))
+y = calc(x)
+z = -7.0/0.0/2.0/-0.0
+println("$x $y $z")
+@test isequal(y, z)
+
+for x in [Inv(Neg(0.0)),
+          Inv(Prd(Any[Neg(Sum(Any[Prd(Any[0.0])]))])),
+          Inv(Sum(Any[Prd(Any[Neg(Sum(Any[Prd(Any[0.0])]))])]))
+          ]
+    y = calc(x)
+    println("$x $y")
+    @test isequal(y, -Inf)
+end
+
+x = Neg(Prd(Any[7.0,
+                Inv(0.0),
+                Inv(2.0),
+                Inv(Sum(Any[Prd(Any[Neg(Sum(Any[Prd(Any[0.0])]))])])),
+                3.0]))
+y = calc(x)
+z = -7.0/0.0/2.0/(-(0.0))*3.0
+println("$x $y $z")
+@test isequal(y, z)
+
+p = Sum(Any[Prd(Any[-9.0]),
+            Neg(Prd(Any[7.0,Inv(0.0),Inv(2.0),Inv(Sum(Any[Prd(Any[Neg(Sum(Any[Prd(Any[0.0])]))])])),3.0])),
+            Neg(Prd(Any[7.0,Inv(Neg(Sum(Any[Prd(Any[9.0]),Prd(Any[5.0])])))])),
+            Prd(Any[5.0]),
+            Neg(Prd(Any[7.0]))]) 
+
+a = eval(parse("-9.0-7.0/0.0/2.0/(-(0.0))*3.0-7.0/-(9.0+5.0)+5.0-7.0"))
+b = parse_one("-9.0-7.0/0.0/2.0/(-(0.0))*3.0-7.0/-(9.0+5.0)+5.0-7.0", all)[1]
+c = calc(b)
+println("$a $b $c")
+@test isequal(a, c)
 
 # generate random expressions, parse them, and compare the results to
 # evaluating in julia
@@ -119,9 +162,13 @@ for i in 1:20
     end
     # julia desn't like repeated -
     expr = replace(expr, r"-+", "-")
-    println(expr)
+    println("expr $(expr)")
     try
-        @test_approx_eq eval(parse(expr)) calc(parse_one(expr, all)[1])
+        a = eval(parse(expr)) 
+        b = calc(parse_one(expr, all)[1])
+        if ! isequal(a, b)   # allow for Inf etc
+            @test_approx_eq a b
+        end
     catch
         @test_throws Exception parse(expr)
         @test_throws Exception calc(parse_one(expr, all)[1])
