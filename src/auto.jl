@@ -2,14 +2,14 @@
 # TODO - isequal?  handle zero size.  add typeto hash.
 
 # add == and hash() to composite types (ie type and immutable blocks).
-
+#
 # @auto type Foo
 #     a::Int
 #     b
 # end
-
+#
 # becomes
-
+#
 # type Foo
 #     a::Int
 #     b
