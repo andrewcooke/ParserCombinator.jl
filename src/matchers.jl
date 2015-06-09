@@ -32,7 +32,7 @@ response(k::Config, m::Delegate, s, t, i, r::Failure) = Response(DIRTY, i, FAILU
 
 # various weird things for completeness
 
-@auto type Epsilon<:Matcher
+@auto_hash_equals type Epsilon<:Matcher
     name::Symbol
     Epsilon() = new(:Epsilon)
 end
@@ -40,7 +40,7 @@ end
 execute(k::Config, m::Epsilon, s::Clean, i) = Response(DIRTY, i, EMPTY)
 
 
-@auto type Insert<:Matcher
+@auto_hash_equals type Insert<:Matcher
     name::Symbol
     text
     Insert(text) = new(:Insert, text)
@@ -49,7 +49,7 @@ end
 execute(k::Config, m::Insert, s::Clean, i) = Response(DIRTY, i, Success(m.text))
 
 
-immutable Dot<:Matcher 
+@auto_hash_equals immutable Dot<:Matcher 
     name::Symbol
     Dot() = new(:Dot)
 end
@@ -64,7 +64,7 @@ function execute(k::Config, m::Dot, s::Clean, i)
 end
 
 
-immutable Fail<:Matcher
+@auto_hash_equals immutable Fail<:Matcher
     name::Symbol
     Fail() = new(:Fail)
 end
@@ -75,13 +75,13 @@ execute(k::Config, m::Fail, s::Clean, i) = Response(DIRTY, i, FAILURE)
 
 # evaluate the sub-matcher, but replace the result with EMPTY
 
-@auto type Drop<:Delegate
+@auto_hash_equals type Drop<:Delegate
     name::Symbol
     matcher::Matcher
     Drop(matcher) = new(:Drop, matcher)
 end
 
-@auto immutable DropState<:DelegateState
+@auto_hash_equals immutable DropState<:DelegateState
     state::State
 end
 
@@ -91,7 +91,7 @@ response(k::Config, m::Drop, s, t, i, rs::Success) = Response(DropState(t), i, E
 
 # exact match
 
-@auto type Equal<:Matcher
+@auto_hash_equals type Equal<:Matcher
     name::Symbol
     string
     Equal(string) = new(:Equal, string)
@@ -137,7 +137,7 @@ Repeat(m::Matcher; flatten=true, greedy=true) = Repeat(m, 0, ALL; flatten=flatte
 
 # depth-first (greedy) state and logic
 
-@auto type Depth<:Repeat_
+@auto_hash_equals type Depth<:Repeat_
     name::Symbol
     matcher::Matcher
     lo::Integer
@@ -159,7 +159,7 @@ end
 
 abstract DepthState<:RepeatState
 
-@auto type Slurp<:DepthState
+@auto_hash_equals type Slurp<:DepthState
     # there's a mismatch in lengths here because the empty results is
     # associated with an iter and state
     results::Array{Value,1} # accumulated.  starts []
@@ -167,13 +167,13 @@ abstract DepthState<:RepeatState
     states::Array{State,1}  # at the end of the result.  starts {CLEAN]
 end
 
-@auto type DepthYield<:DepthState
+@auto_hash_equals type DepthYield<:DepthState
     results::Array{Value,1}
     iters::Array{Any,1}
     states::Array{State,1}
 end
 
-@auto type Backtrack<:DepthState
+@auto_hash_equals type Backtrack<:DepthState
     results::Array{Value,1}
     iters::Array{Any,1}
     states::Array{State,1}
@@ -249,7 +249,7 @@ response(k::Config, m::Depth, s::Backtrack, t, i, ::Failure) = execute(k, m, Dep
 
 # breadth-first specific state and logic
 
-@auto type Breadth<:Repeat_
+@auto_hash_equals type Breadth<:Repeat_
     name::Symbol
     matcher::Matcher
     lo::Integer
@@ -268,7 +268,7 @@ end
 # than for th egreedy match (wikipedia calls this "level order" so my 
 # terminology may be wrong).
 
-@auto type Entry
+@auto_hash_equals type Entry
     iter
     state::State
     results::Array{Value,1}
@@ -276,12 +276,12 @@ end
 
 abstract BreadthState<:RepeatState
 
-@auto type Grow<:BreadthState
+@auto_hash_equals type Grow<:BreadthState
     start  # initial iter
     queue::Array{Entry,1}  # this has to be type for caching
 end
 
-@auto type BreadthYield<:BreadthState
+@auto_hash_equals type BreadthYield<:BreadthState
     start  # initial iter
     queue::Array{Entry,1}  # this has to be immutable for caching
 end
@@ -350,7 +350,7 @@ function Series(m::Matcher...; flatten=true)
     end
 end
 
-@auto type Seq<:Series_
+@auto_hash_equals type Seq<:Series_
     name::Symbol
     matchers::Array{Matcher,1}
     Seq(m::Matcher...) = new(:Seq, [m...])
@@ -359,7 +359,7 @@ end
 
 serial_success(m::Seq, results) = Success(flatten(results))
 
-@auto type And<:Series_
+@auto_hash_equals type And<:Series_
     name::Symbol
     matchers::Array{Matcher,1}
     And(m::Matcher...) = new(:And, [m...])
@@ -369,7 +369,7 @@ end
 # copy so that state remains immutable
 serial_success(m::And, results) = Success([results;])
 
-@auto type SeriesState<:State
+@auto_hash_equals type SeriesState<:State
     results::Array{Value,1}
     iters::Array{Any,1}
     states::Array{State,1}
@@ -423,14 +423,14 @@ end
 
 # backtracked alternates
 
-@auto type Alt<:Matcher
+@auto_hash_equals type Alt<:Matcher
     name::Symbol
     matchers::Array{Matcher,1}
     Alt(matchers::Matcher...) = new(:Alt, [matchers...])
     Alt(matchers::Array{Matcher,1}) = new(:Alt, matchers)    
 end
 
-@auto type AltState<:State
+@auto_hash_equals type AltState<:State
     state::State
     iter
     i  # index into current alternative
@@ -464,13 +464,13 @@ end
 
 # evaluate the child, but discard values and do not advance the iter
 
-@auto type Lookahead<:Delegate
+@auto_hash_equals type Lookahead<:Delegate
     name::Symbol
     matcher::Matcher
     Lookahead(matcher) = new(:Lookahead, matcher)
 end
 
-@auto type LookaheadState<:DelegateState
+@auto_hash_equals type LookaheadState<:DelegateState
     state::State
     iter
 end
@@ -485,13 +485,13 @@ response(k::Config, m::Lookahead, s, t, i, r::Success) = Response(LookaheadState
 # no backtracking of the child is supported (i don't understand how it would
 # work, but feel free to correct me....)
 
-@auto type Not<:Matcher
+@auto_hash_equals type Not<:Matcher
     name::Symbol
     matcher::Matcher
     Not(matcher) = new(:Not ,matcher)
 end
 
-@auto immutable NotState<:State
+@auto_hash_equals immutable NotState<:State
     iter
 end
 
@@ -514,7 +514,7 @@ response(k::Config, m::Not, s, t, i, r::Failure) = Response(s, s.iter, EMPTY)
 
 # we also prepend ^ to anchor the match
 
-@auto type Pattern<:Matcher
+@auto_hash_equals type Pattern<:Matcher
     name::Symbol
     regex::Regex
     Pattern(r::Regex) = new(:Pattern, Regex("^" * r.pattern * "(.??)"))
@@ -535,7 +535,7 @@ end
 
 # support loops
 
-@auto type Delayed<:Matcher
+@auto_hash_equals type Delayed<:Matcher
     name::Symbol
     matcher::Nullable{Matcher}
     Delayed() = new(:Delayed, Nullable{Matcher}())
@@ -557,7 +557,7 @@ end
 
 # end of stream / string
 
-immutable Eos<:Matcher 
+@auto_hash_equals immutable Eos<:Matcher 
     name::Symbol
     Eos() = new(:Eos)
 end

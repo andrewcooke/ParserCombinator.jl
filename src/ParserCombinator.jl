@@ -2,9 +2,10 @@
 module ParserCombinator
 
 using Compat
+using AutoHashEquals
 import Base: start, endof, getindex
 
-export @auto, @with_names, set_name,
+export @with_names, set_name,
 Config, Cache, NoCache, make, make_all, make_one, parse_one, parse_all,
 Debug, Trace, parse_dbg,
 Matcher, State, Result, Success, Execute, Response, 
@@ -18,7 +19,6 @@ Parse, PUInt, PUInt8, PUInt16, PUInt32, PUInt64,
 PInt, PInt8, PInt16, PInt32, PInt64, PFloat32, PFloat64,
 Word, Space, Star, Plus
 
-include("auto.jl")
 include("types.jl")
 include("names.jl")
 include("matchers.jl")

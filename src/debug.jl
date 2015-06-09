@@ -1,12 +1,12 @@
 
 
-# a Config instance that delegates to another, printing information about messages
-# as they are sent.  WARNING: makes a pile of assumptions about the source being
-# a string.
+# a Config instance that delegates to another, printing information about
+# messages as they are sent.  WARNING: makes a pile of assumptions about the
+# source being a string.
 
-# the default parse_dbg uses a simple no-caching delegate, but you can construct
-# your own with any type by using the delegate=... keyword.  see test/calc.j for
-# an example.
+# the default parse_dbg uses a simple no-caching delegate, but you can
+# construct your own with any type by using the delegate=... keyword.  see
+# test/calc.j for an example.
 
 type Debug<:Config
     source::AbstractString
@@ -103,13 +103,13 @@ end
 # this does nothing except delegate and, by simply "being seen" during
 # disparch above, toggle debug state.
 
-@auto type Trace<:Delegate
+@auto_hash_equals type Trace<:Delegate
     name::Symbol
     matcher::Matcher
     Trace(matcher) = new(:Trace, matcher)
 end
 
-@auto type TraceState<:DelegateState
+@auto_hash_equals immutable TraceState<:DelegateState
     state::State
 end
 

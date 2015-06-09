@@ -4,14 +4,14 @@
 # note that the function will receive a Result instance (Failure, Empty or
 # Value) and that the value returned must also be a Result
 
-@auto type TransResult<:Delegate
+@auto_hash_equals type TransResult<:Delegate
     name::Symbol
     matcher::Matcher
     f::Function
     TransResult(matcher, f) = new(:TransResult, matcher, f)
 end
 
-@auto immutable TransState<:DelegateState
+@auto_hash_equals immutable TransState<:DelegateState
     state::State
 end
 
@@ -31,7 +31,7 @@ response(k::Config, m::TransResult, s, t, i, r::Success) = Response(TransState(t
 # transform successes (Empty and Value)
 # again, function must return a Result instance
 
-@auto type TransSuccess<:Delegate
+@auto_hash_equals type TransSuccess<:Delegate
     name::Symbol
     matcher::Matcher
     f::Function

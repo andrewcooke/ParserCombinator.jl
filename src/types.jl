@@ -73,8 +73,8 @@ function flatten(x::Array{Value,1})
     return y
 end
 
-@auto immutable Success<:Result
-    value::Value  # immutable!
+@auto_hash_equals immutable Success<:Result
+    value::Value  # this value must not be modified!
     Success(x::Any...) = new(vcat(x...))
     # TODO - should a constructor take an array?
 end
