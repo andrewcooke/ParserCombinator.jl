@@ -668,6 +668,8 @@ For more details, I'm afraid your best bet is the source code:
 
 * [debug.jl](test/debug.jl) shows how to enable debug mode
 
+* [case.jl](test/case.jl) has an example of a user-defined combinator
+
 ## Design
 
 ### Overview
