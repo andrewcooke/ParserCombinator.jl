@@ -42,7 +42,7 @@ type Sum<:Node val end
 calc(s::Sum) = Base.sum(map(calc, s.val))
 
 
-# the grammar
+# the grammar (the combinators!)
 
 sum = Delayed()
 val = S"(" + sum + S")" | PFloat64()
