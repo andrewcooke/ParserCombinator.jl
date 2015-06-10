@@ -1,6 +1,8 @@
 
 # we need to import these so that we can extend them
 import ParserCombinator: execute, response
+# defines hash() and == for us
+using AutoHashEquals
 
 # a simple example of a matcher that calls a sub-matcher, gets the result, and
 # capitalizes the first letter found.  so it expects to receive a string.
@@ -10,7 +12,7 @@ import ParserCombinator: execute, response
 # matcher with a matcher field and a state with a state field (they can have
 # more fields - those are the minimal requirements).
 
-type Case<:Delegate
+@auto_hash_equals type Case<:Delegate
     name::Symbol
     matcher::Matcher
     Case(matcher) = new(:Case, matcher)
@@ -40,11 +42,13 @@ end
 @test parse_one("foo", Case(p".*")) == ["Foo"]
 
 # to see what's happening in more detail, add debug logging:
-@test parse_one("foo", Trace(Case(p".*"))) == ["Foo"]
+@test parse_dbg("foo", Trace(Case(p".*"))) == ["Foo"]
 # which gives
-#0001     Debug/DebugState => Case/Clean          
-#0001           Case/Clean => Pattern/Clean       
-#0004           Case/Clean <= Success             
-#0004     Debug/DebugState <= Success             
+#  1:foo        00 Trace->Case
+#  1:foo        01  Case->Pattern
+#  4:           01  Case<-["foo"]
+#  4:           00 Trace<-["Foo"]
+# and we can see that Case calls Pattern, as expected; that the Pattern
+# returns foo; and that Case transforms that to Foo.
 
 println("case ok")
