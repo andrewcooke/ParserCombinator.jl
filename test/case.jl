@@ -12,6 +12,8 @@ using AutoHashEquals
 # matcher with a matcher field and a state with a state field (they can have
 # more fields - those are the minimal requirements).
 
+# every matcher has a name field, which by default is the name of the matcher
+# (using @with_names changes this to the variable name - see calc.jl)
 @auto_hash_equals type Case<:Delegate
     name::Symbol
     matcher::Matcher
