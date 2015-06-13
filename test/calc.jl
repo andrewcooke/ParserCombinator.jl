@@ -35,6 +35,8 @@ calc(s::Sum) = signed_sum(map(calc, s.val))
 
 end
 
+println(all)
+
 @test val.name == :val
 @test typeof(val) == Alt
 @test length(val.matchers) == 2

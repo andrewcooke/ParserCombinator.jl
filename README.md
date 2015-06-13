@@ -647,6 +647,82 @@ Some things to note here:
   has no performance penalty when not used.  See [debug.jl](src/debug.jl) for
   more details.
 
+Finally, printing a matcher gives a useful tree view of the grammar.
+Loops are elided with `...`:
+
+```julia
+println(all)
+```
+
+gives
+
+```
+all
++-[1]:sum
+| `-TransSuccess
+|   +-Seq
+|   | +-[1]:prd
+|   | | +-Seq
+|   | | | +-[1]:neg
+|   | | | | `-Alt
+|   | | | |   +-[1]:Seq
+|   | | | |   | +-[1]:Drop
+|   | | | |   | | `-Equal
+|   | | | |   | |   `-"("
+|   | | | |   | +-[2]:sum...
+|   | | | |   | `-[3]:Drop
+|   | | | |   |   `-Equal
+|   | | | |   |     `-")"
+|   | | | |   +-[2]:TransSuccess
+|   | | | |   | +-Pattern
+|   | | | |   | | `-r"-?(\d*\.?\d+|\d+\.\d*)([eE]\d+)?"
+|   | | | |   | `-f
+|   | | | |   `-[3]:TransSuccess
+|   | | | |     +-Seq
+|   | | | |     | +-[1]:Drop
+|   | | | |     | | `-Equal
+|   | | | |     | |   `-"-"
+|   | | | |     | `-[2]:neg...
+|   | | | |     `-f
+|   | | | `-[2]:Depth
+|   | | |   +-Alt
+|   | | |   | +-[1]:mul
+|   | | |   | | +-[1]:Drop
+|   | | |   | | | `-Equal
+|   | | |   | | |   `-"*"
+|   | | |   | | `-[2]:neg...
+|   | | |   | `-[2]:div
+|   | | |   |   +-Seq
+|   | | |   |   | +-[1]:Drop
+|   | | |   |   | | `-Equal
+|   | | |   |   | |   `-"/"
+|   | | |   |   | `-[2]:neg...
+|   | | |   |   `-f
+|   | | |   +-lo=0
+|   | | |   +-hi=9223372036854775807
+|   | | |   `-flatten=true
+|   | | `-f
+|   | `-[2]:Depth
+|   |   +-Alt
+|   |   | +-[1]:add
+|   |   | | +-[1]:Drop
+|   |   | | | `-Equal
+|   |   | | |   `-"+"
+|   |   | | `-[2]:prd...
+|   |   | `-[2]:sub
+|   |   |   +-Seq
+|   |   |   | +-[1]:Drop
+|   |   |   | | `-Equal
+|   |   |   | |   `-"-"
+|   |   |   | `-[2]:prd...
+|   |   |   `-f
+|   |   +-lo=0
+|   |   +-hi=9223372036854775807
+|   |   `-flatten=true
+|   `-f
+`-[2]:Eos
+```
+
 #### More Information
 
 For more details, I'm afraid your best bet is the source code:

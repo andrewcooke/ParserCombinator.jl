@@ -1,10 +1,13 @@
 
+abstract Transform<:Delegate
+
+always_print(::Transform) = false
 
 # transform a result (including failure)
 # note that the function will receive a Result instance (Failure, Empty or
 # Value) and that the value returned must also be a Result
 
-@auto_hash_equals type TransResult<:Delegate
+@auto_hash_equals type TransResult<:Transform
     name::Symbol
     matcher::Matcher
     f::Function
@@ -31,7 +34,7 @@ response(k::Config, m::TransResult, s, t, i, r::Success) = Response(TransState(t
 # transform successes (Empty and Value)
 # again, function must return a Result instance
 
-@auto_hash_equals type TransSuccess<:Delegate
+@auto_hash_equals type TransSuccess<:Transform
     name::Symbol
     matcher::Matcher
     f::Function

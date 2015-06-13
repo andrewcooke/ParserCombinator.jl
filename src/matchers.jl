@@ -97,6 +97,15 @@ response(k::Config, m::Drop, s, t, i, rs::Success) = Response(DropState(t), i, E
     Equal(string) = new(:Equal, string)
 end
 
+always_print(::Equal) = true
+function print_field(m::Equal, ::Type{Val{:string}})
+    if isa(m.string, AbstractString)
+        "\"$(m.string)\""
+    else
+        :string
+    end
+end
+
 function execute(k::Config, m::Equal, s::Clean, i)
     for x in m.string
         if done(k.source, i)
@@ -134,6 +143,9 @@ end
 Repeat(m::Matcher, lo; flatten=true, greedy=true) = Repeat(m, lo, lo; flatten=flatten, greedy=greedy)
 Repeat(m::Matcher; flatten=true, greedy=true) = Repeat(m, 0, ALL; flatten=flatten, greedy=greedy)
 
+print_field(m::Repeat_, ::Type{Val{:lo}}) = "lo=$(m.lo)"
+print_field(m::Repeat_, ::Type{Val{:hi}}) = "hi=$(m.hi)"
+print_field(m::Repeat_, ::Type{Val{:flatten}}) = "flatten=$(m.flatten)"
 
 # depth-first (greedy) state and logic
 
@@ -470,6 +482,8 @@ end
     Lookahead(matcher) = new(:Lookahead, matcher)
 end
 
+always_print(::Delegate) = true
+
 @auto_hash_equals type LookaheadState<:DelegateState
     state::State
     iter
@@ -521,6 +535,8 @@ response(k::Config, m::Not, s, t, i, r::Failure) = Response(s, s.iter, EMPTY)
     Pattern(s::AbstractString) = new(:Patterm. Regex("^" * s * "(.??)"))
 end
 
+print_field(m::Pattern, ::Type{Val{:regex}}) = "r\"$(m.regex.pattern[2:end-5])\""
+
 function execute(k::Config, m::Pattern, s::Clean, i)
     @assert isa(k.source, AbstractString)
     x = match(m.regex, k.source[i:end])
@@ -539,6 +555,24 @@ end
     name::Symbol
     matcher::Nullable{Matcher}
     Delayed() = new(:Delayed, Nullable{Matcher}())
+end
+
+function print_matcher(m::Delayed, known::Dict{Matcher, Int})
+    function producer()
+        tag = "$(m.name)"
+        if (isnull(m.matcher))
+            produce("$(tag) OPEN")
+        elseif haskey(known, m)
+            produce("$(tag)...")
+        else
+            produce("$(tag)")
+            known[m] = 1
+            for (i, line) in enumerate(print_matcher(get(m.matcher), known))
+                produce(i == 1 ? "`-$(line)" : "  $(line)")
+            end
+        end
+    end
+    Task(producer)
 end
 
 function execute(k::Config, m::Delayed, s::Dirty, i)

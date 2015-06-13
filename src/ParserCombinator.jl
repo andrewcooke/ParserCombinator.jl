@@ -27,5 +27,6 @@ include("debug.jl")
 include("transforms.jl")
 include("sugar.jl")
 include("extras.jl")
+include("print.jl")
 
 end
