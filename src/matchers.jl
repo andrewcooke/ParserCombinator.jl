@@ -557,16 +557,16 @@ end
     Delayed() = new(:Delayed, Nullable{Matcher}())
 end
 
-function print_matcher(m::Delayed, known::Dict{Matcher, Int})
+function print_matcher(m::Delayed, known::Set{Matcher})
     function producer()
         tag = "$(m.name)"
         if (isnull(m.matcher))
             produce("$(tag) OPEN")
-        elseif haskey(known, m)
+        elseif m in known
             produce("$(tag)...")
         else
             produce("$(tag)")
-            known[m] = 1
+            push!(known, m)
             for (i, line) in enumerate(print_matcher(get(m.matcher), known))
                 produce(i == 1 ? "`-$(line)" : "  $(line)")
             end
