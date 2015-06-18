@@ -131,6 +131,7 @@ you combine these.  They can all be nested, refer to each other, etc etc.
   * [Transforms](#transforms)
   * [Lookahead And Negation](#lookahead-and-negation)
 * [Other](#other)
+  * [Spaces - Pre And Post-Fixes](#spaces-pre-and-post-fixes)
   * [Coding Style](#coding-style)
   * [Adding Matchers](#adding-matchers)
   * [Debugging](#debugging)
@@ -411,6 +412,43 @@ empty match (ie the empty list).
 
 
 ### Other
+
+#### Spaces - Pre And Post-Fixes
+
+The lack of a lexer can complicate the handling of whitespace when
+using parser combinators.  This library includes the ability to add
+arbitrary matchers before or after named matchers in the grammar -
+something that can be useful for matching and discarding whitespace.
+
+For example,
+
+```julia
+spc = Drop(Star(Space()))
+
+@with_pre spc begin
+
+    sum = Delayed()
+    val = S"(" + spc + sum + spc + S")" | PFloat64()
+
+    neg = Delayed()             # allow multiple negations (eg ---3)
+    neg.matcher = Nullable{Matcher}(val | (S"-" + neg > Neg))
+
+    mul = S"*" + neg
+    div = S"/" + neg > Inv
+    prd = neg + (mul | div)[0:end] |> Prd
+
+    add = S"+" + prd
+    sub = S"-" + prd > Neg
+    sum.matcher = Nullable{Matcher}(prd + (add | sub)[0:end] |> Sum)
+
+    all = sum + spc + Eos()
+
+end
+```
+
+extends the parser given erlier to discard whitespace between numbers.
+The automatc addition of `spc` as a prefix to named matchers means
+that it only needs to be added explicitly in a few places.
 
 #### Coding Style
 
