@@ -1,6 +1,9 @@
 
-# TODO - return config too, so that debug can return calls made etc
-# maybe deepest match, too?
+
+# the main loop for the trampoline is parameterised over the Config
+# type.  this lets us implement different semantics by simply changing
+# the provided Config subtype (and implementing the appropriate
+# dispatch() functions, etc).
 
 
 # this works for all configs defined so far
