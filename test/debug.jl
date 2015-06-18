@@ -16,4 +16,9 @@ parse_dbg("ab", Trace(Dot()))
 println("multiple")
 parse_dbg("ab", Equal("a") + Trace(Dot()[0:end]) + Equal("b"))
 
+grammar = p"\d+" + Eos()
+debug, task = make(Debug, "123abc", grammar; delegate=NoCache)
+@test_throws Exception once(task)
+@test debug.max_iter == 4
+
 println("debug ok")

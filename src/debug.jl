@@ -116,5 +116,4 @@ end
 # must handle both success and failure so that detection can occur above
 
 response(k::Config, m::Trace, s, t, i, r::Success) = Response(TraceState(t), i, r)
-
 response(k::Config, m::Trace, s, t, i, r::Failure) = Response(TraceState(t), i, r)
