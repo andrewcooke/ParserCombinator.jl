@@ -131,7 +131,7 @@ you combine these.  They can all be nested, refer to each other, etc etc.
   * [Transforms](#transforms)
   * [Lookahead And Negation](#lookahead-and-negation)
 * [Other](#other)
-  * [Spaces - Pre And Post-Fixes](#spaces-pre-and-post-fixes)
+  * [Spaces - Pre And Post-Fixes](#spaces---pre-and-post-fixes)
   * [Coding Style](#coding-style)
   * [Adding Matchers](#adding-matchers)
   * [Debugging](#debugging)
