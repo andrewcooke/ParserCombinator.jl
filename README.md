@@ -471,7 +471,7 @@ once(task)   # this does the parsing and throws an exception
 println(source[debug.max_iter:end])   # show the error location "abc"
 ```
 
-For more information see [parser.jl](src/parser.jl) and
+For more information see [parsers.jl](src/parsers.jl) and
 [debug.jl](src/debug.jl).
 
 #### Coding Style
