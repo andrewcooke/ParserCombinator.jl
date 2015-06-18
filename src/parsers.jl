@@ -81,7 +81,7 @@ response(k::Config, m::Root, s::State, t::State, i, r::Failure) = Response(DIRTY
 
 # the core loop that drives the parser, calling the appropriate dispatch
 # functions (above) depending on which Config was used.
-# to modify th ebehaviour you can create a new Config sub-type and then
+# to modify the behaviour you can create a new Config subtype and then
 # add your own dispatch functions.
 
 function producer(k::Config, m::Matcher)
@@ -145,7 +145,7 @@ end
 # the default parsers
 
 # we use the cache only when matching multiple results but obviously motivated
-# users are free to constuct their own...
+# users are free to construct their own...
 
 parse_all = make_all(Cache)
 parse_one = make_one(NoCache)
