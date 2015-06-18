@@ -457,18 +457,22 @@ Sometimes it is useful to report to the user where the input text is
 "wrong".  For a recursive descent parser one useful indicator is the
 maximum depth reached in the source.
 
-This can be retrieved using the `Debug` configuration.  Here is a
-simple example that delegates to the `NoCache` configuration (the
-default confguration for `parse_one()`):
+This can be retrieved using the `Debug` config.  Here is a simple
+example that delegates to `NoCache` (the default confg for
+`parse_one()`):
 
 ```julia
 grammar = p"\d+" + Eos()
 source = "123abc"
+             # make the parser task
 debug, task = make(Debug, source, grammar; delegate=NoCache)
 once(task)   # this does the parsing and throws an exception
              # the debug config now contains max_iter
 println(source[debug.max_iter:end])   # show the error location "abc"
 ```
+
+For more information see [parser.jl](src/parser.jl) and
+[debug.jl](src/debug.jl).
 
 #### Coding Style
 
