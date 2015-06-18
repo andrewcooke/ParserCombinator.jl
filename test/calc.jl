@@ -98,6 +98,7 @@ end
 @test_approx_eq calc(parse_one("3*6-9*1", all)[1]) 9
 @test_approx_eq calc(parse_one("4.0-5.0-0.0/8.0/5.0/3.0*(-6.0/5.0)-9.0*3.0*-((0.0-9.0))*9.0", all)[1]) -2188.0
 @test_approx_eq calc(parse_one("((-6.0/6.0+7.0))*((-1.0-3.0/5.0))+-(9.0)", all)[1]) -18.6
+@test_approx_eq calc(parse_one("7.0/3.0*9.0-5.0-0.0+-(-9.0/7.0)*9.0*-0.0-7.0+-4.0-5.0", all)[1]) 0.0
 
 x = Neg(Prd(Any[7.0,
                 Inv(0.0),
@@ -168,6 +169,7 @@ for i in 1:20
     try
         a = eval(parse(expr)) 
         b = calc(parse_one(expr, all)[1])
+        println("$a $b")
         if ! isequal(a, b)   # allow for Inf etc
             @test_approx_eq a b
         end
