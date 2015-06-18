@@ -50,5 +50,5 @@ response(k::Config, m::TransSuccess, s, t, i, r::Success) = Response(TransState(
 # simplified version for transforming Success (remove and re-add the Success
 # wrapper).
 
-App(m::Matcher, f::Union(Function,DataType)) = TransSuccess(m, x -> Success([f(x.value...)]))
-Appl(m::Matcher, f::Union(Function,DataType)) = TransSuccess(m, x -> Success([f(x.value)]))
+App(m::Matcher, f::Union(Function,DataType)) = TransSuccess(m, x -> Success(Any[f(x.value...)]))
+Appl(m::Matcher, f::Union(Function,DataType)) = TransSuccess(m, x -> Success(Any[f(x.value)]))

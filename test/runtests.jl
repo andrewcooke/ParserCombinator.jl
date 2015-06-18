@@ -3,6 +3,7 @@ importall ParserCombinator
 using Base.Test
 using Compat
 
+include("fix.jl")
 include("print.jl")
 include("names.jl")
 include("debug.jl")

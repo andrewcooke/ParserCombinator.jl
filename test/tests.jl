@@ -38,6 +38,7 @@
 @test length(collect(parse_all("abc", p"."[0:3]))) == 4
 @test length(collect(parse_all("abc", p"."[1:2]))) == 2
 @test parse_one("abc", p"."[3] > tuple) == [("a", "b", "c")]
+@test parse_one("abc", p"."[3] > vcat) == Any[Any["a", "b", "c"]]
 @test_throws ParserException parse_one("abc", And(Equal("a"), Lookahead(Equal("c")), Equal("b")))
 @test parse_one("abc", And(Equal("a"), Not(Lookahead(Equal("c"))), Equal("b"))) == Any[["a"], [], ["b"]]
 @test parse_one("1.2", PFloat64()) == [1.2]
