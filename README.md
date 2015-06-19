@@ -447,9 +447,10 @@ spc = Drop(Star(Space()))
 end
 ```
 
-extends the parser given earlier to discard whitespace between numbers.
-The automatc addition of `spc` as a prefix to named matchers means
-that it only needs to be added explicitly in a few places.
+extends the parser given earlier to discard whitespace between numbers
+and symbols.  The automatc addition of `spc` as a prefix to named
+matchers (those assigned to a variable: `sum`, `val`, `neg`, etc)
+means that it only needs to be added explicitly in a few places.
 
 #### Locating Errors
 
@@ -470,6 +471,11 @@ once(task)   # this does the parsing and throws an exception
              # the debug config now contains max_iter
 println(source[debug.max_iter:end])   # show the error location "abc"
 ```
+
+This is a little complex because I don't pre-define a function for
+this case (cf `parse_one()`).  Please email me if you think I should
+(currently it's unclear what features to support directly, and what to
+leave for "advanced" users).
 
 For more information see [parsers.jl](src/parsers.jl) and
 [debug.jl](src/debug.jl).
@@ -812,13 +818,61 @@ For more details, I'm afraid your best bet is the source code:
 
 ### Overview
 
-Julia does not support tail call recursion, and is not lazy, so a naive
-combinator library would be limited by recursion depth and strict evaluation
-(no caching).  Instead, the "combinators" in ParserCombinator construct a tree
-that describes the grammar, and which is "interpreted" during parsing, by
-dispatching functions on the tree nodes.  The traversal over the tree is
-implemented via trampolining, with an optional cache to avoid repeated
-evaluation (and, possibly, in the future, detect left-recursive grammars).
+Parser combinators were first written (afaik) in functional languages
+where tail calls do not consume stack.  Also, packrat parsers are
+easiest to implement in lazy languages, since shared, cached results
+are "free".
+
+Julia has neither tail recursion optimisation nor lazy evaluation.
+
+On the other hand, tail call optimisation is not much use when you
+want to support backtracking or combine results from child parsers.
+And it is possible to implement combinators for repeated matches using
+iteration rather than recursion.
+
+In short, life is complicated.  Different parser features have
+different costs and any particular implementation choice needs to be
+defended with detailed analysis.  Ideally we want an approach that
+supports features with low overhead by default, but which can be
+extended to accomodate more expensive features when necessary.
+
+This library uses an explicit trampoline, which is described in more
+detail below.  The main advantages are:
+
+* Describing the grammar in a static graph of types, rather than
+  mutually recursive functions, gives better integration with Julia's
+  method dispatch.  So, for example, we can overload operators like
+  `+` to sequence matchers, or use macros to modify the grammar at
+  compile time.
+
+* The semantics of the parser can be modified by changing the details
+  of the trampoline.  This allows, for example, the choice of whether
+  to use memoization to be separated from the grammar itself.
+
+* State is explicitly identified and encapsulated, simplifying
+  memoization.
+
+The main disadvantages are:
+
+* Defining new combinators is more complex.
+
+* Although the "feel" and "end result" of the library are similar to
+  other Parser Combinator libraries, one could argue that the matchers
+  are not "real" combinators.
+
+TODO - more here as i think through how better to reduce memory use.
+Text below is old.
+
+Julia does not support tail call recursion, and is not lazy, so a
+naive combinator library could be limited by stack depth and strict
+evaluation (no caching).  
+
+Instead, the "combinators" in
+ParserCombinator construct a tree that describes the grammar, and
+which is "interpreted" during parsing, by dispatching functions on the
+tree nodes.  The traversal over the tree is implemented via
+trampolining, with an optional cache to avoid repeated evaluation
+(and, possibly, in the future, detect left-recursive grammars).
 
 The advantages of this approach are:
 
