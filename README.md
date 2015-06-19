@@ -836,29 +836,37 @@ defended with detailed analysis.  Ideally we want an approach that
 supports features with low overhead by default, but which can be
 extended to accomodate more expensive features when necessary.
 
-This library uses an explicit trampoline, which is described in more
-detail below.  The main advantages are:
+This library defines the grammar with a static graph, which is then
+"interpreted" using an explicit trampoline (described in more detail
+below).  The main advantages are:
 
 * Describing the grammar in a static graph of types, rather than
   mutually recursive functions, gives better integration with Julia's
   method dispatch.  So, for example, we can overload operators like
   `+` to sequence matchers, or use macros to modify the grammar at
-  compile time.
+  compile time.  And the "interpretation" of the grammar is
+  simplified, using dispatch on the graph nodes.
 
-* The semantics of the parser can be modified by changing the details
-  of the trampoline.  This allows, for example, the choice of whether
-  to use memoization to be separated from the grammar itself.
+* The semantics of the parser can be modified by changing the
+  trampoline implementation (which can also be done by method dispatch
+  on a "configuration" type).  This allows, for example, the choice of
+  whether to use memoization to be separated from the grammar itself.
 
-* State is explicitly identified and encapsulated, simplifying
-  memoization.
+* State is explicitly identified and encapsulated, simplifying both
+  backtracking (resumption from the current state) and memoization.
 
 The main disadvantages are:
 
-* Defining new combinators is more complex.
+* Defining new combinators is more complex.  The behaviour of a
+  matcher is defined as a group of methods that correspond to
+  transitions in state machine.  On the other hand, with dispatch on
+  the grammar and state nodes, the implementation remains idiomatic
+  and compact.
 
 * Although the "feel" and "end result" of the library are similar to
-  other Parser Combinator libraries, one could argue that the matchers
-  are not "real" combinators.
+  other Parser Combinator libraries (the grammar types handled are as
+  expected, for example), one could argue that the matchers are not
+  "real" combinators.
 
 TODO - more here as i think through how better to reduce memory use.
 Text below is old.
