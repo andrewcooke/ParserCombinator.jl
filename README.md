@@ -859,7 +859,7 @@ The main disadvantages are:
 
 * Defining new combinators is more complex.  The behaviour of a
   matcher is defined as a group of methods that correspond to
-  transitions in state machine.  On the other hand, with dispatch on
+  transitions in a state machine.  On the other hand, with dispatch on
   the grammar and state nodes, the implementation remains idiomatic
   and compact.
 
@@ -867,6 +867,32 @@ The main disadvantages are:
   other Parser Combinator libraries (the grammar types handled are as
   expected, for example), one could argue that the matchers are not
   "real" combinators.
+
+### Trampoline Protocol
+
+A matcher is invoked by a call to
+
+```julia
+execute(k::Config, m::Matcher, s::State, i)<:Message
+```
+
+where `k` must include, at a minimum, the field `k.source` that
+follows the [iterator
+protocol](http://julia.readthedocs.org/en/latest/stdlib/collections/?highlight=iterator)
+when used with `i`.  So, for example, `next(k.source, i)` returns the
+next value from the source, plus a new iter.
+
+The initial call (ie the first time a given value of `i` is used,
+before any backtracking) will have `s` equal to
+`CLEAN::Clean<:State`.
+
+The matcher can then either call another (child) matcher, or return a
+result (of an immediate match).  The choice made is indicated by the
+return type from `execute(...)` above: either `Execute<:Message` or
+`Response<:Message`.
+
+On failure, the `Response` contains a `FAILURE::Failure<:Result`.
+
 
 TODO - more here as i think through how better to reduce memory use.
 Text below is old.

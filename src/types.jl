@@ -10,12 +10,12 @@
 abstract Matcher
 
 abstract Result    # result of a particular matcher's matching
-abstract Message   # data sente between trampoline and methods
+abstract Message   # data sent between trampoline and methods
 abstract State     # state associated with Matchers during evaluation
 
 # used to configure the parser.  all Config subtypes must have associated
 # dispatch functions (see parser.jl), a parent() function, and have a
-# constructor that takes the sorce as first argumen and additional arguments
+# constructor that takes the sorce as first argument and additional arguments
 # as keyword.
 abstract Config
 
@@ -101,7 +101,7 @@ type Execute{P<:Matcher,SP<:State,C<:Matcher,SC<:State}<:Message
     parent::P         # stored by trampoline, added to response
     state_parent::SP  # stored by trampoline, added to response
     child::C          # the matcher to evaluate
-    state_child::SC   # needed by for evaluation (was stpred by parent)
+    state_child::SC   # needed by for evaluation (was stored by parent)
     iter
 end
 
