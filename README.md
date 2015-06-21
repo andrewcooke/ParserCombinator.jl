@@ -898,10 +898,12 @@ processing should continue:
   to look for further matchers (this can be be `DIRTY` which is
   globally used to indicate that all further matches will fail).
 
-* `Execute` which results in a "nested" call to a chile matcher's
+* `Execute` which results in a "nested" call to a child matcher's
   `execute` method (as above).
 
-The `FAILURE` and `Success` messages result calls to 
+The `FAILURE` and `Success` messages are processed by the trampoline
+and (typically, although a trampoline implementation may also use to
+cached values, for example) result in calls to
 
 ```julia
 failure(k::Config, m::Matcher, s::State) :: Message
