@@ -903,7 +903,7 @@ processing should continue:
 
 The `FAILURE` and `Success` messages are processed by the trampoline
 and (typically, although a trampoline implementation may also use to
-cached values, for example) result in calls to
+cached values) result in calls to
 
 ```julia
 failure(k::Config, m::Matcher, s::State) :: Message
