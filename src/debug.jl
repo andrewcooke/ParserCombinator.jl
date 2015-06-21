@@ -40,17 +40,29 @@ function dispatch(k::Debug, e::Execute)
     dispatch(k.delegate, e)
 end
 
-function dispatch(k::Debug, r::Response)
-    if isa(r.state_child, TraceState)
+function dispatch(k::Debug, s::Success)
+    if isa(f.child_state, TraceState)
         @assert 0 == pop!(k.depth)
     end
     if length(k.depth) > 0
         k.depth[end] -= 1
-        debug(k, r)
+        debug(k, s)
     end
     k.abs_depth -= 1
-    k.max_iter = max(k.max_iter, r.iter)
-    dispatch(k.delegate, r)
+    k.max_iter = max(k.max_iter, s.iter)
+    dispatch(k.delegate, s)
+end
+
+function dispatch(k::Debug, f::Failure)
+    if isa(f.child_state, TraceState)
+        @assert 0 == pop!(k.depth)
+    end
+    if length(k.depth) > 0
+        k.depth[end] -= 1
+        debug(k, s)
+    end
+    k.abs_depth -= 1
+    dispatch(k.delegate, f)
 end
 
 
@@ -78,10 +90,8 @@ indent(k::Debug; max=MAX_IND) = repeat(" ", k.depth[end] % max)
 src(::Any, ::Any; max=MAX_SRC) = pad(truncate("...", max), max)
 src(s::AbstractString, i::Int; max=MAX_SRC) = pad(truncate(s[i:end], max), max)
 
-res(::Failure; max=MAX_RES) = truncate("!!!", max)
-
-function res(s::Success; max=MAX_RES)
-    txt = string(s.value)
+function res(v::Value; max=MAX_RES)
+    txt = string(v)
     if ismatch(r"^Any", txt)
         txt = txt[4:end]
     end
@@ -93,9 +103,14 @@ function debug(k::Debug, e::Execute)
             e.iter, src(k.source, e.iter), k.depth[end], indent(k), e.parent.name, e.child.name)
 end
 
-function debug(k::Debug, r::Response)
+function debug(k::Debug, s::Success)
     @printf("%3d:%s %02d %s%s<-%s\n",
-            r.iter, src(k.source, r.iter), k.depth[end], indent(k), parent(k).name, res(r.result))
+            s.iter, src(s.source, s.iter), k.depth[end], indent(k), parent(k).name, res(s.result))
+end
+
+function debug(k::Debug, f::Failure)
+    @printf("???:%s %02d %s%s<-!!!\n",
+            src(k.source, None), k.depth[end], indent(k), parent(k).name)
 end
 
 

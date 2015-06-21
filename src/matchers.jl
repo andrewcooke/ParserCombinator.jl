@@ -3,10 +3,10 @@
 # some basic definitions for generic matches
 
 execute(k::Config, m, s, i) = error("$m did not expect to be called with state $s")
+success(k::Config, m, s, t, i, r) = error("$m did not expect to receive state $s, result $r")
+failure(k::Config, m, s) = error("$m did not expect to receive state $s, failure")
 
-response(k::Config, m, s, t, i, r) = error("$m did not expect to receive state $s, response $r")
-
-execute(k::Config, m::Matcher, s::Dirty, i) = Response(s, i, FAILURE)
+execute(k::Config, m::Matcher, s::Dirty, i) = FAILURE
 
 
 
@@ -26,7 +26,7 @@ execute(k::Config, m::Delegate, s::Clean, i) = Execute(m, s, m.matcher, CLEAN, i
 execute(k::Config, m::Delegate, s::DelegateState, i) = Execute(m, s, m.matcher, s.state, i)
 
 # this avoids re-calling child on backtracking on failure
-response(k::Config, m::Delegate, s, t, i, r::Failure) = Response(DIRTY, i, FAILURE)
+failure(k::Config, m::Delegate, s) = FAILURE
 
 
 
@@ -37,7 +37,7 @@ response(k::Config, m::Delegate, s, t, i, r::Failure) = Response(DIRTY, i, FAILU
     Epsilon() = new(:Epsilon)
 end
 
-execute(k::Config, m::Epsilon, s::Clean, i) = Response(DIRTY, i, EMPTY)
+execute(k::Config, m::Epsilon, s::Clean, i) = Success(DIRTY, i, EMPTY)
 
 
 @auto_hash_equals type Insert<:Matcher
@@ -46,7 +46,7 @@ execute(k::Config, m::Epsilon, s::Clean, i) = Response(DIRTY, i, EMPTY)
     Insert(text) = new(:Insert, text)
 end
 
-execute(k::Config, m::Insert, s::Clean, i) = Response(DIRTY, i, Success(m.text))
+execute(k::Config, m::Insert, s::Clean, i) = Success(DIRTY, i, Any[m.text])
 
 
 @auto_hash_equals immutable Dot<:Matcher 
@@ -56,10 +56,10 @@ end
 
 function execute(k::Config, m::Dot, s::Clean, i)
     if done(k.source, i)
-        Response(DIRTY, i, FAILURE)
+        FAILURE
     else
         c, i = next(k.source, i)
-        Response(DIRTY, i, Success(c))
+        Success(DIRTY, i, Any[c])
     end
 end
 
@@ -69,7 +69,7 @@ end
     Fail() = new(:Fail)
 end
 
-execute(k::Config, m::Fail, s::Clean, i) = Response(DIRTY, i, FAILURE)
+execute(k::Config, m::Fail, s::Clean, i) = FAILURE
 
 
 
@@ -85,7 +85,7 @@ end
     state::State
 end
 
-response(k::Config, m::Drop, s, t, i, rs::Success) = Response(DropState(t), i, EMPTY)
+success(k::Config, m::Drop, s, t, i, r::Value) = Success(DropState(t), i, EMPTY)
 
 
 
@@ -109,14 +109,14 @@ end
 function execute(k::Config, m::Equal, s::Clean, i)
     for x in m.string
         if done(k.source, i)
-            return Response(DIRTY, i, FAILURE)
+            return FAILURE
         end
         y, i = next(k.source, i)
         if x != y
-            return Response(DIRTY, i, FAILURE)
+            return FAILURE
         end
     end
-    Response(DIRTY, i, Success(m.string))
+    Success(DIRTY, i, Any[m.string])
 end
 
 
@@ -127,7 +127,7 @@ end
 # possible states (limited by the maximum number of matches), yielding
 # when we have a result within the lo/hi range.
 
-abstract Repeat_<:Matcher   # _ to avoid conflict with abstract in 0.3
+abstract Repeat_<:Matcher   # _ to avoid conflict with function in 0.3
 
 ALL = typemax(Int)
 
@@ -171,12 +171,17 @@ end
 
 abstract DepthState<:RepeatState
 
+# an arbitrary iter to pass to a state where it's not needed (typically from
+# failure)
+arbitrary(s::DepthState) = s.iters[1]
+
 @auto_hash_equals type Slurp<:DepthState
     # there's a mismatch in lengths here because the empty results is
     # associated with an iter and state
     results::Array{Value,1} # accumulated.  starts []
-    iters::Array{Any,1}     # at the end of the result.  starts [i]
-    states::Array{State,1}  # at the end of the result.  starts {CLEAN]
+    iters::Array{Any,1}     # at the end of the result.  starts [i].
+    states::Array{State,1}  # at the end of the result.  starts [DIRTY],
+                            # since [] at i is returned last.
 end
 
 @auto_hash_equals type DepthYield<:DepthState
@@ -207,8 +212,8 @@ function execute(k::Config, m::Depth, s::Slurp, i)
     end
 end
 
-function response(k::Config, m::Depth, s::Slurp, t, i, r::Success)
-    results = Value[s.results..., r.value]
+function success(k::Config, m::Depth, s::Slurp, t, i, r::Value)
+    results = Value[s.results..., r]
     iters = vcat(s.iters, i)
     states = vcat(s.states, t)
     if max_depth(m, results)
@@ -218,33 +223,35 @@ function response(k::Config, m::Depth, s::Slurp, t, i, r::Success)
     end
 end
 
-function response(k::Config, m::Depth, s::Slurp, t, i, ::Failure)
-    execute(k, m, DepthYield(s.results, s.iters, s.states), i)
+function failure(k::Config, m::Depth, s::Slurp)
+    # the iter passed on is arbitrary and unused
+    execute(k, m, DepthYield(s.results, s.iters, s.states), arbitrary(s))
 end
 
 # yield a result and set state to backtrack
 
-function execute(k::Config, m::Depth, s::DepthYield, i)
+function execute(k::Config, m::Depth, s::DepthYield, unused)
     n = length(s.results)
     if n >= m.lo
         if m.flatten
-            Response(Backtrack(s.results, s.iters, s.states), s.iters[end], Success(flatten(s.results)))
+            Success(Backtrack(s.results, s.iters, s.states), s.iters[end], flatten(s.results))
         else
-            Response(Backtrack(s.results, s.iters, s.states), s.iters[end], Success([s.results;]))
+            # Array{Value,1} -> Value
+            Success(Backtrack(s.results, s.iters, s.states), s.iters[end], Any[s.results;])
         end
     else
-        # we need to continue searhcing in case there's some other weird
+        # we need to continue searching in case there's some other weird
         # case that gets us back into valid matches
-        execute(k, m, Backtrack(s.results, s.iters, s.states), i)
+        execute(k, m, Backtrack(s.results, s.iters, s.states), arbitrary(s))
     end
 end
 
 # backtrack once and then move down again if possible.  we cannot repeat a
 # path because we always advance child state.
 
-function execute(k::Config, m::Depth, s::Backtrack, i)
+function execute(k::Config, m::Depth, s::Backtrack, unused)
     if length(s.iters) == 1  # we've exhausted the search space
-        Response(DIRTY, i, FAILURE)
+        FAILURE
     else
         # we need the iter from *before* the result
         Execute(m, Backtrack(s.results[1:end-1], s.iters[1:end-1], s.states[1:end-1]), m.matcher, s.states[end], s.iters[end-1])
@@ -252,10 +259,10 @@ function execute(k::Config, m::Depth, s::Backtrack, i)
 end
 
 # backtrack succeeded so move down
-response(k::Config, m::Depth, s::Backtrack, t, i, r::Success) = execute(k, m, Slurp(Value[s.results..., r.value], vcat(s.iters, i), vcat(s.states, t)), i)
+success(k::Config, m::Depth, s::Backtrack, t, i, r::Value) = execute(k, m, Slurp(Value[s.results..., r], vcat(s.iters, i), vcat(s.states, t)), i)
 
 # we couldn't move down, so yield this point
-response(k::Config, m::Depth, s::Backtrack, t, i, ::Failure) = execute(k, m, DepthYield(s.results, s.iters, s.states), i)
+failure(k::Config, m::Depth, s::Backtrack) = execute(k, m, DepthYield(s.results, s.iters, s.states), arbitrary(s))
 
 
 
@@ -277,7 +284,7 @@ end
 # that means we need to store the entire result for each node.
 
 # on the other hand, because the results are pre-order, the logic is simpler
-# than for th egreedy match (wikipedia calls this "level order" so my 
+# than for the greedy match (wikipedia calls this "level order" so my 
 # terminology may be wrong).
 
 @auto_hash_equals type Entry
@@ -287,6 +294,8 @@ end
 end
 
 abstract BreadthState<:RepeatState
+
+arbitrary(s::BreadthState) = s.start
 
 @auto_hash_equals type Grow<:BreadthState
     start  # initial iter
@@ -304,39 +313,40 @@ execute(k::Config, m::Breadth, s::Clean, i) = execute(k, m, BreadthYield(i, Entr
 
 # yield the top state
 
-function execute(k::Config, m::Breadth, s::BreadthYield, i)
+function execute(k::Config, m::Breadth, s::BreadthYield, unused)
     q = s.queue[1]
     n = length(q.results)
     if n >= m.lo
         if m.flatten
-            Response(Grow(s.start, s.queue), q.iter, Success(flatten(q.results)))
+            Success(Grow(s.start, s.queue), q.iter, flatten(q.results))
         else
-            Response(Grow(s.start, s.queue), q.iter, Success([q.results;]))
+            # Array{Value,1} -> Value
+            Success(Grow(s.start, s.queue), q.iter, Any[q.results;])
         end
     else
-        execute(k, m, Grow(s.start, s.queue), i)
+        execute(k, m, Grow(s.start, s.queue), unused)
     end
 end
 
 # add the next row
 
-function execute(k::Config, m::Breadth, s::Grow, i)
+function execute(k::Config, m::Breadth, s::Grow, unused)
     if length(s.queue[1].results) > m.hi
-        Response(DIRTY, s.start, FAILURE)
+        FAILURE
     else
         Execute(m, s, m.matcher, CLEAN, s.queue[1].iter)
     end
 end
 
-response(k::Config, m::Breadth, s::Grow, t, i, r::Success) = Execute(m, Grow(s.start, vcat(s.queue, Entry(i, t, Value[s.queue[1].results..., r.value]))), m.matcher, t, i)
+success(k::Config, m::Breadth, s::Grow, t, i, r::Value) = Execute(m, Grow(s.start, vcat(s.queue, Entry(i, t, Value[s.queue[1].results..., r]))), m.matcher, t, i)
 
 # discard what we have yielded and grown
 
-function response(k::Config, m::Breadth, s::Grow, t, i, r::Failure)
+function failure(k::Config, m::Breadth, s::Grow)
     if (length(s.queue) > 1)
-        execute(k, m, BreadthYield(s.start, s.queue[2:end]), i)
+        execute(k, m, BreadthYield(s.start, s.queue[2:end]), arbitrary(s))
     else
-        Response(DIRTY, s.start, FAILURE)
+        FAILURE
     end
 end
 
@@ -369,7 +379,7 @@ end
     Seq(m::Array{Matcher,1}) = new(:Seq, m)
 end
 
-serial_success(m::Seq, results) = Success(flatten(results))
+serial_success(m::Seq, results::Array{Value,1}) = flatten(results)
 
 @auto_hash_equals type And<:Series_
     name::Symbol
@@ -378,11 +388,11 @@ serial_success(m::Seq, results) = Success(flatten(results))
     And(m::Array{Matcher,1}) = new(:And,m)
 end
 
-# copy so that state remains immutable
-serial_success(m::And, results) = Success([results;])
+# copy to get type right (Array{Value,1} -> Array{Any,1})
+serial_success(m::And, results::Array{Value,1}) = Any[results;]
 
 @auto_hash_equals type SeriesState<:State
-    results::Array{Value,1}
+    results::Array{Value, 1}
     iters::Array{Any,1}
     states::Array{State,1}
 end
@@ -391,7 +401,7 @@ end
 
 function execute(l::Config, m::Series_, s::Clean, i) 
     if length(m.matchers) == 0
-        Response(DIRTY, i, EMPTY)
+        Success(DIRTY, i, EMPTY)
     else
         Execute(m, SeriesState(Value[], [i], State[]), m.matchers[1], CLEAN, i)
     end
@@ -400,13 +410,13 @@ end
 # if the final matcher matched then return what we have.  otherwise, evaluate
 # the next.
 
-function response(k::Config, m::Series_, s::SeriesState, t, i, r::Success)
+function success(k::Config, m::Series_, s::SeriesState, t, i, r::Value)
     n = length(s.iters)
-    results = Value[s.results..., r.value]
+    results = Value[s.results..., r]
     iters = vcat(s.iters, i)
     states = vcat(s.states, t)
     if n == length(m.matchers)
-        Response(SeriesState(results, iters, states), i, serial_success(m, results))
+        Success(SeriesState(results, iters, states), i, serial_success(m, results))
     else
         Execute(m, SeriesState(results, iters, states), m.matchers[n+1], CLEAN, i)
     end
@@ -414,10 +424,10 @@ end
 
 # if the first matcher failed, fail.  otherwise backtrack
 
-function response(k::Config, m::Series_, s::SeriesState, t, i, r::Failure)
+function failure(k::Config, m::Series_, s::SeriesState)
     n = length(s.iters)
     if n == 1
-        Response(DIRTY, s.iters[1], FAILURE)
+        FAILURE
     else
         Execute(m, SeriesState(s.results[1:end-1], s.iters[1:end-1], s.states[1:end-1]), m.matchers[n-1], s.states[end], s.iters[end-1])
     end
@@ -450,7 +460,7 @@ end
 
 function execute(k::Config, m::Alt, s::Clean, i)
     if length(m.matchers) == 0
-        Response(DIRTY, i, FAILURE)
+        FAILURE
     else
         execute(k, m, AltState(CLEAN, i, 1), i)
     end
@@ -460,15 +470,15 @@ function execute(k::Config, m::Alt, s::AltState, i)
     Execute(m, s, m.matchers[s.i], s.state, s.iter)
 end
 
-function response(k::Config, m::Alt, s::AltState, t, i, r::Success)
-    Response(AltState(t, s.iter, s.i), i, r)
+function success(k::Config, m::Alt, s::AltState, t, i, r::Value)
+    Success(AltState(t, s.iter, s.i), i, r)
 end
 
-function response(k::Config, m::Alt, s::AltState, t, i, r::Failure)
+function failure(k::Config, m::Alt, s::AltState)
     if s.i == length(m.matchers)
-        Response(DIRTY, i, FAILURE)
+        FAILURE
     else
-        execute(k, m, AltState(CLEAN, s.iter, s.i + 1), i)
+        execute(k, m, AltState(CLEAN, s.iter, s.i + 1), s.iter)
     end
 end
 
@@ -491,7 +501,7 @@ end
 
 execute(k::Config, m::Lookahead, s::Clean, i) = Execute(m, LookaheadState(s, i), m.matcher, CLEAN, i)
 
-response(k::Config, m::Lookahead, s, t, i, r::Success) = Response(LookaheadState(t, s.iter), s.iter, EMPTY)
+success(k::Config, m::Lookahead, s, t, i, r::Value) = Response(LookaheadState(t, s.iter), s.iter, EMPTY)
 
 
 
@@ -511,9 +521,9 @@ end
 
 execute(k::Config, m::Not, s::Clean, i) = Execute(m, NotState(i), m.matcher, CLEAN, i)
 
-response(k::Config, m::Not, s, t, i, r::Success) = Response(s, s.iter, FAILURE)
+success(k::Config, m::Not, s::NotState, t, i, r::Value) = FAILURE
 
-response(k::Config, m::Not, s, t, i, r::Failure) = Response(s, s.iter, EMPTY)
+failure(k::Config, m::Not, s::NotState) = SUCCESS(s, s.iter, EMPTY)
 
 
 
@@ -541,9 +551,9 @@ function execute(k::Config, m::Pattern, s::Clean, i)
     @assert isa(k.source, AbstractString)
     x = match(m.regex, k.source[i:end])
     if x == nothing
-        Response(DIRTY, i, FAILURE)
+        FAILURE
     else
-        Response(DIRTY, i + x.offsets[end] - 1, Success(x.match))
+        Success(DIRTY, i + x.offsets[end] - 1, Any[x.match])
     end
 end
 
@@ -598,8 +608,8 @@ end
 
 function execute(k::Config, m::Eos, s::Clean, i)
     if done(k.source, i)
-        Response(DIRTY, i, EMPTY)
+        Success(DIRTY, i, EMPTY)
     else
-        Response(DIRTY, i, FAILURE)
+        FAILURE
     end
 end

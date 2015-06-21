@@ -9,7 +9,6 @@
 # (re-set to a more useful type inside with_names() - see names.jl)
 abstract Matcher
 
-abstract Result    # result of a particular matcher's matching
 abstract Message   # data sent between trampoline and methods
 abstract State     # state associated with Matchers during evaluation
 
@@ -58,28 +57,17 @@ abstract Config
 =={T<:State}(a::T, b::T) = true
 
 
-# Result sub-types
-
-# match failed - backtrack
-immutable Failure<:Result end
-FAILURE = Failure()
-
-# match succeeded (we use an array to handle empty values in a natural way)
+# use an array to handle empty values in a natural way
 
 typealias Value Array{Any,1}
+
+EMPTY = Any[]
 
 function flatten(x::Array{Value,1})
     y::Value = vcat(x...)
     return y
 end
 
-@auto_hash_equals immutable Success<:Result
-    value::Value  # this value must not be modified!
-    Success(x::Any...) = new(vcat(x...))
-    # TODO - should a constructor take an array?
-end
-
-EMPTY = Success()
 
 
 
@@ -87,21 +75,26 @@ EMPTY = Success()
 
 # use mutable types here since they are packed and unpacked often
 
-# parent and state_parent are popped from the stack.  a call is made to
-# response(config, parent, state_parent, state_child, iter, result)
-type Response{SC<:State,R<:Result}<:Message
-    state_child::SC   # parent to store, passed in next call for backtracking
-    iter              # original value on failure, or advanced on success
-    result::R         # Failure, or Sucess in an Array (possibly empty)
+# parent and parent_state are popped from the stack.  a call is made to
+# success(config, parent, parent_state, child_state, iter, result)
+type Success{CS<:State}<:Message
+    child_state::CS   # parent to store, passed in next call for backtracking
+    iter              # advanced as appropriate
+    result::Value     # possibly empty
 end
 
-# parent and state_parent are pushed to the stack.  a call is made to
-# execute(config, child, state_child, iter)
-type Execute{P<:Matcher,SP<:State,C<:Matcher,SC<:State}<:Message
+# parent and parent_state are popped from the stack.  a call is made to
+# failure(config, parent, parent_state)
+type Failure<:Message end
+FAILURE = Failure()
+
+# parent and parent_state are pushed to the stack.  a call is made to
+# execute(config, child, child_state, iter)
+type Execute{P<:Matcher,PS<:State,C<:Matcher,CS<:State}<:Message
     parent::P         # stored by trampoline, added to response
-    state_parent::SP  # stored by trampoline, added to response
+    parent_state::PS  # stored by trampoline, added to response
     child::C          # the matcher to evaluate
-    state_child::SC   # needed by for evaluation (was stored by parent)
+    child_state::CS   # needed by for evaluation (was stored by parent)
     iter
 end
 

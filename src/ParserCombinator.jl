@@ -25,10 +25,10 @@ include("names.jl")
 include("matchers.jl")
 include("parsers.jl")
 include("debug.jl")
-include("transforms.jl")
+#include("transforms.jl")
 include("sugar.jl")
 include("extras.jl")
-include("print.jl")
-include("fix.jl")
+#include("print.jl")
+#include("fix.jl")
 
 end

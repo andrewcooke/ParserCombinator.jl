@@ -20,13 +20,18 @@ type NoCache<:Config
 end
 
 function dispatch(k::NoCache, e::Execute)
-    push!(k.stack, (e.parent, e.state_parent))
-    execute(k, e.child, e.state_child, e.iter)
+    push!(k.stack, (e.parent, e.parent_state))
+    execute(k, e.child, e.child_state, e.iter)
 end
 
-function dispatch(k::NoCache, r::Response)
-    (parent, state_parent) = pop!(k.stack)
-    response(k, parent, state_parent, r.state_child, r.iter, r.result)
+function dispatch(k::NoCache, s::Success)
+    (parent, parent_state) = pop!(k.stack)
+    success(k, parent, parent_state, s.child_state, s.iter, s.result)
+end
+
+function dispatch(k::NoCache, f::Failure)
+    (parent, parent_state) = pop!(k.stack)
+    failure(k, parent, parent_state)
 end
 
 
@@ -42,20 +47,26 @@ type Cache<:Config
 end
 
 function dispatch(k::Cache, e::Execute)
-    key = (e.child, e.state_child, e.iter)
-    push!(k.stack, (e.parent, e.state_parent, key))
+    key = (e.child, e.child_state, e.iter)
+    push!(k.stack, (e.parent, e.parent_state, key))
     cached = haskey(k.cache, key)
     if haskey(k.cache, key)
         k.cache[key]
     else
-        execute(k, e.child, e.state_child, e.iter)
+        execute(k, e.child, e.child_state, e.iter)
     end
 end
 
-function dispatch(k::Cache, r::Response)
-    parent, state_parent, key = pop!(k.stack)
+function dispatch(k::Cache, s::Success)
+    parent, parent_state, key = pop!(k.stack)
     k.cache[key] = r
-    response(k, parent, state_parent, r.state_child, r.iter, r.result)
+    success(k, parent, parent_state, s.child_state, s.iter, s.result)
+end
+
+function dispatch(k::Cache, f::Failure)
+    parent, parent_state, key = pop!(k.stack)
+    k.cache[key] = r
+    failure(k, parent, parent_state)
 end
 
 
@@ -75,8 +86,8 @@ immutable RootState<:DelegateState
     state::State
 end
 
-response(k::Config, m::Root, s::State, t::State, i, r::Success) = Response(RootState(t), i, r)
-response(k::Config, m::Root, s::State, t::State, i, r::Failure) = Response(DIRTY, i, r)
+success(k::Config, m::Root, s::State, t::State, i, r::Value) = Success(RootState(t), i, r)
+failure(k::Config, m::Root, s::State) = FAILURE
 
 
 # the core loop that drives the parser, calling the appropriate dispatch
@@ -92,17 +103,19 @@ function producer(k::Config, m::Matcher)
     while true
         msg = dispatch(k, msg)
         if isempty(k.stack)
-            @assert isa(msg, Response)
-            if isa(msg.result, Success)
-                produce(msg.result.value)
+            @assert !isa(msg, Execute)
+            if isa(msg, Execute)
+                error("Unexpected execute message")
+            elseif isa(msg, Success)
+                produce(msg.result)
                 # my head hurts
-                msg = Execute(root, CLEAN, m, msg.state_child.state, start(k.source))
+                msg = Execute(root, CLEAN, m, msg.child_state.state, start(k.source))
             else
-                return
+                break
             end
         end
     end
-
+    
 end
 
 
