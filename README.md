@@ -873,7 +873,7 @@ The main disadvantages are:
 A matcher is invoked by a call to
 
 ```julia
-execute(k::Config, m::Matcher, s::State, i)<:Message
+execute(k::Config, m::Matcher, s::State, i) :: Message
 ```
 
 where `k` must include, at a minimum, the field `k.source` that
@@ -883,15 +883,38 @@ when used with `i`.  So, for example, `next(k.source, i)` returns the
 next value from the source, plus a new iter.
 
 The initial call (ie the first time a given value of `i` is used,
-before any backtracking) will have `s` equal to
-`CLEAN::Clean<:State`.
+before any backtracking) will have `s` equal to `CLEAN`.
 
-The matcher can then either call another (child) matcher, or return a
-result (of an immediate match).  The choice made is indicated by the
-return type from `execute(...)` above: either `Execute<:Message` or
-`Response<:Message`.
+A matcher returns a `Message` which indicates to the trampine how
+processing should continue:
 
-On failure, the `Response` contains a `FAILURE::Failure<:Result`.
+* `Failure` indicates that the match has failed and probably (depending
+  on parent matcher and configuration triggers backtracking).  There
+  is a single instance of the type, `FAILURE`.
+
+* `Success` indicates that the match succeeded, and so contains a
+  result (of type `Value`, which is a type alias for `Any[]`) together
+  with the updated iter `i` and any state that the matcher will need
+  to look for further matchers (this can be be `DIRTY` which is
+  globally used to indicate that all further matches will fail).
+
+* `Execute` which results in a "nested" call to a chile matcher's
+  `execute` method (as above).
+
+The `FAILURE` and `Success` messages result calls to 
+
+```julia
+failure(k::Config, m::Matcher, s::State) :: Message
+
+success(k::Config, m::Matcher, s::State, c::Matcher, t::State, i, r::Value) :: Message
+```
+
+where the parent matcher can do any clean-up work, resulting in a new
+`Message.
+
+Note that the child's state is returned to the parent.  It is the
+responsibility of the parent to save this (in its own state) if it
+wants to re-call the child.
 
 
 TODO - more here as i think through how better to reduce memory use.
