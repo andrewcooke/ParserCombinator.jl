@@ -107,8 +107,8 @@ function debug(k::Debug, s::Success)
 end
 
 function debug(k::Debug, f::Failure)
-    @printf("???:%s %02d %s%s<-!!!\n",
-            src(k.source, None), k.depth[end], indent(k), parent(k).name)
+    @printf("   :%s %02d %s%s<-!!!\n",
+            pad(" ", MAX_SRC), k.depth[end], indent(k), parent(k).name)
 end
 
 
