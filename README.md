@@ -844,8 +844,8 @@ below).  The main advantages are:
   mutually recursive functions, gives better integration with Julia's
   method dispatch.  So, for example, we can overload operators like
   `+` to sequence matchers, or use macros to modify the grammar at
-  compile time.  And the "interpretation" of the grammar is simple,
-  using dispatch on the graph nodes.
+  compile time.  And the "execution" of the grammar is simple, using
+  dispatch on the graph nodes.
 
 * The semantics of the parser can be modified by changing the
   trampoline implementation (which can also be done by method dispatch
@@ -864,9 +864,11 @@ The main disadvantages are:
   and compact.
 
 * Although the "feel" and "end result" of the library are similar to
-  other Parser Combinator libraries (the grammar types handled are as
+  other parser combinator libraries (the grammar types handled are as
   expected, for example), one could argue that the matchers are not
-  "real" combinators.
+  "real" combinators (what is written be the user is a graph of types,
+  not a set of recursive functions, even if the final execution logic
+  is equivalent).
 
 ### Trampoline Protocol
 
