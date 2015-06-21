@@ -914,9 +914,9 @@ success(k::Config, m::Matcher, s::State, c::Matcher, t::State, i, r::Value) :: M
 where the parent matcher can do any clean-up work, resulting in a new
 `Message`.
 
-Note that the child's state is returned to the parent.  It is the
-responsibility of the parent to save this (in its own state) if it
-wants to re-call the child.
+Note that the state `t` of the child `c` is returned to the parent.
+It is the responsibility of the parent to save this (in its own state)
+if it wants to re-call the child.
 
 
 TODO - more here as i think through how better to reduce memory use.
