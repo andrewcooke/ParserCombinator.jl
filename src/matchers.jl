@@ -236,7 +236,7 @@ function execute(k::Config, m::Depth, s::DepthYield, unused)
             Success(Backtrack(s.results, s.iters, s.states), s.iters[end], flatten(s.results))
         else
             # Array{Value,1} -> Value
-            Success(Backtrack(s.results, s.iters, s.states), s.iters[end], Any[s.results;])
+            Success(Backtrack(s.results, s.iters, s.states), s.iters[end], Any[s.results...])
         end
     else
         # we need to continue searching in case there's some other weird
@@ -323,7 +323,7 @@ function execute(k::Config, m::Breadth, s::BreadthYield, unused)
             Success(Grow(s.start, s.queue), q.iter, flatten(q.results))
         else
             # Array{Value,1} -> Value
-            Success(Grow(s.start, s.queue), q.iter, Any[q.results;])
+            Success(Grow(s.start, s.queue), q.iter, Any[q.results...])
         end
     else
         execute(k, m, Grow(s.start, s.queue), unused)
@@ -391,7 +391,7 @@ serial_success(m::Seq, results::Array{Value,1}) = flatten(results)
 end
 
 # copy to get type right (Array{Value,1} -> Array{Any,1})
-serial_success(m::And, results::Array{Value,1}) = Any[results;]
+serial_success(m::And, results::Array{Value,1}) = Any[results...]
 
 @auto_hash_equals type SeriesState<:State
     results::Array{Value, 1}
