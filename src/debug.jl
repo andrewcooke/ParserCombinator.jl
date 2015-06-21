@@ -25,6 +25,7 @@ end
 
 parse_dbg = make_one(Debug)
 
+parent(k::Debug) = parent(k.delegate)
 
 function dispatch(k::Debug, e::Execute)
     if isa(e.parent, Trace)
@@ -41,8 +42,8 @@ function dispatch(k::Debug, e::Execute)
 end
 
 function dispatch(k::Debug, s::Success)
-    if isa(f.child_state, TraceState)
-        @assert 0 == pop!(k.depth)
+    if isa(parent(k), Trace)
+        @assert 1 == pop!(k.depth)
     end
     if length(k.depth) > 0
         k.depth[end] -= 1
@@ -54,12 +55,12 @@ function dispatch(k::Debug, s::Success)
 end
 
 function dispatch(k::Debug, f::Failure)
-    if isa(f.child_state, TraceState)
-        @assert 0 == pop!(k.depth)
+    if isa(parent(k), Trace)
+        @assert 1 == pop!(k.depth)
     end
     if length(k.depth) > 0
         k.depth[end] -= 1
-        debug(k, s)
+        debug(k, f)
     end
     k.abs_depth -= 1
     dispatch(k.delegate, f)
@@ -90,22 +91,19 @@ indent(k::Debug; max=MAX_IND) = repeat(" ", k.depth[end] % max)
 src(::Any, ::Any; max=MAX_SRC) = pad(truncate("...", max), max)
 src(s::AbstractString, i::Int; max=MAX_SRC) = pad(truncate(s[i:end], max), max)
 
-function res(v::Value; max=MAX_RES)
-    txt = string(v)
-    if ismatch(r"^Any", txt)
-        txt = txt[4:end]
-    end
-    truncate(txt, max)
-end
-
 function debug(k::Debug, e::Execute)
     @printf("%3d:%s %02d %s%s->%s\n",
             e.iter, src(k.source, e.iter), k.depth[end], indent(k), e.parent.name, e.child.name)
 end
 
 function debug(k::Debug, s::Success)
+    result = string(s.result)
+    if ismatch(r"^Any", result)
+        result = result[4:end]
+    end
+    result = truncate(result, MAX_RES)
     @printf("%3d:%s %02d %s%s<-%s\n",
-            s.iter, src(s.source, s.iter), k.depth[end], indent(k), parent(k).name, res(s.result))
+            s.iter, src(k.source, s.iter), k.depth[end], indent(k), parent(k).name, result)
 end
 
 function debug(k::Debug, f::Failure)
@@ -130,5 +128,5 @@ end
 
 # must handle both success and failure so that detection can occur above
 
-response(k::Config, m::Trace, s, t, i, r::Success) = Response(TraceState(t), i, r)
-response(k::Config, m::Trace, s, t, i, r::Failure) = Response(TraceState(t), i, r)
+success(k::Config, m::Trace, s, t, i, v::Value) = Success(TraceState(t), i, v)
+failure(k::Config, m::Trace, s) = FAILURE

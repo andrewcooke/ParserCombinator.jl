@@ -25,7 +25,6 @@ execute(k::Config, m::Delegate, s::Clean, i) = Execute(m, s, m.matcher, CLEAN, i
 
 execute(k::Config, m::Delegate, s::DelegateState, i) = Execute(m, s, m.matcher, s.state, i)
 
-# this avoids re-calling child on backtracking on failure
 failure(k::Config, m::Delegate, s) = FAILURE
 
 
@@ -259,11 +258,14 @@ function execute(k::Config, m::Depth, s::Backtrack, unused)
 end
 
 # backtrack succeeded so move down
-success(k::Config, m::Depth, s::Backtrack, t, i, r::Value) = execute(k, m, Slurp(Value[s.results..., r], vcat(s.iters, i), vcat(s.states, t)), i)
+function success(k::Config, m::Depth, s::Backtrack, t, i, r::Value)
+    execute(k, m, Slurp(Value[s.results..., r], vcat(s.iters, i), vcat(s.states, t)), i)
+end
 
 # we couldn't move down, so yield this point
-failure(k::Config, m::Depth, s::Backtrack) = execute(k, m, DepthYield(s.results, s.iters, s.states), arbitrary(s))
-
+function failure(k::Config, m::Depth, s::Backtrack)
+    execute(k, m, DepthYield(s.results, s.iters, s.states), arbitrary(s))
+end
 
 
 # breadth-first specific state and logic
@@ -501,7 +503,7 @@ end
 
 execute(k::Config, m::Lookahead, s::Clean, i) = Execute(m, LookaheadState(s, i), m.matcher, CLEAN, i)
 
-success(k::Config, m::Lookahead, s, t, i, r::Value) = Response(LookaheadState(t, s.iter), s.iter, EMPTY)
+success(k::Config, m::Lookahead, s, t, i, r::Value) = Success(LookaheadState(t, s.iter), s.iter, EMPTY)
 
 
 
@@ -523,7 +525,7 @@ execute(k::Config, m::Not, s::Clean, i) = Execute(m, NotState(i), m.matcher, CLE
 
 success(k::Config, m::Not, s::NotState, t, i, r::Value) = FAILURE
 
-failure(k::Config, m::Not, s::NotState) = SUCCESS(s, s.iter, EMPTY)
+failure(k::Config, m::Not, s::NotState) = Success(s, s.iter, EMPTY)
 
 
 

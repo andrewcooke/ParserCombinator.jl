@@ -6,8 +6,7 @@
 # dispatch() functions, etc).
 
 
-# this works for all configs defined so far
-
+# this works for most configs
 parent(k::Config) = k.stack[end][1]
 
 
@@ -59,13 +58,13 @@ end
 
 function dispatch(k::Cache, s::Success)
     parent, parent_state, key = pop!(k.stack)
-    k.cache[key] = r
+    k.cache[key] = s
     success(k, parent, parent_state, s.child_state, s.iter, s.result)
 end
 
 function dispatch(k::Cache, f::Failure)
     parent, parent_state, key = pop!(k.stack)
-    k.cache[key] = r
+    k.cache[key] = f
     failure(k, parent, parent_state)
 end
 

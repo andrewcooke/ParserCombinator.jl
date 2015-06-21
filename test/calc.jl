@@ -45,7 +45,7 @@ println(all)
 @test typeof(get(neg.matcher)) == Alt
 @test length(get(neg.matcher).matchers) == 3  # flattening
 @test prd.name == :prd
-@test typeof(prd) == TransSuccess
+@test typeof(prd) == Transform
 @test typeof(prd.matcher) == Seq
 @test length(prd.matcher.matchers) == 2
 @test typeof(prd.matcher.matchers[2]) == Depth

@@ -1,6 +1,6 @@
 
 # we need to import these so that we can extend them
-import ParserCombinator: execute, response
+import ParserCombinator: execute, success, failure
 # defines hash() and == for us
 using AutoHashEquals
 
@@ -27,16 +27,16 @@ end
 # the Delegate code handles the initial call (with CLEAN), and failure.  all
 # we need to do is add handling for success
 
-function response(k::Config, m::Case, s, t, i, r::Success)
+function success(k::Config, m::Case, s, t, i, r::Value)
     # we don't care about the old state for this matcher (s), but we need to
     # save the child state (t), so that it can be used in backtracking.
     new_s = CaseState(t)
     # get the string contents from the child matcher
     # (nicer code would check this was a list containing a single string)
-    contents::AbstractString = r.value[1]
+    contents::AbstractString = r[1]
     new_contents = uppercase(contents[1:1]) * contents[2:end]
     # and build the response from this matcher (see types.jl)
-    Response(new_s, i, Success([new_contents]))
+    Success(new_s, i, Any[new_contents])
 end
 
 
