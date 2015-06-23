@@ -432,8 +432,8 @@ matchers in the grammar.  For example, the following two grammars have
 different backtracking behaviour:
 
 ```julia
-Series(Repeat(s"a", 0, 3); backtrack=false)
-Series(Repeat(s"a", 0, 3; backtrack=false); backtrack=false)
+Series(Repeat(s"a", 0, 3), s"b"; backtrack=false)
+Series(Repeat(s"a", 0, 3), s"b"; backtrack=false); backtrack=false)
 ```
 
 #### Spaces - Pre And Post-Fixes
