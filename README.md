@@ -131,6 +131,7 @@ you combine these.  They can all be nested, refer to each other, etc etc.
   * [Transforms](#transforms)
   * [Lookahead And Negation](#lookahead-and-negation)
 * [Other](#other)
+  * [Backtracking](#backtracking)
   * [Spaces - Pre And Post-Fixes](#spaces---pre-and-post-fixes)
   * [Locating Errors](#locating-errors)
   * [Coding Style](#coding-style)
@@ -413,6 +414,27 @@ empty match (ie the empty list).
 
 
 ### Other
+
+#### Backtracking
+
+By default, matchers will backtrack as necessary.
+
+In some (unusual) cases, it is useful to disable backtracking.  For
+example, see PCRE's "posessive" matching.  This can be done here on a
+case-by-case basis by adding `backtrack=false` to `Repeat()`,
+`Alternatives()` and `Series()`, or by appending `!` to the matchers
+that those functions generate: `Depth!`, `Breadth!`, `Alt!`, `Seq!`
+and `And!`.
+
+This disables backtracking of the direct children of those matchers.
+To disable *all* backtracking, then the change must be made to *all*
+matchers in the grammar.  For example, the following two grammars have
+different backtracking behaviour:
+
+```julia
+Series(Repeat(s"a", 0, 3); backtracking=false)
+Series(Repeat(s"a", 0, 3; backtracking=false); backtracking=false)
+```
 
 #### Spaces - Pre And Post-Fixes
 
