@@ -426,20 +426,28 @@ case-by-case basis by adding `backtrack=false` to `Repeat()`,
 that those functions generate: `Depth!`, `Breadth!`, `Alt!`, `Seq!`
 and `And!`.
 
-This disables backtracking of the direct children of those matchers.
-To disable *all* backtracking, then the change must be made to *all*
-matchers in the grammar.  For example, the following two grammars have
-different backtracking behaviour:
+For example,
+
+```julia
+collect(parse_all("123abc", Seq!(p"\d"[0:end], p"[a-z]"[0:end])))
+```
+
+will give just a single match.
+
+Using `backtrack=false` disables backtracking of the direct children
+of those matchers.  To disable *all* backtracking, then the change
+must be made to *all* matchers in the grammar.  For example, the
+following two grammars have different backtracking behaviour:
 
 ```julia
 Series(Repeat(s"a", 0, 3), s"b"; backtrack=false)
 Series(Repeat(s"a", 0, 3; backtrack=false), s"b"; backtrack=false)
 ```
 
-Using `backtrack=false` makes a grammar more efficient, but also more specific.
-It can also reduce the memory consumed by the parser, but does not
-guarantee that resources will be released - see TODO for a better
-approach to reducing memory use.
+This makes a grammar more efficient, but also more specific.  It can
+reduce the memory consumed by the parser, but does not guarantee that
+resources will be released - see TODO for a better approach to
+reducing memory use.
 
 #### Spaces - Pre And Post-Fixes
 

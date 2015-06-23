@@ -51,6 +51,7 @@ m1.matcher = Nullable{ParserCombinator.Matcher}(Seq(Dot(), Opt(m1)))
 @test parse_one("12c", Lookahead(p"\d") + PInt()) == [12]
 @test parse_one("12c", Lookahead(p"\d") + PInt() + Dot()) == [12, 'c']
 @test_throws ParserException parse_one("12c", Not(Lookahead(p"\d")) + PInt() + Dot())
+@test collect(parse_all("123abc", Seq!(p"\d"[0:end], p"[a-z]"[0:end]))) == Any[Any["1", "2", "3", "a", "b", "c"]]
 
 # check that repeat is exactly the same as regexp
 
