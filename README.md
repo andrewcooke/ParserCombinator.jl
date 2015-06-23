@@ -432,7 +432,8 @@ For example,
 collect(parse_all("123abc", Seq!(p"\d"[0:end], p"[a-z]"[0:end])))
 ```
 
-will give just a single match.
+will give just a single match, because `Seq!` (with trailing `!`) does
+not backtrack the `Repeat()` child matchers.
 
 Using `backtrack=false` disables backtracking of the direct children
 of those matchers.  To disable *all* backtracking, then the change
