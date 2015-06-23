@@ -1,6 +1,4 @@
 
-# various simple matchers
-
 @test parse_one("", Epsilon()) == []
 @test parse_one("", Insert("foo")) == ["foo"]
 @test parse_one("", Drop(Insert("foo"))) == []
@@ -23,6 +21,8 @@
 @test parse_one("abc", Seq(Equal("a"), Equal("b"))) == ["a", "b"]
 @test parse_one("abc", Seq(p"."[1:2], Equal("c"))) == ["a", "b", "c"]
 @test parse_one("abc", Seq(p"."[1:2], Equal("b"))) == ["a", "b"]
+@test parse_one("abc", Seq!(p"."[1:2], Equal("c"))) == ["a", "b", "c"]
+@test_throws ParserException  parse_one("abc", Seq!(p"."[1:2], Equal("b"))) == ["a", "b"]
 @test parse_one("abc", Seq(p"."[1:2], p"."[1:2])) == ["a", "b", "c"]
 @test parse_one("abc", Seq(p"."[1:2,:&], p"."[1:2])) == Any[["a"], ["b"], "c"]
 @test parse_one("abc", Seq(p"."[1:2,:&,:?], p"."[1:2])) == Any[["a"], "b", "c"]
@@ -32,6 +32,7 @@
 @test parse_one("abc", p"." + s"b" + s"c") == ["a", "b", "c"]
 @test parse_one("abc", p"." + S"b" + s"c") == ["a", "c"]
 @test parse_one("b", Alt(s"a", s"b", s"c")) == ["b"]
+@test parse_one("b", Alt!(s"a", s"b", s"c")) == ["b"]
 @test collect(parse_all("b", Trace(Alt(Epsilon(), Repeat(s"b", 0, 1))))) == Array[[], ["b"], []]
 @test collect(parse_all("b", Alt(Epsilon(), Repeat(s"b", 0, 1; greedy=false)))) == Array[[], [], ["b"]]
 @test parse_one("abc", p"." + (s"b" | s"c")) == ["a", "b"]
@@ -75,22 +76,26 @@ end
 
 @test parse_one("ab", Seq(Equal("a"), Equal("b"))) == ["a", "b"]
 @test parse_one("abc", Dot() + Dot() + Dot()) == ['a', 'b', 'c']
-@test map(x -> [length(x[1]), length(x[2])],
-          collect(parse_all("aaa", 
-                            Seq((Repeat(Equal("a"), 0, 3) > tuple),
-                                (Repeat(Equal("a"), 0, 3) > tuple))))) == 
-                                Array[[3,0],
-                                      [2,1],[2,0],
-                                      [1,2],[1,1],[1,0],
-                                      [0,3],[0,2],[0,1],[0,0]]
-@test map(x -> [length(x[1]), length(x[2])],
-          collect(parse_all("aaa", 
-                            Seq((Repeat(Equal("a"), 0, 3; greedy=false) > tuple),
-                                (Repeat(Equal("a"), 0, 3; greedy=false) > tuple))))) == 
-                                Array[[0,0],[0,1],[0,2],[0,3],
-                                      [1,0],[1,1],[1,2],
-                                      [2,0],[2,1],
-                                      [3,0]]
 
+for backtrack in (true, false)
+
+    @test map(x -> [length(x[1]), length(x[2])],
+              collect(parse_all("aaa", 
+                                Seq((Repeat(Equal("a"), 0, 3; backtrack=backtrack) > tuple),
+                                    (Repeat(Equal("a"), 0, 3; backtrack=backtrack) > tuple))))) == 
+    Array[[3,0],
+          [2,1],[2,0],
+          [1,2],[1,1],[1,0],
+          [0,3],[0,2],[0,1],[0,0]]
+
+    @test map(x -> [length(x[1]), length(x[2])],
+              collect(parse_all("aaa", 
+                                Seq((Repeat(Equal("a"), 0, 3; backtrack=backtrack, greedy=false) > tuple),
+                                    (Repeat(Equal("a"), 0, 3; backtrack=backtrack, greedy=false) > tuple))))) == 
+    Array[[0,0],[0,1],[0,2],[0,3],
+          [1,0],[1,1],[1,2],
+          [2,0],[2,1],
+          [3,0]]
+end
 
 println("tests ok")

@@ -122,9 +122,9 @@ end
 
 # repetition
 
-# in both cases (Depth and Breadth) we perform a tree search of all
-# possible states (limited by the maximum number of matches), yielding
-# when we have a result within the lo/hi range.
+# in the first two cases (Depth and Breadth) we perform a tree search
+# of all possible states (limited by the maximum number of matches),
+# yielding when we have a result within the lo/hi range.
 
 abstract Repeat_<:Matcher   # _ to avoid conflict with function in 0.3
 
@@ -132,19 +132,27 @@ ALL = typemax(Int)
 
 abstract RepeatState<:State
 
-function Repeat(m::Matcher, lo, hi; flatten=true, greedy=true)
+function Repeat(m::Matcher, lo, hi; flatten=true, greedy=true, backtrack=true)
     if greedy
-        Depth(m, lo, hi; flatten=flatten)
+        backtrack ? Depth(m, lo, hi; flatten=flatten) : Depth!(m, lo, hi; flatten=flatten)
     else
-        Breadth(m, lo, hi; flatten=flatten)
+        backtrack ? Breadth(m, lo, hi; flatten=flatten) : Breadth!(m, lo, hi; flatten=flatten)
     end
 end
-Repeat(m::Matcher, lo; flatten=true, greedy=true) = Repeat(m, lo, lo; flatten=flatten, greedy=greedy)
-Repeat(m::Matcher; flatten=true, greedy=true) = Repeat(m, 0, ALL; flatten=flatten, greedy=greedy)
+Repeat(m::Matcher, lo; flatten=true, greedy=true, backtrack=true) = Repeat(m, lo, lo; flatten=flatten, greedy=greedy, backtrack=backtrack)
+Repeat(m::Matcher; flatten=true, greedy=true, backtrack=true) = Repeat(m, 0, ALL; flatten=flatten, greedy=greedy, backtrack=backtrack)
 
 print_field(m::Repeat_, ::Type{Val{:lo}}) = "lo=$(m.lo)"
 print_field(m::Repeat_, ::Type{Val{:hi}}) = "hi=$(m.hi)"
 print_field(m::Repeat_, ::Type{Val{:flatten}}) = "flatten=$(m.flatten)"
+
+function repeat_success(m::Repeat_, results::Array{Value,1})
+    if m.flatten
+        flatten(results)
+    else
+        Any[results...]
+    end
+end
 
 # depth-first (greedy) state and logic
 
@@ -174,7 +182,7 @@ abstract DepthState<:RepeatState
 # failure)
 arbitrary(s::DepthState) = s.iters[1]
 
-@auto_hash_equals type Slurp<:DepthState
+@auto_hash_equals type DepthSlurp<:DepthState
     # there's a mismatch in lengths here because the empty results is
     # associated with an iter and state
     results::Array{Value,1} # accumulated.  starts []
@@ -189,7 +197,7 @@ end
     states::Array{State,1}
 end
 
-@auto_hash_equals type Backtrack<:DepthState
+@auto_hash_equals type DepthBacktrack<:DepthState
     results::Array{Value,1}
     iters::Array{Any,1}
     states::Array{State,1}
@@ -197,13 +205,13 @@ end
 
 # when first called, create base state and make internal transition
 
-execute(k::Config, m::Depth, s::Clean, i) = execute(k, m, Slurp(Array(Value, 0), [i], State[DIRTY]), i)
+execute(k::Config, m::Depth, s::Clean, i) = execute(k, m, DepthSlurp(Array(Value, 0), [i], State[DIRTY]), i)
 
 # repeat matching until at bottom of this branch (or maximum depth)
 
 max_depth(m::Depth, results) = m.hi == length(results)
 
-function execute(k::Config, m::Depth, s::Slurp, i)
+function execute(k::Config, m::Depth, s::DepthSlurp, i)
     if max_depth(m, s.results)
         execute(k, m, DepthYield(s.results, s.iters, s.states), i)
     else
@@ -211,18 +219,18 @@ function execute(k::Config, m::Depth, s::Slurp, i)
     end
 end
 
-function success(k::Config, m::Depth, s::Slurp, t, i, r::Value)
+function success(k::Config, m::Depth, s::DepthSlurp, t, i, r::Value)
     results = Value[s.results..., r]
     iters = vcat(s.iters, i)
     states = vcat(s.states, t)
     if max_depth(m, results)
         execute(k, m, DepthYield(results, iters, states), i)
     else
-        Execute(m, Slurp(results, iters, states), m.matcher, CLEAN, i)
+        Execute(m, DepthSlurp(results, iters, states), m.matcher, CLEAN, i)
     end
 end
 
-function failure(k::Config, m::Depth, s::Slurp)
+function failure(k::Config, m::Depth, s::DepthSlurp)
     # the iter passed on is arbitrary and unused
     execute(k, m, DepthYield(s.results, s.iters, s.states), arbitrary(s))
 end
@@ -232,38 +240,33 @@ end
 function execute(k::Config, m::Depth, s::DepthYield, unused)
     n = length(s.results)
     if n >= m.lo
-        if m.flatten
-            Success(Backtrack(s.results, s.iters, s.states), s.iters[end], flatten(s.results))
-        else
-            # Array{Value,1} -> Value
-            Success(Backtrack(s.results, s.iters, s.states), s.iters[end], Any[s.results...])
-        end
+        Success(DepthBacktrack(s.results, s.iters, s.states), s.iters[end], repeat_success(m, s.results))
     else
         # we need to continue searching in case there's some other weird
         # case that gets us back into valid matches
-        execute(k, m, Backtrack(s.results, s.iters, s.states), arbitrary(s))
+        execute(k, m, DepthBacktrack(s.results, s.iters, s.states), arbitrary(s))
     end
 end
 
 # backtrack once and then move down again if possible.  we cannot repeat a
 # path because we always advance child state.
 
-function execute(k::Config, m::Depth, s::Backtrack, unused)
+function execute(k::Config, m::Depth, s::DepthBacktrack, unused)
     if length(s.iters) == 1  # we've exhausted the search space
         FAILURE
     else
         # we need the iter from *before* the result
-        Execute(m, Backtrack(s.results[1:end-1], s.iters[1:end-1], s.states[1:end-1]), m.matcher, s.states[end], s.iters[end-1])
+        Execute(m, DepthBacktrack(s.results[1:end-1], s.iters[1:end-1], s.states[1:end-1]), m.matcher, s.states[end], s.iters[end-1])
     end
 end
 
 # backtrack succeeded so move down
-function success(k::Config, m::Depth, s::Backtrack, t, i, r::Value)
-    execute(k, m, Slurp(Value[s.results..., r], vcat(s.iters, i), vcat(s.states, t)), i)
+function success(k::Config, m::Depth, s::DepthBacktrack, t, i, r::Value)
+    execute(k, m, DepthSlurp(Value[s.results..., r], vcat(s.iters, i), vcat(s.states, t)), i)
 end
 
 # we couldn't move down, so yield this point
-function failure(k::Config, m::Depth, s::Backtrack)
+function failure(k::Config, m::Depth, s::DepthBacktrack)
     execute(k, m, DepthYield(s.results, s.iters, s.states), arbitrary(s))
 end
 
@@ -299,9 +302,9 @@ abstract BreadthState<:RepeatState
 
 arbitrary(s::BreadthState) = s.start
 
-@auto_hash_equals type Grow<:BreadthState
+@auto_hash_equals type BreadthGrow<:BreadthState
     start  # initial iter
-    queue::Array{Entry,1}  # this has to be type for caching
+    queue::Array{Entry,1}  # this has to be immutable for caching
 end
 
 @auto_hash_equals type BreadthYield<:BreadthState
@@ -319,20 +322,15 @@ function execute(k::Config, m::Breadth, s::BreadthYield, unused)
     q = s.queue[1]
     n = length(q.results)
     if n >= m.lo
-        if m.flatten
-            Success(Grow(s.start, s.queue), q.iter, flatten(q.results))
-        else
-            # Array{Value,1} -> Value
-            Success(Grow(s.start, s.queue), q.iter, Any[q.results...])
-        end
+        Success(BreadthGrow(s.start, s.queue), q.iter, repeat_success(m, q.results))
     else
-        execute(k, m, Grow(s.start, s.queue), unused)
+        execute(k, m, BreadthGrow(s.start, s.queue), unused)
     end
 end
 
 # add the next row
 
-function execute(k::Config, m::Breadth, s::Grow, unused)
+function execute(k::Config, m::Breadth, s::BreadthGrow, unused)
     if length(s.queue[1].results) > m.hi
         FAILURE
     else
@@ -340,11 +338,11 @@ function execute(k::Config, m::Breadth, s::Grow, unused)
     end
 end
 
-success(k::Config, m::Breadth, s::Grow, t, i, r::Value) = Execute(m, Grow(s.start, vcat(s.queue, Entry(i, t, Value[s.queue[1].results..., r]))), m.matcher, t, i)
+success(k::Config, m::Breadth, s::BreadthGrow, t, i, r::Value) = Execute(m, BreadthGrow(s.start, vcat(s.queue, Entry(i, t, Value[s.queue[1].results..., r]))), m.matcher, t, i)
 
 # discard what we have yielded and grown
 
-function failure(k::Config, m::Breadth, s::Grow)
+function failure(k::Config, m::Breadth, s::BreadthGrow)
     if (length(s.queue) > 1)
         execute(k, m, BreadthYield(s.start, s.queue[2:end]), arbitrary(s))
     else
@@ -352,6 +350,97 @@ function failure(k::Config, m::Breadth, s::Grow)
     end
 end
 
+
+# largest first (greedy) repetition without backtracking of child
+# matchers
+
+@auto_hash_equals type Depth!<:Repeat_
+    name::Symbol
+    matcher::Matcher
+    lo::Integer
+    hi::Integer
+    flatten::Bool
+    Depth!(m, lo, hi; flatten=true) = new(:Depth!, m, lo, hi, flatten)
+end
+
+@auto_hash_equals type DepthSlurp!<:RepeatState
+    result::Array{Value,1}
+    iters::Array{Any,1}
+end
+
+arbitrary(s::DepthSlurp!) = s.iters[1]
+
+@auto_hash_equals type DepthYield!<:RepeatState
+    result::Array{Value,1}
+    iters::Array{Any,1}
+end
+
+execute(k::Config, m::Depth!, s::Clean, i) = execute(k, m, DepthSlurp!(Value[], Any[i]), i)
+
+function execute(k::Config, m::Depth!, s::DepthSlurp!, i)
+    if length(s.result) < m.hi
+        Execute(m, s, m.matcher, CLEAN, i)
+    else
+        execute(k, m, DepthYield!(s.result, s.iters), i)
+    end
+end
+
+success(k::Config, m::Depth!, s::DepthSlurp!, t::State, i, r::Value) = execute(k, m, DepthSlurp!(Value[s.result..., r], Any[s.iters..., i]), i)
+
+failure(k::Config, m::Depth!, s::DepthSlurp!) = execute(k, m, DepthYield!(s.result, s.iters), arbitrary(s))
+
+function execute(k::Config, m::Depth!, s::DepthYield!, unused)
+    if length(s.result) == m.lo
+        Success(DIRTY, s.iters[end], repeat_success(m, s.result))
+    else
+        Success(DepthYield!(s.result[1:end-1], s.iters[1:end-1]), s.iters[end], repeat_success(m, s.result))
+    end
+end
+
+
+# smallest first (non-greedy) repetition without backtracking of child
+# matchers
+
+@auto_hash_equals type Breadth!<:Repeat_
+    name::Symbol
+    matcher::Matcher
+    lo::Integer
+    hi::Integer
+    flatten::Bool
+    Breadth!(m, lo, hi; flatten=true) = new(:Breadth!, m, lo, hi, flatten)
+end
+
+@auto_hash_equals type BreadthState!<:RepeatState
+    result::Array{Value,1}
+    iter
+end
+
+function execute(k::Config, m::Breadth!, s::Clean, i)
+    if m.lo == 0
+        Success(BreadthState!(Value[], i), i, EMPTY)
+    else
+        execute(k, m, BreadthState!(Value[], i), i)
+    end
+end
+
+function execute(k::Config, m::Breadth!, s::BreadthState!, unused)
+    if length(s.result) == m.hi
+        FAILURE
+    else
+        Execute(m, s, m.matcher, CLEAN, s.iter)
+    end
+end
+
+function success(k::Config, m::Breadth!, s::BreadthState!, t::State, i, r::Value)
+    result = Value[s.result..., r]
+    if length(result) >= m.lo
+        Success(BreadthState!(result, i), i, repeat_success(m, result))
+    else
+        execute(k, m, BreadthState!(result, i), i)
+    end
+end
+
+failure(k::Config, m::Breadth!, s::BreadthState!) = FAILURE
 
 
 # match all in a sequence with backtracking
@@ -364,15 +453,18 @@ end
 # Repeat) that takes a flatten argument.  finally, both are so similar
 # that they can share the same state.
 
-abstract Series_<:Matcher
-
-function Series(m::Matcher...; flatten=true)
+function Series(m::Matcher...; flatten=true, backtrack=true)
     if flatten
-        Seq(m...)
+        backtrack ? Seq(m...) : Seq!(m...)
     else
-        And(m...)
+        backtrack ? And(m...) : And!(m...)
     end
 end
+
+abstract Series_<:Matcher
+
+
+# first, the backtracking version
 
 @auto_hash_equals type Seq<:Series_
     name::Symbol
@@ -401,7 +493,7 @@ end
 
 # when first called, call first matcher
 
-function execute(l::Config, m::Series_, s::Clean, i) 
+function execute(k::Config, m::Series_, s::Clean, i) 
     if length(m.matchers) == 0
         Success(DIRTY, i, EMPTY)
     else
@@ -443,11 +535,60 @@ function execute(k::Config, m::Series_, s::SeriesState, i)
 end
 
 
+# next, the non-backtracking version
+
+abstract Series!<:Matcher
+
+@auto_hash_equals type Seq!<:Series!
+    name::Symbol
+    matchers::Array{Matcher,1}
+    Seq!(m::Matcher...) = new(:Seq!, [m...])
+    Seq!(m::Array{Matcher,1}) = new(:Seq!, m)
+end
+
+serial_success(m::Seq!, results::Array{Value,1}) = flatten(results)
+
+@auto_hash_equals type And!<:Series!
+    name::Symbol
+    matchers::Array{Matcher,1}
+    And!(m::Matcher...) = new(:And!, [m...])
+    ANd!(m::Array{Matcher,1}) = new(:And!, m)
+end
+
+serial_success(m::And!, results::Array{Value,1}) = Any[results...]
+
+@auto_hash_equals type SeriesState!<:State
+    results::Array{Value,1}
+    i  # index into current alternative
+end
+
+execute(k::Config, m::Series!, s::Clean, i) = execute(k, m, SeriesState!(Value[], 0), i)
+
+function execute(k::Config, m::Series!, s::SeriesState!, i)
+    if s.i == length(m.matchers)
+        return Success(DIRTY, i, serial_success(m, s.results))
+    else
+        return Execute(m, SeriesState!(s.results, s.i+1), m.matchers[s.i+1], CLEAN, i)
+    end
+end
+
+success(k::Config, m::Series!, s::SeriesState!, t, i, r::Value) = execute(k, m, SeriesState!(Value[s.results..., r], s.i), i)
+
+failure(k::Config, m::Series!, s::SeriesState!) = FAILURE
 
 
-# backtracked alternates
+# alternatives (these need to be separate matchers so that | works ok)
 
-@auto_hash_equals type Alt<:Matcher
+function Alternatives(m::Matcher...; backtrack=true)
+    backtrack ? Alt(m...) : Alt!(m...)
+end
+
+abstract Alternatives_<:Matcher
+
+
+# first, the backtracking version
+
+@auto_hash_equals type Alt<:Alternatives_
     name::Symbol
     matchers::Array{Matcher,1}
     Alt(matchers::Matcher...) = new(:Alt, [matchers...])
@@ -480,10 +621,40 @@ function failure(k::Config, m::Alt, s::AltState)
     if s.i == length(m.matchers)
         FAILURE
     else
-        execute(k, m, AltState(CLEAN, s.iter, s.i + 1), s.iter)
+        execute(k, m, AltState(CLEAN, s.iter, s.i+1), s.iter)
     end
 end
 
+
+# next, the non-backtracking version (for some sense of backtracking -
+# it does not re-match children again, but does try other
+# alternatives)
+
+@auto_hash_equals type Alt!<:Alternatives_
+    name::Symbol
+    matchers::Array{Matcher,1}
+    Alt!(matchers::Matcher...) = new(:Alt!, [matchers...])
+    Alt!(matchers::Array{Matcher,1}) = new(:Alt!, matchers)    
+end
+
+@auto_hash_equals type AltState!<:State
+    iter
+    i  # index into current alternative
+end
+
+execute(k::Config, m::Alt!, s::Clean, i) = execute(k, m, AltState!(i, 0), i)
+
+function execute(k::Config, m::Alt!, s::AltState!, i)
+    if s.i == length(m.matchers)
+        FAILURE
+    else
+        Execute(m, AltState!(i, s.i+1), m.matchers[s.i+1], CLEAN, i)
+    end
+end
+
+success(k::Config, m::Alt!, s::AltState!, t, i, r::Value) = Success(s, i, r)
+
+failure(k::Config, m::Alt!, s::AltState!) = execute(k, m, AltState!(s.iter, s.i), s.iter)
 
 
 # evaluate the child, but discard values and do not advance the iter

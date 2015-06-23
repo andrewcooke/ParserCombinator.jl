@@ -23,8 +23,6 @@ type Debug<:Config
     end
 end
 
-parse_dbg = make_one(Debug)
-
 parent(k::Debug) = parent(k.delegate)
 
 function dispatch(k::Debug, e::Execute)
@@ -130,3 +128,14 @@ end
 
 success(k::Config, m::Trace, s, t, i, v::Value) = Success(TraceState(t), i, v)
 failure(k::Config, m::Trace, s) = FAILURE
+
+
+parse_one_cache_dbg = make_one(Debug; delegate=Cache)
+parse_one_nocache_dbg = make_one(Debug; delegate=NoCache)
+parse_one_dbg = parse_one_nocache_dbg
+parse_dbg = parse_one_nocache_dbg
+
+parse_all_cache_dbg = make_all(Debug; delegate=Cache)
+parse_all_nocache_dbg = make_all(Debug; delegate=NoCache)
+parse_all_dbg = parse_all_cache_dbg
+

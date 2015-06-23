@@ -159,5 +159,10 @@ end
 # we use the cache only when matching multiple results but obviously motivated
 # users are free to construct their own...
 
-parse_all = make_all(Cache)
-parse_one = make_one(NoCache)
+parse_all_cache = make_all(Cache)
+parse_all_nocache = make_all(NoCache)
+parse_all = parse_all_cache
+
+parse_one_cache = make_one(Cache)
+parse_one_nocache = make_one(NoCache)
+parse_one = parse_one_nocache
