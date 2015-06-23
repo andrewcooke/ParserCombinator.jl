@@ -261,6 +261,12 @@ julia> parse_one("abc", P"." + p"b.")
 As with equality, a capital prefix to the string literal ("p" for "pattern" by
 the way) implies that the value is dropped.
 
+Note that regular expresions do not backtrack.  A typical, greedy,
+regular expression will match as much of the input as possible, every
+time that it is used.  Backtracking only exists within the library
+matchers (which can duplicate regular expression functionality, when
+needed).
+
 #### Repetition
 
 ```julia
