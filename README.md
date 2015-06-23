@@ -437,13 +437,17 @@ not backtrack the `Repeat()` child matchers.
 
 Using `backtrack=false` only disables backtracking of the direct
 children of those matchers.  To disable *all* backtracking, then the
-change must be made to *all* matchers in the grammar.  For example,
-the following two grammars have different backtracking behaviour:
+change must be made to *all* matchers in the grammar.  For example, in
+theory, the following two grammars have different backtracking
+behaviour:
 
 ```julia
 Series(Repeat(s"a", 0, 3), s"b"; backtrack=false)
 Series(Repeat(s"a", 0, 3; backtrack=false), s"b"; backtrack=false)
 ```
+
+(although, in practice, they are identical, in this contrived example,
+because `s"a"` doesn't backtrack anyway).
 
 This makes a grammar more efficient, but also more specific.  It can
 reduce the memory consumed by the parser, but does not guarantee that
