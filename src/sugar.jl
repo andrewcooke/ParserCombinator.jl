@@ -60,11 +60,14 @@ getindex(m::Matcher, r::Int, s::Symbol...) = getindex(m, r:r; s...)
 function getindex(m::Matcher, r::UnitRange, s::Symbol...)
     greedy = true
     flatten = true
+    backtrack = true
     for x in s
         if x == :?
             greedy = false
         elseif x == :&
             flatten = false
+        elseif x == :!
+            backtrack = false
         else
             error("bad flag to []: $x")
         end

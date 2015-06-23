@@ -420,7 +420,7 @@ empty match (ie the empty list).
 By default, matchers will backtrack as necessary.
 
 In some (unusual) cases, it is useful to disable backtracking.  For
-example, see PCRE's "posessive" matching.  This can be done here on a
+example, see PCRE's "possessive" matching.  This can be done here on a
 case-by-case basis by adding `backtrack=false` to `Repeat()`,
 `Alternatives()` and `Series()`, or by appending `!` to the matchers
 that those functions generate: `Depth!`, `Breadth!`, `Alt!`, `Seq!`
@@ -432,8 +432,8 @@ matchers in the grammar.  For example, the following two grammars have
 different backtracking behaviour:
 
 ```julia
-Series(Repeat(s"a", 0, 3); backtracking=false)
-Series(Repeat(s"a", 0, 3; backtracking=false); backtracking=false)
+Series(Repeat(s"a", 0, 3); backtrack=false)
+Series(Repeat(s"a", 0, 3; backtrack=false); backtrack=false)
 ```
 
 #### Spaces - Pre And Post-Fixes
