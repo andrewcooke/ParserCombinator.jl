@@ -433,7 +433,7 @@ different backtracking behaviour:
 
 ```julia
 Series(Repeat(s"a", 0, 3), s"b"; backtrack=false)
-Series(Repeat(s"a", 0, 3), s"b"; backtrack=false); backtrack=false)
+Series(Repeat(s"a", 0, 3; backtrack=false), s"b"; backtrack=false)
 ```
 
 #### Spaces - Pre And Post-Fixes
