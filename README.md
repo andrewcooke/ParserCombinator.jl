@@ -436,6 +436,11 @@ Series(Repeat(s"a", 0, 3), s"b"; backtrack=false)
 Series(Repeat(s"a", 0, 3; backtrack=false), s"b"; backtrack=false)
 ```
 
+This typically makes a grammar more efficient, but also more specific.
+It can also reduce the memory consumed by the parser, but does not
+guarantee that resources will be released - see TODO for a better
+approach to reducing memory use.
+
 #### Spaces - Pre And Post-Fixes
 
 The lack of a lexer can complicate the handling of whitespace when
