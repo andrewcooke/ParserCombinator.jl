@@ -532,6 +532,9 @@ Don't go reinventing regexps.  The built-in regexp engine is way, way more
 efficient than this library could ever be.  So call out to regexps liberally.
 The `p"..."` syntax makes it easy.
 
+But don't use regular expressions if you need to backtrack what is
+being matched.
+
 Drop stuff you don't need.
 
 Transform things into containers so that your result has nice types.  Look at
