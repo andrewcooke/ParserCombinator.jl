@@ -40,27 +40,27 @@ function dispatch(k::Debug, e::Execute)
 end
 
 function dispatch(k::Debug, s::Success)
-    if isa(parent(k), Trace)
-        @assert 1 == pop!(k.depth)
-    end
     if length(k.depth) > 0
         k.depth[end] -= 1
         debug(k, s)
     end
     k.abs_depth -= 1
     k.max_iter = max(k.max_iter, s.iter)
+    if isa(parent(k), Trace)
+        @assert 0 == pop!(k.depth)
+    end
     dispatch(k.delegate, s)
 end
 
 function dispatch(k::Debug, f::Failure)
-    if isa(parent(k), Trace)
-        @assert 1 == pop!(k.depth)
-    end
     if length(k.depth) > 0
         k.depth[end] -= 1
         debug(k, f)
     end
     k.abs_depth -= 1
+    if isa(parent(k), Trace)
+        @assert 0 == pop!(k.depth)
+    end
     dispatch(k.delegate, f)
 end
 
