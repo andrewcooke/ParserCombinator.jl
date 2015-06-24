@@ -25,6 +25,10 @@ function colon(a::StreamState, b::StreamState)
     b = unify_line(a, b)
     StepRange(a, 1, b)
 end
+# step range is trying to be clever.  we're exploting that this is exposed
+# in range.jl.  i guess we could implement all the necessary arithmetic...
+# (we can't use unit range because of type restrictions - perhaps we should
+# define StreamState to subclass the appropriate type?)
 steprange_last(start::StreamState, step::Int, stop::StreamState) = stop
 
 # very restricted - just enough to support iter[i:end] as current line
