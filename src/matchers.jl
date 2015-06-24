@@ -721,12 +721,12 @@ end
 print_field(m::Pattern, ::Type{Val{:regex}}) = "r\"$(m.regex.pattern[2:end-5])\""
 
 function execute(k::Config, m::Pattern, s::Clean, i)
-    @assert isa(k.source, AbstractString)
     x = match(m.regex, k.source[i:end])
     if x == nothing
         FAILURE
     else
-        Success(DIRTY, i + x.offsets[end] - 1, Any[x.match])
+        # parens so that we only need to define + for obscure iter states
+        Success(DIRTY, i + (x.offsets[end] - 1), Any[x.match])
     end
 end
 

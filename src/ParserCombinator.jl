@@ -25,7 +25,8 @@ PInt, PInt8, PInt16, PInt32, PInt64, PFloat32, PFloat64,
 Word, Space, Star, Plus,
 @with_names, set_name,
 @with_pre, @with_post, set_fix,
-StrongStreamIter, WeakStreamIter
+StrongStreamIter, WeakStreamIter, ExpiredContent, FailExpired, 
+parse_weak, parse_weak_dbg
 
 include("types.jl")
 include("names.jl")

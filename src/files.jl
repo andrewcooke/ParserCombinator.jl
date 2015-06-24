@@ -31,6 +31,9 @@ end
 # define StreamState to subclass the appropriate type?)
 steprange_last(start::StreamState, step::Int, stop::StreamState) = stop
 
+# used to advance state after matching regexp
++(a::StreamState, b::Int) = StreamState(a.line, a.col + b)
+
 # very restricted - just enough to support iter[i:end] as current line
 # for regexps.  step is ignored,
 function getindex(f::StreamIter, r::StepRange)
@@ -40,7 +43,6 @@ function getindex(f::StreamIter, r::StepRange)
     if start.line != stop.line
         error("Can only index a range within a line")
     else
-        println("$(start) $(stop)")
         return line[start.col:stop.col]
     end
 end
@@ -103,3 +105,55 @@ function line_at(f::WeakStreamIter, s::StreamState)
     end
     f.lines[s.line - f.zero]
 end
+
+
+# as NoCache, but treat ExpiredContent exceptions as failures
+
+type FailExpired<:Config
+    source::Any
+    @compat stack::Array{Tuple{Matcher, State},1}
+    @compat FailExpired(source) = new(source, Array(Tuple{Matcher,State}, 0))
+end
+
+function dispatch(k::FailExpired, e::Execute)
+    push!(k.stack, (e.parent, e.parent_state))
+    try
+        execute(k, e.child, e.child_state, e.iter)
+    catch err
+        if isa(err, ExpiredContent)
+            FAILURE
+        else
+            rethrow()
+        end
+    end
+end
+
+function dispatch(k::FailExpired, s::Success)
+    (parent, parent_state) = pop!(k.stack)
+    try
+        success(k, parent, parent_state, s.child_state, s.iter, s.result)
+    catch err
+        if isa(err, ExpiredContent)
+            FAILURE
+        else
+            rethrow()
+        end
+    end
+end
+
+function dispatch(k::FailExpired, f::Failure)
+    (parent, parent_state) = pop!(k.stack)
+    try
+        failure(k, parent, parent_state)
+    catch err
+        if isa(err, ExpiredContent)
+            FAILURE
+        else
+            rethrow()
+        end
+    end
+end
+
+
+parse_weak = make_one(FailExpired)
+parse_weak_dbg = make_one(Debug; delegate=FailExpired)
