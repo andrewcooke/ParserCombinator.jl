@@ -34,9 +34,6 @@ end
 # type, or create our own range type?)
 steprange_last(start::StreamState, step::Int, stop::StreamState) = stop
 
-# used to advance state after matching regexp
-+(a::StreamState, b::Int) = StreamState(a.line, a.col + b)
-
 # very restricted - just enough to support iter[i:end] as current line
 # for regexps.  step is ignored,
 function getindex(f::StreamIter, r::StepRange)
