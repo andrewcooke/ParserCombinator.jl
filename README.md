@@ -13,13 +13,16 @@ Status](https://travis-ci.org/andrewcooke/ParserCombinator.jl.png)](https://trav
 * [Design](#design)
 * [Releases](#releases)
 
-A parser combinator library for Julia that tries to strike a balance between
-being both (moderately) efficient and simple (for the end-user and the
-maintainer).  It is similar to parser combinator libraries in other languages
-(eg. Haskell's Parsec or Python's pyparsing) - it can include caching
-(memoization) but does not handle left-recursive grammars.
+A parser combinator library for Julia, similar to those in other
+languages, like Haskell's Parsec or Python's pyparsing.
 
-ParserCombinator can parse any iterable type (not just strings).
+ParserCombinator's main advantage may be its flexible design, which
+separates the matchers from the evaluation strategy.  That may sound
+odd, but makes it easy to "plug in" memoization, or debug traces, or
+to restrict backtracking in a similar way to Parsec - all while using
+the same grammar.
+
+It can also parse any iterable type (not just strings).
 
 ## Example
 
@@ -132,6 +135,7 @@ you combine these.  They can all be nested, refer to each other, etc etc.
   * [Lookahead And Negation](#lookahead-and-negation)
 * [Other](#other)
   * [Backtracking](#backtracking)
+  * [Controlling Memory Use](#controlling-memory-use)
   * [Spaces - Pre And Post-Fixes](#spaces---pre-and-post-fixes)
   * [Locating Errors](#locating-errors)
   * [Coding Style](#coding-style)
@@ -464,8 +468,27 @@ because `s"a"` doesn't backtrack anyway).
 
 This makes a grammar more efficient, but also more specific.  It can
 reduce the memory consumed by the parser, but does not guarantee that
-resources will be released - see TODO for a better approach to
-reducing memory use.
+resources will be released - see the next section for a better
+approach to reducing memory use.
+
+#### Controlling Memory Use
+
+Haskell's Parsec, if I understand correctly, does not backtrack by
+default.  More exactly, it does not allow input that has been consumed
+(matched) to be read again.  This reduces memory consumption (since
+read data can be discarded), but only accepts LL(1) grammars.
+
+To allow parsing of a wider range of grammars, Parse then introduces
+the `Try` combinator, which enables backtracking in some (generally
+small) portion of the grammar.
+
+The same approach can be used with this library, using
+`WeakStreamIter` as a source with `parse_weak`.  This is targetted at
+file parsing (since in-memory strings already fit in memorye):
+
+```julia
+example here
+```
 
 #### Spaces - Pre And Post-Fixes
 
