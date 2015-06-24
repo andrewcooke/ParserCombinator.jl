@@ -8,20 +8,22 @@
 # construct your own with any type by using the delegate=... keyword.  see
 # test/calc.j for an example.
 
-type Debug<:Config
-    source::AbstractString
+type Debug{S}<:Config
+    source::S
     stack::Array
     delegate::Config
     depth::Array{Int,1}
     abs_depth::Int
     max_depth::Int
-    max_iter::Int
+    max_iter
     n_calls::Int
-    function Debug(source::AbstractString; delegate=NoCache, kargs...)
+    function Debug(source::S; delegate=NoCache, kargs...)
         k = delegate(source; kargs...)
         new(k.source, k.stack, k, Array(Int, 0), 0, 0, start(k.source), 0)
     end
 end
+# i don't get why this is necessary, but it seems to work
+Debug(source; kargs...) = Debug{typeof(source)}(source; kargs...)
 
 parent(k::Debug) = parent(k.delegate)
 
@@ -89,22 +91,25 @@ indent(k::Debug; max=MAX_IND) = repeat(" ", k.depth[end] % max)
 src(::Any, ::Any; max=MAX_SRC) = pad(truncate("...", max), max)
 src(s::AbstractString, i::Int; max=MAX_SRC) = pad(truncate(s[i:end], max), max)
 
-function debug(k::Debug, e::Execute)
+function debug{S<:AbstractString}(k::Debug{S}, e::Execute)
     @printf("%3d:%s %02d %s%s->%s\n",
             e.iter, src(k.source, e.iter), k.depth[end], indent(k), e.parent.name, e.child.name)
 end
 
-function debug(k::Debug, s::Success)
-    result = string(s.result)
+function short(s::Value)
+    result = string(s)
     if ismatch(r"^Any", result)
         result = result[4:end]
     end
-    result = truncate(result, MAX_RES)
-    @printf("%3d:%s %02d %s%s<-%s\n",
-            s.iter, src(k.source, s.iter), k.depth[end], indent(k), parent(k).name, result)
+    truncate(result, MAX_RES)
 end
 
-function debug(k::Debug, f::Failure)
+function debug{S<:AbstractString}(k::Debug{S}, s::Success)
+    @printf("%3d:%s %02d %s%s<-%s\n",
+            s.iter, src(k.source, s.iter), k.depth[end], indent(k), parent(k).name, short(s.result))
+end
+
+function debug{S<:AbstractString}(k::Debug{S}, f::Failure)
     @printf("   :%s %02d %s%s<-!!!\n",
             pad(" ", MAX_SRC), k.depth[end], indent(k), parent(k).name)
 end
