@@ -41,6 +41,10 @@ steprange_last(start::StreamState, step::Int, stop::StreamState) = stop
 function getindex(f::StreamIter, r::StepRange)
     start = r.start
     line = line_at(f, start)
+    # if we're at the end of a line, we want the next one
+    while done(line, start.s)
+        start = next(f, start)
+    end
     stop = unify_col(line, unify_line(start, r.stop))
     if start.line != stop.line
         error("Can only index a range within a line")
