@@ -38,6 +38,13 @@ for iter in (StrongStreamIter, WeakStreamIter)
         end
     end
 
+    open("test1.txt", "r") do io
+        # this backtracks across multiple lines, but uses Try
+        result = parse_weak(iter(io), Try(p"(.|\n)"[0:end] + s"5" > string))
+        println(result)
+        @test result == Any["abcdefghijklmnopqrstuvwxyz\n012345"]
+    end
+
 end
 
 println("files ok")

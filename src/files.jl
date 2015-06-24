@@ -84,10 +84,10 @@ type ExpiredContent<:Exception end
 
 type WeakStreamIter<:StreamIter
     io::IOStream
-    frozen::Bool
+    frozen::Int
     zero::Int
     lines::Array{AbstractString,1}
-    WeakStreamIter(io::IOStream) = new(io, false, 0, AbstractString[])
+    WeakStreamIter(io::IOStream) = new(io, 0, 0, AbstractString[])
 end
 
 function line_at(f::WeakStreamIter, s::StreamState)
@@ -95,7 +95,7 @@ function line_at(f::WeakStreamIter, s::StreamState)
         throw(ExpiredContent())
     end
     while length(f.lines) < s.line - f.zero
-        if f.frozen
+        if f.frozen > 0
             push!(f.lines, readline(f.io))
         else
             f.zero += length(f.lines)  # discarded
@@ -151,6 +151,43 @@ function dispatch(k::FailExpired, f::Failure)
             rethrow()
         end
     end
+end
+
+
+@auto_hash_equals type Try<:Delegate
+    name::Symbol
+    matcher::Matcher
+    Try(matcher) = new(:Try, matcher)
+end
+
+@auto_hash_equals immutable TryState<:DelegateState
+    state::State
+end
+
+# TODO - should we make Config parametric in source so that the above
+# is dispatched instead of explicitly tested?
+
+execute(k::FailExpired, m::Try, s::Clean, i) = execute(k, m, TryState(CLEAN), i)
+
+function execute(k::FailExpired, m::Try, s::TryState, i)
+    if isa(k.source, WeakStreamIter)
+        k.source.frozen += 1
+    end
+    Execute(m, s, m.matcher, s.state, i)
+end
+
+function success(k::FailExpired, m::Try, s::TryState, t, i, r::Value)
+    if isa(k.source, WeakStreamIter)
+        k.source.frozen -= 1
+    end
+    Success(TryState(t), i, r)
+end
+
+function failure(k::FailExpired, m::Try, s::TryState)
+    if isa(k.source, WeakStreamIter)
+        k.source.frozen -= 1
+    end
+    FAILURE
 end
 
 
