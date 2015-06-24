@@ -484,7 +484,7 @@ small) portion of the grammar.
 
 The same approach can be used with this library, using
 `WeakStreamIter` as a source with `parse_weak`.  This is targetted at
-file parsing (since in-memory strings already fit in memorye):
+file parsing (since in-memory strings already fit in memory):
 
 ```julia
 example here
