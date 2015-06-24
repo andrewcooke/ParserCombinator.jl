@@ -11,6 +11,11 @@ abstract StreamIter  # must contain io field
     col::Int
 end
 
+immutable StreamRange
+    start::StreamState
+    stop::StreamState
+end
+
 END_COL = typemax(Int)
 FLOAT_LINE = -1
 FLOAT_END = StreamState(FLOAT_LINE, END_COL)
@@ -18,25 +23,14 @@ FLOAT_END = StreamState(FLOAT_LINE, END_COL)
 unify_line(a::StreamState, b::StreamState) = b.line == FLOAT_LINE ? StreamState(a.line, b.col) : b
 unify_col(line::AbstractString, b::StreamState) = b.col == END_COL ? StreamState(b.line, endof(line)) : b
 
-isless(a::StreamState, b::StreamState) = a.line < b.line || (a.line == b.line && a.col < b.col)
-
 start(f::StreamIter) = StreamState(1, 1)
 endof(f::StreamIter) = FLOAT_END
 
-function colon(a::StreamState, b::StreamState)
-    # don't unify here - we may need to skip to the next line
-    StepRange(a, 1, b)
-end
-# step range is trying to be clever.  we're exploiting that this is
-# exposed in range.jl.  i guess we could implement all the necessary
-# arithmetic...  (we can't use unit range because of type restrictions
-# - perhaps we should define StreamState to subclass the appropriate
-# type, or create our own range type?)
-steprange_last(start::StreamState, step::Int, stop::StreamState) = stop
+colon(a::StreamState, b::StreamState) = StreamRange(a, b)
 
 # very restricted - just enough to support iter[i:end] as current line
 # for regexps.  step is ignored,
-function getindex(f::StreamIter, r::StepRange)
+function getindex(f::StreamIter, r::StreamRange)
     start = r.start
     line = line_at(f, start)
     stop = unify_col(line, unify_line(start, r.stop))
