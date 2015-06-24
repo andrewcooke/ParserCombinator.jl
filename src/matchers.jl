@@ -680,7 +680,7 @@ success(k::Config, m::Lookahead, s, t, i, r::Value) = Success(LookaheadState(t, 
 
 # if the child matches, fail; if the child fails return EMPTY
 # no backtracking of the child is supported (i don't understand how it would
-# work, but feel free to correct me....)
+# work, but feel free to correct mfie....)
 
 @auto_hash_equals type Not<:Matcher
     name::Symbol

@@ -13,10 +13,10 @@ for iter in (StrongStreamIter, WeakStreamIter)
         i = start(f)
         (c, i) = next(f, i)
         @test c == 'a'
-        @test f[i:end] == "bcdefghijklmnopqrstuvwxyz"
+        @test f[i:end] == "bcdefghijklmnopqrstuvwxyz\n"
     end
 
 end
 
 println("files ok")
-error()
+

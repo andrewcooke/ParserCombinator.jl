@@ -6,41 +6,55 @@
 
 abstract StreamIter  # must contain io field
 
-start(f::StreamIter) = (1, 1)
+@auto_hash_equals immutable StreamState
+    line::Int
+    col::Int
+end
 
-EOL = (-1, -1)
-endof(f::StreamIter) = EOL
+END_COL = typemax(Int)
+FLOAT_LINE = -1
+FLOAT_END = StreamState(FLOAT_LINE, END_COL)
+
+unify_line(a::StreamState, b::StreamState) = b.line == FLOAT_LINE ? StreamState(a.line, b.col) : b
+unify_col(line::AbstractString, b::StreamState) = b.col == END_COL ? StreamState(b.line, endof(line)) : b
+
+start(f::StreamIter) = StreamState(1, 1)
+endof(f::StreamIter) = FLOAT_END
+
+function colon(a::StreamState, b::StreamState)
+    b = unify_line(a, b)
+    StepRange(a, 1, b)
+end
+steprange_last(start::StreamState, step::Int, stop::StreamState) = stop
 
 # very restricted - just enough to support iter[i:end] as current line
-# for regexps
-function getindex(f::StreamIter, r::UnitRange)
-    a, s = r.start
-    line = line_at(f, a)
-    if r.stop == EOL
-        t = endof(line)
+# for regexps.  step is ignored,
+function getindex(f::StreamIter, r::StepRange)
+    start = r.start
+    line = line_at(f, start)
+    stop = unify_col(line, unify_line(start, r.stop))
+    if start.line != stop.line
+        error("Can only index a range within a line")
     else
-        b, t = r.stop
-        @assert a == b
-    end
-    return line[s:t]
-end
-
-function next(f::StreamIter, i)
-    a, s = i
-    line = line_at(f, a)
-    if done(line, s)
-        next(f, (a+1, 1))
-    else
-        c, s = next(line, s)
-        c, (a, s)
+        println("$(start) $(stop)")
+        return line[start.col:stop.col]
     end
 end
 
-function done(f::StreamIter, i)
+function next(f::StreamIter, s::StreamState)
+    line = line_at(f, s)
+    if done(line, s.col)
+        next(f, StreamState(s.line+1, 1))
+    else
+        c, col = next(line, s.col)
+        c, StreamState(s.line, col)
+    end
+end
+
+function done(f::StreamIter, s::StreamState)
     try
-        a, s = i
-        line = line_at(f, a)
-        done(line, s) && eof(f.io)
+        line = line_at(f, s)
+        done(line, s.col) && eof(f.io)
     catch
         true
     end
@@ -53,11 +67,11 @@ type StrongStreamIter<:StreamIter
     StrongStreamIter(io::IOStream) = new(io, AbstractString[])
 end
 
-function line_at(f::StrongStreamIter, a)
-    while length(f.lines) < a
+function line_at(f::StrongStreamIter, s::StreamState)
+    while length(f.lines) < s.line
         push!(f.lines, readline(f.io))
     end
-    f.lines[a]
+    f.lines[s.line]
 end
 
 
@@ -71,11 +85,11 @@ type WeakStreamIter<:StreamIter
     WeakStreamIter(io::IOStream) = new(io, false, 0, AbstractString[])
 end
 
-function line_at(f::WeakStreamIter, a)
-    if a < f.zero
+function line_at(f::WeakStreamIter, s::StreamState)
+    if s.line < f.zero
         throw(ExpiredContent())
     end
-    while length(f.lines) < a - f.zero
+    while length(f.lines) < s.line - f.zero
         if f.frozen
             push!(f.lines, readline(f.io))
         else
@@ -83,5 +97,5 @@ function line_at(f::WeakStreamIter, a)
             f.lines = AbstractString[readline(f.io)]
         end
     end
-    f.lines[a - f.zero]
+    f.lines[s.line - f.zero]
 end
