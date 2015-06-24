@@ -478,7 +478,7 @@ default.  More exactly, it does not allow input that has been consumed
 (matched) to be read again.  This reduces memory consumption (since
 read data can be discarded), but only accepts LL(1) grammars.
 
-To allow parsing of a wider range of grammars, Parse then introduces
+To allow parsing of a wider range of grammars, Parsec then introduces
 the `Try` combinator, which enables backtracking in some (generally
 small) portion of the grammar.
 
