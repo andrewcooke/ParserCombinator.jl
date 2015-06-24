@@ -725,8 +725,15 @@ function execute(k::Config, m::Pattern, s::Clean, i)
     if x == nothing
         FAILURE
     else
-        # parens so that we only need to define + for obscure iter states
-        Success(DIRTY, i + (x.offsets[end] - 1), Any[x.match])
+        # advance iter by the number of characters consumed
+        # for some sources (ASCII strings for example) we can do better,
+        # but Julia string docs say that generally strings are partial functions
+        # so adding an offset to iter may not be so smart.  TODO - consider
+        # pulling into separate function
+        for _ in 1:(x.offsets[end]-1)
+            discard, i = next(k.source, i)
+        end
+        Success(DIRTY, i, Any[x.match])
     end
 end
 

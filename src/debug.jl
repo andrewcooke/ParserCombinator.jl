@@ -89,7 +89,7 @@ pad(s::AbstractString, n::Int) = s * repeat(" ", n - length(s))
 indent(k::Debug; max=MAX_IND) = repeat(" ", k.depth[end] % max)
 
 src(::Any, ::Any; max=MAX_SRC) = pad(truncate("...", max), max)
-src(s::AbstractString, i::Int; max=MAX_SRC) = pad(truncate(s[i:end], max), max)
+src(s::AbstractString, i::Int; max=MAX_SRC) = pad(truncate(escape_string(s[i:end]), max), max)
 
 function debug{S<:AbstractString}(k::Debug{S}, e::Execute)
     @printf("%3d:%s %02d %s%s->%s\n",

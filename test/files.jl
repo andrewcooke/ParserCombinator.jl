@@ -25,9 +25,17 @@ for iter in (StrongStreamIter, WeakStreamIter)
 
     open("test1.txt", "r") do io
         # this backtracks across multiple lines
-#        result = parse_weak(iter(io), p"."[0:end] + s"5" > string)
-        result = parse_weak_dbg(iter(io), Trace(p"(.|\n)"[0:end] + s"5" > string))
-        println(result)
+        try
+            result = parse_weak(iter(io), p"(.|\n)"[0:end] + s"5" > string)
+            println(result)
+            @test result == Any["abcdefghijklmnopqrstuvwxyz\n012345"]
+            @test iter == StrongStreamIter
+        catch x
+            if !isa(x, ParserException)
+                rethrow()
+            end
+            @test iter == WeakStreamIter
+        end
     end
 
 end

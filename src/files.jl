@@ -24,13 +24,14 @@ start(f::StreamIter) = StreamState(1, 1)
 endof(f::StreamIter) = FLOAT_END
 
 function colon(a::StreamState, b::StreamState)
-    b = unify_line(a, b)
+    # don't unify here - we may need to skip to the next line
     StepRange(a, 1, b)
 end
-# step range is trying to be clever.  we're exploting that this is exposed
-# in range.jl.  i guess we could implement all the necessary arithmetic...
-# (we can't use unit range because of type restrictions - perhaps we should
-# define StreamState to subclass the appropriate type?)
+# step range is trying to be clever.  we're exploiting that this is
+# exposed in range.jl.  i guess we could implement all the necessary
+# arithmetic...  (we can't use unit range because of type restrictions
+# - perhaps we should define StreamState to subclass the appropriate
+# type, or create our own range type?)
 steprange_last(start::StreamState, step::Int, stop::StreamState) = stop
 
 # used to advance state after matching regexp
@@ -41,24 +42,25 @@ steprange_last(start::StreamState, step::Int, stop::StreamState) = stop
 function getindex(f::StreamIter, r::StepRange)
     start = r.start
     line = line_at(f, start)
-    # if we're at the end of a line, we want the next one
-    while done(line, start.s)
-        start = next(f, start)
-    end
     stop = unify_col(line, unify_line(start, r.stop))
     if start.line != stop.line
-        error("Can only index a range within a line")
+        error("Can only index a range within a line ($(start.line), $(stop.line))")
     else
         return line[start.col:stop.col]
     end
 end
 
 function next(f::StreamIter, s::StreamState)
+    # there's a subtlelty here.  the line is always correct for
+    # reading more data (the check on done() comes *after* next).
+    # this is so that getindex can access the line correctly if needed
+    # (if we didn't have the line correct, getindex would take a slice
+    # from the end of the previous line).
     line = line_at(f, s)
-    if done(line, s.col)
-        next(f, StreamState(s.line+1, 1))
+    c, col = next(line, s.col)
+    if done(line, col)
+        c, StreamState(s.line+1, 1)
     else
-        c, col = next(line, s.col)
         c, StreamState(s.line, col)
     end
 end
@@ -98,7 +100,7 @@ type WeakStreamIter<:StreamIter
 end
 
 function line_at(f::WeakStreamIter, s::StreamState)
-    if s.line < f.zero
+    if s.line <= f.zero
         throw(ExpiredContent())
     end
     while length(f.lines) < s.line - f.zero
@@ -165,6 +167,18 @@ parse_weak = make_one(FailExpired)
 parse_weak_dbg = make_one(Debug; delegate=FailExpired)
 
 
+function src(s::StreamIter, i::StreamState; max=MAX_SRC)
+    try
+        pad(truncate(escape_string(s[i:end]), max), max)
+    catch x
+        if isa(x, ExpiredContent)
+            pad(truncate("[expired]", max), max)
+        else
+            rethrow()
+        end
+    end
+end
+   
 function debug{S<:StreamIter}(k::Debug{S}, e::Execute)
     @printf("%3d:%3d:%s %02d %s%s->%s\n",
             e.iter.line, e.iter.col, src(k.source, e.iter), k.depth[end], indent(k), e.parent.name, e.child.name)
