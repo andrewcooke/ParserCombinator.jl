@@ -166,8 +166,8 @@ evaluate it against some input in various ways:
   info [here](#debugging).
 
 These are all implemented by providing different `Config` subtypes.
-For more information see [types.jl](src/types.jl) and
-[parsers.jl](src/parsers.jl).
+For more information see [Design](#design), [types.jl](src/types.jl)
+and [parsers.jl](src/parsers.jl).
 
 ### Basic Matchers
 
