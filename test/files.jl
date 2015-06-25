@@ -30,7 +30,7 @@ open("test1.txt", "r") do io
     @test result == Any["abcdefghijklmnopqrstuvwxyz\n012345"]
 end
 
-parse_try(TryIter("?"), Alt!(p"[a-z]"), p"\d", Error("not letter or number"))
+@test_throws ParserError parse_try(TryIter("?"), Alt!(p"[a-z]", p"\d", Error("not letter or number")))
 
 println("files ok")
 

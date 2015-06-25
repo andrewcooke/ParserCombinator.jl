@@ -506,7 +506,10 @@ end
 Without backtracking, error messages using the `Error()` matcher are
 much more useful (this is why Parsec can provide good error messages):
 
-
+```julia
+parse_try(TryIter("?"), Alt!(p"[a-z]", p"\d", Error("not letter or number")))
+# ParserError("not letter or number",ParserCombinator.TryIterState(1,1))
+```
 
 #### Spaces - Pre And Post-Fixes
 

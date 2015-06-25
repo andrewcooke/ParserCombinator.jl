@@ -20,12 +20,12 @@
 type ExpiredContent<:Exception end
 
 type TryIter
-    io::IOStream
+    io::IO
     frozen::Int    # non-zero is frozen; count allows nested Try()
     zero::Int      # offset to lines (lines[x] contains line x+zero)
     right::Int     # rightmost expired column
     lines::Array{AbstractString,1}
-    TryIter(io::IOStream) = new(io, 0, 0, 0, AbstractString[])
+    TryIter(io::IO) = new(io, 0, 0, 0, AbstractString[])
 end
 TryIter(s::AbstractString) = TryIter(IOBuffer(s))
 
@@ -233,4 +233,4 @@ end
     Error(msg::AbstractString) = new(:Error, msg)
 end
 
-execute(k::Config, m::Error, s::Clean, i) = throw(ParserError(msg, i))
+execute(k::Config, m::Error, s::Clean, i) = throw(ParserError(m.msg, i))
