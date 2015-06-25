@@ -541,6 +541,9 @@ parse_try(TryIter("?"), Alt!(p"[a-z]", p"\d", Error("not letter or number")))
 # ParserError("not letter or number",ParserCombinator.TryIterState(1,1))
 ```
 
+where the `(1,1)` (the `iter` field of the error) is line number and
+column - so this failed on the first character of the first line.
+
 #### Spaces - Pre And Post-Fixes
 
 The lack of a lexer can complicate the handling of whitespace when
