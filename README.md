@@ -1060,7 +1060,7 @@ strings.  But in practice that matcher is rarely used (particularly
 since, with strings, you can use regular expressions - `p"pattern"`
 for example), and you can construct a string from multiple characters
 using `> string` (similarly `> vcat` can be used to flatten an
-additional layer of lists)..
+additional layer of lists).
 
 ## Releases
 
