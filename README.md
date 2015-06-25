@@ -158,10 +158,10 @@ evaluate it against some input in various ways:
   inside the `Try()` matcher (but no memoization).  More info
   [here](#controlling-memory-use).
 
-* `parse_debug()` - as `parse_one()`, but also prints a trace of
+* `parse_dbg()` - as `parse_one()`, but also prints a trace of
   evaluation for all of the matchers that are children of a `Trace()`
   matchers.  Can also be used with other matchers via the keword
-  `delegate`; for example `parse_debug(...; delegate=Cache)` will
+  `delegate`; for example `parse_dbg(...; delegate=Cache)` will
   provide tracing of the packrat parser (`parse_all()` above).  More
   info [here](#debugging).
 
