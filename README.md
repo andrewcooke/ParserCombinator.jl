@@ -123,6 +123,7 @@ julia> Pkg.add("ParserCombinator")
 In what follows, remember that the power of parser combinators comes from how
 you combine these.  They can all be nested, refer to each other, etc etc.
 
+* [Evaluation]
 * [Basic Matchers](#basic-matchers)
   * [Equality](#equality)
   * [Sequences](#sequences)
@@ -142,6 +143,32 @@ you combine these.  They can all be nested, refer to each other, etc etc.
   * [Adding Matchers](#adding-matchers)
   * [Debugging](#debugging)
   * [More Information](#more-information)
+
+### Evaluation
+
+Once you have a grammar (see [below](#basic-matchers)) you can
+evaluate it against some input in various ways:
+
+* `parse_one()` - a simple, recursive decent parser with backtracking,
+  but no memoisation.  Returns a single result or throws a
+  `ParserException`.
+
+* `parse_all()` - a packrat parser, with memoization, that returns an
+  iterator (evaluated lazily) over all possible parses of the input.
+
+* `parse_debug()` - as `parse_one()`, but also prints a trace of
+  evaluation for all of the matchers that are children of a `Trace()`
+  matchers.  Can also be used with other matchers via the keword
+  `delegate`; for example `parse_debug(...; delegate=Cache)` will
+  provide tracing of the packrat parser (`parse_all()`, above).
+
+* `parse_try()` - similar to Haskell's Parsec, with backtracking only
+  inside the `Try()` matcher.  [More info
+  here](#controlling-memory-use).
+
+These are all implemented by providing different `Config` subtypes.
+For more information see [types.jl](src/types.jl) and
+[parsers.jl](src/parsers.jl).
 
 ### Basic Matchers
 
