@@ -164,7 +164,7 @@ evaluate it against some input in various ways:
   evaluation for all of the matchers that are children of a `Trace()`
   matchers.  Can also be used with other matchers via the keword
   `delegate`; for example `parse_debug(...; delegate=Cache)` will
-  provide tracing of the packrat parser (`parse_all()`, above).
+  provide tracing of the packrat parser (`parse_all()` above).
 
 These are all implemented by providing different `Config` subtypes.
 For more information see [types.jl](src/types.jl) and
