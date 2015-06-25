@@ -156,15 +156,15 @@ evaluate it against some input in various ways:
 * `parse_all()` - a packrat parser, with memoization, that returns an
   iterator (evaluated lazily) over all possible parses of the input.
 
+* `parse_try()` - similar to Haskell's Parsec, with backtracking only
+  inside the `Try()` matcher.  More info
+  [here](#controlling-memory-use).
+
 * `parse_debug()` - as `parse_one()`, but also prints a trace of
   evaluation for all of the matchers that are children of a `Trace()`
   matchers.  Can also be used with other matchers via the keword
   `delegate`; for example `parse_debug(...; delegate=Cache)` will
   provide tracing of the packrat parser (`parse_all()`, above).
-
-* `parse_try()` - similar to Haskell's Parsec, with backtracking only
-  inside the `Try()` matcher.  More info
-  [here](#controlling-memory-use).
 
 These are all implemented by providing different `Config` subtypes.
 For more information see [types.jl](src/types.jl) and
