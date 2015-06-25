@@ -18,9 +18,9 @@ languages, like Haskell's Parsec or Python's pyparsing.
 
 ParserCombinator's main advantage may be its flexible design, which
 separates the matchers from the evaluation strategy.  That may sound
-odd, but makes it easy to "plug in" memoization, or debug traces, or
-to restrict backtracking in a similar way to Parsec - all while using
-the same grammar.
+odd, but makes it [easy](@evaluation) to "plug in" memoization, or
+debug traces, or to restrict backtracking in a similar way to Parsec -
+all while using the same grammar.
 
 It can also parse any iterable type (not just strings).
 
