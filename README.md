@@ -120,9 +120,6 @@ julia> Pkg.add("ParserCombinator")
 
 ## Manual
 
-In what follows, remember that the power of parser combinators comes from how
-you combine these.  They can all be nested, refer to each other, etc etc.
-
 * [Evaluation](#evaluation)
 * [Basic Matchers](#basic-matchers)
   * [Equality](#equality)
@@ -171,6 +168,9 @@ For more information see [types.jl](src/types.jl) and
 [parsers.jl](src/parsers.jl).
 
 ### Basic Matchers
+
+In what follows, remember that the power of parser combinators comes from how
+you combine these.  They can all be nested, refer to each other, etc etc.
 
 #### Equality
 
