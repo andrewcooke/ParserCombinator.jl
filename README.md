@@ -22,7 +22,8 @@ odd, but makes it [easy](#evaluation) to "plug in" memoization, or
 debug traces, or to restrict backtracking in a similar way to Parsec -
 all while using the same grammar.
 
-It can also parse any iterable type (not just strings).
+It can also parse any iterable type (not just strings) (except for
+regexp matchers, of course).
 
 ## Example
 
