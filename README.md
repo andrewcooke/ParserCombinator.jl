@@ -123,7 +123,7 @@ julia> Pkg.add("ParserCombinator")
 In what follows, remember that the power of parser combinators comes from how
 you combine these.  They can all be nested, refer to each other, etc etc.
 
-* [Evaluation]
+* [Evaluation](#evaluation)
 * [Basic Matchers](#basic-matchers)
   * [Equality](#equality)
   * [Sequences](#sequences)
@@ -150,7 +150,7 @@ Once you have a grammar (see [below](#basic-matchers)) you can
 evaluate it against some input in various ways:
 
 * `parse_one()` - a simple, recursive decent parser with backtracking,
-  but no memoisation.  Returns a single result or throws a
+  but no memoization.  Returns a single result or throws a
   `ParserException`.
 
 * `parse_all()` - a packrat parser, with memoization, that returns an
@@ -163,8 +163,8 @@ evaluate it against some input in various ways:
   provide tracing of the packrat parser (`parse_all()`, above).
 
 * `parse_try()` - similar to Haskell's Parsec, with backtracking only
-  inside the `Try()` matcher.  [More info
-  here](#controlling-memory-use).
+  inside the `Try()` matcher.  More info
+  [here](#controlling-memory-use).
 
 These are all implemented by providing different `Config` subtypes.
 For more information see [types.jl](src/types.jl) and
