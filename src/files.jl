@@ -218,3 +218,19 @@ function debug{S<:TryIter}(k::Debug{S}, f::Failure)
     @printf("       :%s %02d %s%s<-!!!\n",
             pad(" ", MAX_SRC), k.depth[end], indent(k), parent(k).name)
 end
+
+
+# this is general, but usually not much use with backtracking
+
+type ParserError<:Exception
+    msg::AbstractString
+    iter
+end
+
+@auto_hash_equals immutable Error<:Matcher
+    name::Symbol
+    msg::AbstractString
+    Error(msg::AbstractString) = new(:Error, msg)
+end
+
+execute(k::Config, m::Error, s::Clean, i) = throw(ParserError(msg, i))

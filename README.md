@@ -498,10 +498,15 @@ open("test1.txt", "r") do io
 end
 
 open("test1.txt", "r") do io
-    # this works fine
+    # this (with Try(...)) works fine
     parse_try(TryIter(io), Try(p"[a-z]"[0:end] + s"m" > string))
 end
 ```
+
+Without backtracking, error messages using the `Error()` matcher are
+much more useful (this is why Parsec can provide good error messages):
+
+
 
 #### Spaces - Pre And Post-Fixes
 
