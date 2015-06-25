@@ -22,9 +22,10 @@ type ExpiredContent<:Exception end
 type TryIter
     io::IOStream
     frozen::Int    # non-zero is frozen; count allows nested Try()
-    zero::Int      # offset to lines
+    zero::Int      # offset to lines (lines[x] contains line x+zero)
+    right::Int     # rightmost expired column
     lines::Array{AbstractString,1}
-    TryIter(io::IOStream) = new(io, 0, 0, AbstractString[])
+    TryIter(io::IOStream) = new(io, 0, 0, 0, AbstractString[])
 end
 TryIter(s::AbstractString) = TryIter(IOBuffer(s))
 
@@ -43,19 +44,24 @@ FLOAT_LINE = -1
 FLOAT_END = TryIterState(FLOAT_LINE, END_COL)
 
 
+function expire(f::TryIter, s::TryIterState)
+    if f.frozen == 0
+        n = s.line - f.zero
+        f.lines = f.lines[n:end]
+        f.zero += (n-1)
+        f.right = s.col
+    end
+end
+
 function line_at(f::TryIter, s::TryIterState)
-    if s.line <= f.zero
+    if s.line <= f.zero || (s.line == f.zero+1 && s.col <= f.right)
         throw(ExpiredContent())
     end
-    while length(f.lines) < s.line - f.zero
-        if f.frozen > 0
-            push!(f.lines, readline(f.io))
-        else
-            f.zero += length(f.lines)  # discarded
-            f.lines = AbstractString[readline(f.io)]
-        end
+    n = s.line - f.zero
+    while length(f.lines) < n
+        push!(f.lines, readline(f.io))
     end
-    f.lines[s.line - f.zero]
+    f.lines[n]
 end
 
 
@@ -108,9 +114,9 @@ end
 # as NoCache, but treat ExpiredContent exceptions as failures
 
 type TryConfig<:Config
-    source::Any
+    source::TryIter
     @compat stack::Array{Tuple{Matcher, State},1}
-    @compat TryConfig(source) = new(source, Array(Tuple{Matcher,State}, 0))
+    @compat TryConfig(source::TryIter) = new(source, Array(Tuple{Matcher,State}, 0))
 end
 
 function dispatch(k::TryConfig, e::Execute)
@@ -128,6 +134,7 @@ end
 
 function dispatch(k::TryConfig, s::Success)
     (parent, parent_state) = pop!(k.stack)
+    expire(k.source, s.iter)
     try
         success(k, parent, parent_state, s.child_state, s.iter, s.result)
     catch err
@@ -163,29 +170,20 @@ end
     state::State
 end
 
-# TODO - should we make Config parametric in source so that the above
-# is dispatched instead of explicitly tested?
-
 execute(k::TryConfig, m::Try, s::Clean, i) = execute(k, m, TryState(CLEAN), i)
 
 function execute(k::TryConfig, m::Try, s::TryState, i)
-    if isa(k.source, TryIter)
-        k.source.frozen += 1
-    end
+    k.source.frozen += 1
     Execute(m, s, m.matcher, s.state, i)
 end
 
 function success(k::TryConfig, m::Try, s::TryState, t, i, r::Value)
-    if isa(k.source, TryIter)
-        k.source.frozen -= 1
-    end
+    k.source.frozen -= 1
     Success(TryState(t), i, r)
 end
 
 function failure(k::TryConfig, m::Try, s::TryState)
-    if isa(k.source, TryIter)
-        k.source.frozen -= 1
-    end
+    k.source.frozen -= 1
     FAILURE
 end
 

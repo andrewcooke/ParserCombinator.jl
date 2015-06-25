@@ -14,19 +14,17 @@ open("test1.txt", "r") do io
 end
 
 open("test1.txt", "r") do io
-    # this backtracks within a single line
-    result = parse_try(TryIter(io), p"[a-z]"[0:end] + s"m" > string)
+    @test_throws ParserException parse_try(TryIter(io), p"[a-z]"[0:end] + s"m" > string)
+end
+
+open("test1.txt", "r") do io
+    result = parse_try(TryIter(io), Try(p"[a-z]"[0:end] + s"m" > string))
     println(result)
     @test result == Any["abcdefghijklm"]
 end
 
 open("test1.txt", "r") do io
-    # this backtracks across multiple lines
-    @test_throws ParserException parse_try(TryIter(io), p"(.|\n)"[0:end] + s"5" > string)
-end
-
-open("test1.txt", "r") do io
-    # this backtracks across multiple lines, but uses Try
+    # multiple lines
     result = parse_try(TryIter(io), Try(p"(.|\n)"[0:end] + s"5" > string))
     println(result)
     @test result == Any["abcdefghijklmnopqrstuvwxyz\n012345"]

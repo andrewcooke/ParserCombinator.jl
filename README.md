@@ -482,12 +482,25 @@ To allow parsing of a wider range of grammars, Parsec then introduces
 the `Try` combinator, which enables backtracking in some (generally
 small) portion of the grammar.
 
-The same approach can be used with this library, using
-`WeakStreamIter` as a source with `parse_weak`.  This is targetted at
-file parsing (since in-memory strings already fit in memory):
+The same approach can be used with this library, using `TryIter` as a
+source with `parse_try`.
+
+```
+file1.txt:
+abcdefghijklmnopqrstuvwxyz
+0123456789
+```
 
 ```julia
-example here
+open("test1.txt", "r") do io
+    # this throws an execption because it requires backtracking
+    parse_try(TryIter(io), p"[a-z]"[0:end] + s"m" > string)
+end
+
+open("test1.txt", "r") do io
+    # this works fine
+    parse_try(TryIter(io), Try(p"[a-z]"[0:end] + s"m" > string))
+end
 ```
 
 #### Spaces - Pre And Post-Fixes
