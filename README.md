@@ -1057,7 +1057,7 @@ protocol](http://julia.readthedocs.org/en/latest/stdlib/collections/?highlight=i
 
 This has the unfortunate result that `Dot()` returns characters, not strings.
 But in practice that matcher is rarely used (particularly since, with strings,
-you can use regular expressions - `p"pattern"` for example).
+you can use regular expressions - `p"pattern"` for example), and anyway you can construct a string from multiple characters using `> string`.
 
 ## Releases
 
