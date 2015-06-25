@@ -154,7 +154,7 @@ evaluate it against some input in various ways:
   iterator (evaluated lazily) over all possible parses of the input.
 
 * `parse_try()` - similar to Haskell's Parsec, with backtracking only
-  inside the `Try()` matcher.  More info
+  inside the `Try()` matcher (but no memoization).  More info
   [here](#controlling-memory-use).
 
 * `parse_debug()` - as `parse_one()`, but also prints a trace of
