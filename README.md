@@ -1055,9 +1055,12 @@ wants to re-call the child.
 The source text is read using the [standard Julia iterator
 protocol](http://julia.readthedocs.org/en/latest/stdlib/collections/?highlight=iterator).
 
-This has the unfortunate result that `Dot()` returns characters, not strings.
-But in practice that matcher is rarely used (particularly since, with strings,
-you can use regular expressions - `p"pattern"` for example), and anyway you can construct a string from multiple characters using `> string`.
+This has the unfortunate result that `Dot()` returns characters, not
+strings.  But in practice that matcher is rarely used (particularly
+since, with strings, you can use regular expressions - `p"pattern"`
+for example), and you can construct a string from multiple characters
+using `> string` (similarly `> vcat` can be used to flatten an
+additional layer of lists)..
 
 ## Releases
 
