@@ -48,7 +48,6 @@ end
 function dispatch(k::Cache, e::Execute)
     key = (e.child, e.child_state, e.iter)
     push!(k.stack, (e.parent, e.parent_state, key))
-    cached = haskey(k.cache, key)
     if haskey(k.cache, key)
         k.cache[key]
     else

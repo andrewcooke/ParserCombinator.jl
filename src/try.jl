@@ -111,15 +111,20 @@ function done(f::TryIter, s::TryIterState)
 end
 
 
+# and now the Config(s)
+
+abstract TryConfig<:Config
+
+
 # as NoCache, but treat ExpiredContent exceptions as failures
 
-type TryConfig<:Config
+type TryNoCache<:TryConfig
     source::TryIter
-    @compat stack::Array{Tuple{Matcher, State},1}
-    @compat TryConfig(source::TryIter) = new(source, Array(Tuple{Matcher,State}, 0))
+    @compat stack::Array{Tuple{Matcher,State},1}
+    @compat TryNoCache(source::TryIter) = new(source, Array(Tuple{Matcher,State}, 0))
 end
 
-function dispatch(k::TryConfig, e::Execute)
+function dispatch(k::TryNoCache, e::Execute)
     push!(k.stack, (e.parent, e.parent_state))
     try
         execute(k, e.child, e.child_state, e.iter)
@@ -132,8 +137,8 @@ function dispatch(k::TryConfig, e::Execute)
     end
 end
 
-function dispatch(k::TryConfig, s::Success)
-    (parent, parent_state) = pop!(k.stack)
+function dispatch(k::TryNoCache, s::Success)
+    parent, parent_state = pop!(k.stack)
     expire(k.source, s.iter)
     try
         success(k, parent, parent_state, s.child_state, s.iter, s.result)
@@ -146,8 +151,8 @@ function dispatch(k::TryConfig, s::Success)
     end
 end
 
-function dispatch(k::TryConfig, f::Failure)
-    (parent, parent_state) = pop!(k.stack)
+function dispatch(k::TryNoCache, f::Failure)
+    parent, parent_state = pop!(k.stack)
     try
         failure(k, parent, parent_state)
     catch err
@@ -160,6 +165,65 @@ function dispatch(k::TryConfig, f::Failure)
 end
 
 
+# ditto, but with cache too (Key from Cache in parsers.jl)
+
+type TryCache<:TryConfig
+    source::TryIter
+    @compat stack::Array{Tuple{Matcher,State,Key},1}
+    cache::Dict{Key,Message}
+    @compat TryCache(source::TryIter) = new(source, Array(Tuple{Matcher,State,Key}, 0), Dict{Key,Message}())
+end
+
+function dispatch(k::TryCache, e::Execute)
+    key = (e.child, e.child_state, e.iter)
+    push!(k.stack, (e.parent, e.parent_state, key))
+    if haskey(k.cache, key)
+        k.cache[key]
+    else
+        try
+            execute(k, e.child, e.child_state, e.iter)
+        catch err
+            if isa(err, ExpiredContent)
+                FAILURE
+            else
+                rethrow()
+            end
+        end
+    end
+end
+
+function dispatch(k::TryCache, s::Success)
+    parent, parent_state, key = pop!(k.stack)
+    expire(k.source, s.iter)
+    k.cache[key] = s
+    try
+        success(k, parent, parent_state, s.child_state, s.iter, s.result)
+    catch err
+        if isa(err, ExpiredContent)
+            FAILURE
+        else
+            rethrow()
+        end
+    end
+end
+
+function dispatch(k::TryCache, f::Failure)
+    parent, parent_state, key = pop!(k.stack)
+    k.cache[key] = f
+    try
+        failure(k, parent, parent_state)
+    catch err
+        if isa(err, ExpiredContent)
+            FAILURE
+        else
+            rethrow()
+        end
+    end
+end
+
+
+# the Try() matcher that enables backtracking
+
 @auto_hash_equals type Try<:Delegate
     name::Symbol
     matcher::Matcher
@@ -170,7 +234,7 @@ end
     state::State
 end
 
-execute(k::Config, m::Try, s::Clean, i) = error("use Try only with TryConfig / parse_try")
+execute(k::Config, m::Try, s::Clean, i) = error("use Try only with TryNoCache / parse_try")
 
 execute(k::TryConfig, m::Try, s::Clean, i) = execute(k, m, TryState(CLEAN), i)
 
@@ -190,9 +254,11 @@ function failure(k::TryConfig, m::Try, s::TryState)
 end
 
 
-parse_try = make_one(TryConfig)
-parse_try_dbg = make_one(Debug; delegate=TryConfig)
+parse_try = make_one(TryCache)
+parse_try_dbg = make_one(Debug; delegate=TryCache)
 
+
+# need to add some debug support for this iterator / source
 
 function src(s::TryIter, i::TryState; max=MAX_SRC)
     try
