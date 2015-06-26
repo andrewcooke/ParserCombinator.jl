@@ -8,10 +8,6 @@
 # 4 - throw an exception when discarded input is accessed
 # 5 - treat that exception as failure
 
-# not sure what to name this.  originally used "weak" (weak references
-# to source), then "file".  am now going with "try" since that is the
-# main user-visible feature.
-
 # the source wraps an IO instance.  this is how julia manages files
 # (which is presumably where this is needed most, since strings are
 # already available in memory).  but strings can also be wrapped.
