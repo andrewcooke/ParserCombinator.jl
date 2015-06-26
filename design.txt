@@ -71,11 +71,12 @@ might want to cache calls to matchers so that when the "same" call is
 made a second time, the cached value is used.  Or you might want to
 write the parser so that all possible parses (of an ambiguous gramar)
 are returned.  Or you might want to restrict backtracking so that
-error messages are more reliable.  Or...
+error messages are more reliable.  Or you might want to display a
+record of what is happening to help with debugging.  Or...
 
-These variations, on a little inspection, tend to be things that are
-connected more with how the parser "executes", rather than with how
-the individual matchers are implemented.
+These variations, on a little inspection, tend to be connected more
+with how the parser "executes", rather than with how the individual
+matchers are implemented.
 
 What do I mean by that?  Take, for example, the idea that you cache
 results to avoid repeated evaluation.  That is trivial in a "lazy"
