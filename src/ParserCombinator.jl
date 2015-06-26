@@ -25,8 +25,8 @@ PInt, PInt8, PInt16, PInt32, PInt64, PFloat32, PFloat64,
 Word, Space, Star, Plus,
 @with_names, set_name,
 @with_pre, @with_post, set_fix,
-TryIter, ExpiredContent, TryConfig, Try, ParserError, Error, 
-parse_try, parse_try_dbg
+TryIter, ExpiredContent, TryCache, TryNoCache, Try, ParserError, Error, 
+parse_try, parse_try_dbg, parse_try_nocache, parse_try_nocache_dbg
 
 include("types.jl")
 include("names.jl")

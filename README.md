@@ -155,7 +155,7 @@ evaluate it against some input in various ways:
   iterator (evaluated lazily) over all possible parses of the input.
 
 * `parse_try()` - similar to Haskell's Parsec, with backtracking only
-  inside the `Try()` matcher (but no memoization).  More info
+  inside the `Try()` matcher.  More info
   [here](#controlling-memory-use).
 
 * `parse_dbg()` - as `parse_one()`, but also prints a trace of
@@ -543,6 +543,11 @@ parse_try(TryIter("?"), Alt!(p"[a-z]", p"\d", Error("not letter or number")))
 
 where the `(1,1)` (the `iter` field of the error) is line number and
 column - so this failed on the first character of the first line.
+
+Finally, if you're really concerned about memory use, the
+[source](#src/try.jl) does include a Config instance that implements
+the "no backtracking" without memoization (the default `parse_try()`
+includes memoization to match lazy Haskell more closely).
 
 #### Spaces - Pre And Post-Fixes
 

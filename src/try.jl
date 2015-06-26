@@ -256,6 +256,8 @@ end
 
 parse_try = make_one(TryCache)
 parse_try_dbg = make_one(Debug; delegate=TryCache)
+parse_try_nocache = make_one(TryNoCache)
+parse_try_nocache_dbg = make_one(Debug; delegate=TryNoCache)
 
 
 # need to add some debug support for this iterator / source
