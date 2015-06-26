@@ -610,6 +610,9 @@ leave for "advanced" users).
 For more information see [parsers.jl](src/parsers.jl) and
 [debug.jl](src/debug.jl).
 
+An alternative approach to error messages is to use `parse_try()` with
+the `Error()` matcher - see [here](#controlling-memory-use).
+
 #### Coding Style
 
 Don't go reinventing regexps.  The built-in regexp engine is way, way more
