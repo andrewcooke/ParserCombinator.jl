@@ -60,3 +60,4 @@ end
 trampoline(0, 10)
 @time println(trampoline(0, 100_000))
 @time println(trampoline(0, 1_000_000))
+@time println(trampoline(0, 10_000_000))

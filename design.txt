@@ -60,10 +60,10 @@ Complications
 
 First, Julia isn't intended to be used as a functional language.  It's
 not designed to support deep, recursive calls of functions (in fact,
-the stack limit is a little greater than 100,000 on my machine, so
-providing you write combinators for multiple matches that work with
-iteration rather than recursion, that's probably not such a serious
-issue).
+the stack limit in a simple test is a little greater than 100,000 on
+my machine, so providing you write combinators for multiple matches
+that work with iteration rather than recursion, that's probably not
+such a serious issue).
 
 Second, there are different variations on the general idea of "parser
 combinators", which work in slightly different ways.  For example, you
@@ -86,8 +86,8 @@ earlier.  These are, in a sense, "meta" issues, that have little to do
 with checking whether one string is equal to another.
 
 So the question is: can we write our library in a way that makes it
-easy to change how the parser "executes"?  And the answer is yes (or I
-wouldn't be writing this article)!
+easy to change how the parser "executes"?  And the answer is,
+thankfully, yes (or I wouldn't be writing this article)!
 
 How do we do this?  We need two things.  First, we need to use a
 "trampoline" to take control of execution.  Second, we need some way
@@ -270,10 +270,10 @@ super-type, which provides common support.
 
 And, second of all, it's easy - almost trivial - to hack things at a
 "meta" level.  Take the example of caching results.  All you need to
-do is add a Map (the cache) to the Config type and modify the
-dispatch() functions above: the dispatch for Success should populate
-the Map with results; the dispatch for Execute should check the Map in
-case a value already exists.  That's it!
+do is add a Map (the cache) to a new sub-type of Config and provide
+new dispatch() functions as above: the dispatch for Success should
+populate the Map with results; the dispatch for Execute should check
+the Map in case a value already exists.  That's it!
 
 
 Method Dispatch v OOP
