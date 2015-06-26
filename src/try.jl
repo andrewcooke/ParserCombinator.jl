@@ -162,6 +162,7 @@ end
 
 
 # ditto, but with cache too (Key from Cache in parsers.jl)
+# (we really need mixins or multiple inheritance here...)
 
 type TryCache<:TryConfig
     source::TryIter
