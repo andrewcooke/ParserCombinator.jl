@@ -38,6 +38,6 @@ include("sugar.jl")
 include("extras.jl")
 include("print.jl")
 include("fix.jl")
-include("files.jl")
+include("try.jl")
 
 end

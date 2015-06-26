@@ -170,6 +170,8 @@ end
     state::State
 end
 
+execute(k::Config, m::Try, s::Clean, i) = error("use Try only with TryConfig / parse_try")
+
 execute(k::TryConfig, m::Try, s::Clean, i) = execute(k, m, TryState(CLEAN), i)
 
 function execute(k::TryConfig, m::Try, s::TryState, i)
