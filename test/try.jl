@@ -32,5 +32,4 @@ end
 
 @test_throws ParserError parse_try(TryIter("?"), Alt!(p"[a-z]", p"\d", Error("not letter or number")))
 
-println("files ok")
-
+println("try ok")
