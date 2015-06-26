@@ -69,7 +69,7 @@ Second, there are different variations on the general idea of "parser
 combinators", which work in slightly different ways.  For example, you
 might want to cache calls to matchers so that when the "same" call is
 made a second time, the cached value is used.  Or you might want to
-write the parser so that all possible parses (of an ambiguous gramar)
+write the parser so that all possible parses (of an ambiguous grammar)
 are returned.  Or you might want to restrict backtracking so that
 error messages are more reliable.  Or you might want to display a
 record of what is happening to help with debugging.  Or...
@@ -91,7 +91,7 @@ wouldn't be writing this article)!
 
 How do we do this?  We need two things.  First, we need to use a
 "trampoline" to take control of execution.  Second, we need some way
-of allowng different behaviours to be "plugged in".  In Julia, this is
+of allowing different behaviors to be "plugged in".  In Julia, this is
 typically done by method dispatch.  And it works really well.
 
 
@@ -181,12 +181,12 @@ You may still be a little confused, however, because Equal, above, is
 a type, not a function.  That's because it makes more sense in Julia
 to work this way.
 
-Let me exmplain in more detail...
+Let me explain in more detail...
 
 
 Grammar As Types
 
-Originally, when I sketched how parser combiantors worked, I described
+Originally, when I sketched how parser combinators worked, I described
 them as functions that returned functions that parsed data (see
 "equals()" and "follows()" above).
 
@@ -263,10 +263,10 @@ calls the appropriate function.  Here, in a sense, the function is
 always the same - "execute()" - and the right choice of which
 particular execute is made for us, by Julia's type system.  Things get
 even better when many matchers have similar functionality because they
-can, by sharing a common supertype, share a single implementation.  In
-the case of the ParserCombinator library, for example, most matchers
-that call a child matcher are derived from a Delegate supertype, which
-provides common support.
+can, by sharing a common super-type, share a single implementation.
+In the case of the ParserCombinator library, for example, most
+matchers that call a child matcher are derived from a Delegate
+super-type, which provides common support.
 
 And, second of all, it's easy - almost trivial - to hack things at a
 "meta" level.  Take the example of caching results.  All you need to
@@ -283,7 +283,7 @@ of what I have described above would carry across nicely.  There would
 be a Trampoline base class that would be subclassed for different
 approaches to execution, for example.
 
-But Julia's method dispatch wins out when you want behaviour to "cut
+But Julia's method dispatch wins out when you want behavior to "cut
 across" more than one type.
 
 In the ParserCombinator library, one of the approaches to execution
