@@ -1,0 +1,288 @@
+
+Introduction
+
+I am going to describe some of the decisions behind the
+ParserCombinator library, which, I hope, will show how useful Julia's
+method dispatch can be.
+
+OK, so I wanted to write a parser combinator library in Julia.
+
+If you don't know what a parser combinator library is, here's a quick
+sketch:
+
+  There's a pretty neat, easy to understand way of writing parsers by
+  hand, which is common in functional languages, where you construct a
+  "tree" (or even a DAG) of functions that take a stream of characters
+  as input and return some structured output as a result.
+
+  The stream of characters is (of course) what you want to parse, and
+  the structured output becomes your AST.
+
+  Here's a simple (untested!) example (in Julia):
+
+      function equals(text)
+          function _(string)
+              n = length(text)
+              if string[1:n] == text
+                  return string[n:end], text
+              else
+                  throw(Backtrack())
+              end
+          end
+      end
+
+  By itself that doesn't seem very useful, but consider
+
+      function follows(m1, m2)
+          function _(string)
+              string1, result1 = m1(string)
+              string2, result2 = m2(string1)
+              return string2, [result1, result2]
+          end
+      end
+
+  which can be used like:
+
+     grammar = follows(equals("hello"), equals("world"))
+     grammar("helloworld")
+  
+  and returns ["hello", "world"].
+
+  And, of course, you can go crazy, with functions that test
+  alternatives, or repeat a given number of times, or as often as
+  possible, etc etc.
+
+So that's the kind of thing I wanted to write.  But when you start
+digging into the details, it's not quite so simple.
+
+
+Complications
+
+First, Julia isn't intended to be used as a functional language.  It's
+not designed to support deep, recursive calls of functions (in fact,
+the stack limit is a little greater than 100,000 on my machine, so
+providing you write combinators for multiple matches that work with
+iteration rather than recursion, that's probably not such a serious
+issue).
+
+Second, there are different variations on the general idea of "parser
+combinators", which work in slightly different ways.  For example, you
+might want to cache calls to matchers so that when the "same" call is
+made a second time, the cached value is used.  Or you might want to
+write the parser so that all possible parses (of an ambiguous gramar)
+are returned.  Or you might want to restrict backtracking so that
+error messages are more reliable.  Or...
+
+These variations, on a little inspection, tend to be things that are
+connected more with how the parser "executes", rather than with how
+the individual matchers are implemented.
+
+What do I mean by that?  Take, for example, the idea that you cache
+results to avoid repeated evaluation.  That is trivial in a "lazy"
+language.  But in an eager language (like Julia) you need to intercept
+each call to a function, so you can check whether it was cached
+earlier.  These are, in a sense, "meta" issues, that have little to do
+with checking whether one string is equal to another.
+
+So the question is: can we write our library in a way that makes it
+easy to change how the parser "executes"?  And the answer is yes (or I
+wouldn't be writing this article)!
+
+How do we do this?  We need two things.  First, we need to use a
+"trampoline" to take control of execution.  Second, we need some way
+of allowng different behaviours to be "plugged in".  In Julia, this is
+typically done by method dispatch.  And it works really well.
+
+
+Trampolines
+
+All a trampoline is, really, is a "manual" replacement for what a
+compiler does automatically: it's a loop, with a stack, that calls
+each function in turn, checks what the result is, and then calls
+another function, as appropriate.
+
+In practice, what that means is that when we write a function, and we
+need to call some other function, we don't just "make the call".
+Instead, we return a "message" to the trampoline that says "please
+call this other function and then give me the result".
+
+Ibn addition, of course, we need the main loop, which receives these
+messages and does the work.
+
+That may sound complicated, but in fact it's not so much work.
+Particularly when you're only evaluating matchers in a parser, which
+all work in a similar way.
+
+Here's most of the code needed for the main loop, taken from
+parsers.jl:
+
+    type NoCache<:Config
+        source::Any
+        stack::Array{Tuple{Matcher, State},1}
+    end
+
+    function dispatch(k::NoCache, e::Execute)
+        push!(k.stack, (e.parent, e.parent_state))
+        execute(k, e.child, e.child_state, e.iter)
+    end
+
+    function dispatch(k::NoCache, s::Success)
+        (parent, parent_state) = pop!(k.stack)
+        success(k, parent, parent_state, s.child_state, s.iter, s.result)
+    end
+
+    function dispatch(k::NoCache, f::Failure)
+        (parent, parent_state) = pop!(k.stack)
+        failure(k, parent, parent_state)
+    end
+
+Those functions are simply responding to the different message types
+(Execute, Success and Failure) by manipulating the stack and calling
+the appropriate matchers.  Everything is drive by this main loop:
+
+    while true
+        msg = dispatch(k, msg)
+    end
+    
+(plus some extra details for handling the setup and teardown).
+
+Now if you're trying to understand the above in detail, you're
+probably wondering what the exacute(), success() and failure() are.
+These are the methods where the matcher itself is implemented.
+
+For example, an "equals" matcher looks like this:
+
+    type Equal<:Matcher
+	string
+    end
+
+    function execute(k::Config, m::Equal, s::Clean, i)
+	for x in m.string
+	    if done(k.source, i)
+		return FAILURE
+	    end
+	    y, i = next(k.source, i)
+	    if x != y
+		return FAILURE
+	    end
+	end
+	Success(DIRTY, i, Any[m.string])
+    end
+
+where FAILURE is the singleton Failure() message and most of the work
+is just checking for equality, character by character.
+
+You may still be a little confused, however, because Equal is a type,
+not a function.  That's because it makes more sense in Julia to work
+this way.
+
+Let me exmplain in more detail...
+
+
+Grammar As Types
+
+Originally, when I sketched how parser combiantors worked, I described
+them as functions that returned functions that parsed data (see
+"equals()" and "follows()" above).
+
+But in Julia, when you use a trampoline, it makes much more sense to
+use types.  So constructing a grammar is not done be calling
+functions, but by calling type constructors (like "Equal()" above).
+
+That's because Julia is based around messages, which are dispatched on
+types.  By using types to describe our grammar we can then use
+messages to implement the work.
+
+And that's what you can see above.  The execute() method includes
+"m::Equal", which means that specific execute() is called ONLY when m
+is an instance of Equal.  So that execute() is equivalent, roughly, to
+the anonymous function in the original sketch.
+
+To make it completely clear, let's work through things in more detail.
+
+We have to strt somewhere, and I am trying to avoid the details of how
+we start or end, since it's how we run that is most important.  So
+let's just assume that some other matcher (an instance of a type) is
+similar to the "follows()" function above, in that it contains two
+Equals children.  it returns an Execute message to the trampoline,
+which contains the first Equals child (containg the string "hello").
+
+The main loop of the trampoline receives the Execute message, saves
+the matcher on the stack, and then calls the dispathc() method for
+Execute.  That results in calling the execute(... m::Equal...) method,
+which checks the input against "hello".
+
+Assuming that matches, it returns a Success message, which the
+trampoline receives.  The trampoline pops the original matcher form
+the stack and calls its success() method.  That, presumably, then
+returns another Execute message, to match "world", etc etc.
+
+Obviously these matchers need to save data as they work.  The matcher
+discussed above, for example, needs to save "hello" while it calls the
+second Equals for "world".  That is done in the State types that
+appear in the dispatch code.
+
+
+Was That Worth It?!
+
+OK, so at this point you're probably starting to see how things work
+(I hope).  It may help to think of the grammar (the DAG of types) as a
+"program" that the trampoline is executing - it's very like an
+interpreter, where the grammar is the "program" that the trampoline
+"executes" given some input (which is being parsed).
+
+But you may ask "OK, I kind-of get how it works, but was all that
+complexity worth it?"
+
+Well, first of all, it's not as complex as it looks.  It's different,
+sure.  Which means it takes some getting used to.  But with a little
+experience it becomes surprisingly easy to understand.  The matchers,
+for example, are "just" state machines, where the State instances
+describe the state, and the execute(), success() and failure() methods
+drive transitions from one state to another.
+
+More than "not as bad as it looks" - it's actually surprisingly
+elegant.  In a traditional interpreter the main loop is a case
+statement that checks the type of what is being executed and then
+calls the appropriate function.  Here, in a sense, the function is
+always the same - "execute()" - and the right choice of which
+particular execute is made for us, by Julia's type system.  Things get
+even better when many matchers have similar functionality because they
+can, by sharing a common supertype, share a single implementation.  In
+the case of the ParserCombinator library, for example, most matchers
+that call a child matcher are derived from a Delegate supertype, which
+provides common support.
+
+And, second of all, it's easy - almost trivial - to hack things at a
+"meta" level.  Take the example of caching results.  All you need to
+do is add a Map (the cache) to the Config type and modify the
+dispatch() functions above: the dispatch for Success should populate
+the Map with results; the dispatch for Execute should check the Map in
+case a value already exists.  That's it!
+
+
+Method Dispatch v OOP
+
+If the same code had been implemented in a traditional OOP language,
+mucg of what I have described above would have carried across nicely.
+There would be an Trampoline base class that would be subclassed for
+different approaches to execution, for example.
+
+But Julia's method dispatch wins out when you want behaviour to "cut
+across" more than one object.
+
+In the ParserCombinator library, one of the approaches to execution
+emulates the Parser library from Haskell.  This doesn't allow
+backtracing, by default, if the source has been successfully matched.
+But one, "magic" matcher, Try() changes this.  So this one particular
+matcher has to "know" about the trampoline in more detail than normal.
+
+How do you do that in an OO language?  It's not so clear, because the
+matchers are, presumably, classes that are quite separate from the
+trampoline.
+
+But in Julia a method can dispatch on multiple types.  So there's
+nothing to stop you having an execute() method that is for one
+specific trampoline type and one specific matcher type.  And which is
+only called when both those types are used together.
+
