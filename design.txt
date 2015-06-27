@@ -3,7 +3,7 @@ Introduction
 
 I am going to describe some of the decisions behind the
 ParserCombinator library, which, I hope, will show how useful Julia's
-method dispatch can be.
+method-centred, multiple dispatch can be.
 
 OK, so I wanted to write a parser combinator library in Julia.
 
@@ -92,7 +92,8 @@ thankfully, yes (or I wouldn't be writing this article)!
 How do we do this?  We need two things.  First, we need to use a
 "trampoline" to take control of execution.  Second, we need some way
 of allowing different behaviors to be "plugged in".  In Julia, this is
-typically done by method dispatch.  And it works really well.
+typically done by multiple dispatch on methods.  And it works really
+well.
 
 
 Trampolines
@@ -195,8 +196,8 @@ use types.  So constructing a grammar is not done be calling
 functions, but by calling type constructors (like "Equal()" above).
 
 That's because Julia is based around messages, which are dispatched on
-types.  By using types to describe our grammar we can then use
-messages to implement the work.
+multiple types.  By using types to describe our grammar we can then
+use messages to implement the work.
 
 And that's what you can see above.  The execute() method includes
 "m::Equal", which means that specific execute() is called ONLY when m
@@ -276,14 +277,14 @@ populate the Map with results; the dispatch for Execute should check
 the Map in case a value already exists.  That's it!
 
 
-Method Dispatch v OOP
+Multiple Dispatch v OOP
 
 If the same ideas were implemented in a traditional OOP language, much
 of what I have described above would carry across nicely.  There would
 be a Trampoline base class that would be subclassed for different
 approaches to execution, for example.
 
-But Julia's method dispatch wins out when you want behavior to "cut
+But Julia's multiple dispatch wins out when you want behavior to "cut
 across" more than one type.
 
 In the ParserCombinator library, one of the approaches to execution
