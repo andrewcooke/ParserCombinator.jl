@@ -13,7 +13,8 @@ sketch:
   There's a pretty neat, easy to understand, way of writing parsers by
   hand, which is common in functional languages, where you construct a
   "tree" (or even a DAG) of functions that take a stream of characters
-  as input and return some structured output as a result.
+  as input and return some structured output as a result (along with
+  the remaining text).
 
   The stream of characters is (of course) what you want to parse, and
   the structured output becomes your AST.
@@ -92,7 +93,7 @@ thankfully, yes (or I wouldn't be writing this article)!
 How do we do this?  We need two things.  First, we need to use a
 "trampoline" to take control of execution.  Second, we need some way
 of allowing different behaviors to be "plugged in".  In Julia, this is
-typically done by multiple dispatch on methods.  And it works really
+typically done by multiple dispatch with methods.  And it works really
 well.
 
 
@@ -195,14 +196,16 @@ But in Julia, when you use a trampoline, it makes much more sense to
 use types.  So constructing a grammar is not done be calling
 functions, but by calling type constructors (like "Equal()" above).
 
-That's because Julia is based around messages, which are dispatched on
+That's because Julia is based around methods, which are dispatched on
 multiple types.  By using types to describe our grammar we can then
-use messages to implement the work.
+use method dispatch to implement the work.
 
 And that's what you can see above.  The execute() method includes
 "m::Equal", which means that specific execute() is called ONLY when m
 is an instance of Equal.  So that execute() is equivalent, roughly, to
 the anonymous function in the original sketch.
+
+It's similar to OOP, where the method "belongs" to the type.
 
 To make it completely clear, let's work through things in more detail.
 
@@ -212,11 +215,11 @@ how we bootstrap or return a final result, since the important idea is
 instance of a type) is similar to the "follows()" function above, in
 that it contains two Equals children.  And we'll start with the
 execute() method associated with that matcher returning an Execute
-message to the trampoline, which contains the first Equals child
+message to the trampoline, which contains the first Equal child
 (containing the string "hello").
 
-So the parent matcher is saying to the trampoline "call this Equals
-for me".
+So the parent matcher is saying to the trampoline "call this Equal for
+me".
 
 The main loop of the trampoline receives the Execute message, saves
 the parent matcher on the stack, and then calls the dispatch() method
@@ -250,7 +253,7 @@ interpreter, where the grammar is the "program" that the trampoline
 But you may ask "OK, I kind-of get how it works, but was all that
 complexity worth it?"
 
-Well, first of all, it's not as complex as it looks.  It's different,
+Well, first of all, it's not as complex as it sounds.  It's different,
 sure.  Which means it takes some getting used to.  But with a little
 experience it becomes surprisingly easy to understand.  The matchers,
 for example, are "just" state machines, where the State instances
@@ -296,12 +299,16 @@ it can enable backtracking.
 
 How do you do that in a traditional OO language?  It's not so clear,
 because the matchers are, presumably, classes that are quite separate
-from the trampoline.
+from the trampoline (in Java, for example, you start having to worry
+about "package private" access)
 
 But in Julia a method can dispatch on multiple types.  So there's
 nothing to stop you having an execute() method that is for one
 specific trampoline type and one specific matcher type.  And which is
 only called when both those types are used together.
+
+(It may confuse more than it helps, but a similar idea is used here -
+http://acooke.org/cute/FizzBuzzin0.html)
 
 
 Conclusions
@@ -315,6 +322,6 @@ idea comes from an earlier attempt in Python, called Lepl).  But
 Julia's methods make things particularly easy.
 
 If you want to try ParserCombinator for yourself, please check it out
-at XXX
+at https://github.com/andrewcooke/ParserCombinator.jl
 
 Thanks!
