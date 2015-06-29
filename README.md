@@ -957,6 +957,10 @@ For more details, I'm afraid your best bet is the source code:
 
 ## Design
 
+For a longer discussion of the design, please see 
+[this blog post](http://www.acooke.org/cute/DetailedDi0.html), also available 
+[here](design.txt).
+
 ### Overview
 
 Parser combinators were first written (afaik) in functional languages
