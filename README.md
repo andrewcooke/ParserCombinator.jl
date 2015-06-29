@@ -1075,6 +1075,8 @@ additional layer of lists).
 
 ## Releases
 
+1.2.0 - 2015-06-28 - Trampoline side rewritten; more execution modes.
+
 1.1.0 - 2015-06-07 - Fixed calc example; debug mode; much rewriting.
 
 1.0.0 - ~2015-06-03 - More or less feature complete.
