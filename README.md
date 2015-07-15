@@ -4,7 +4,6 @@ Status](https://travis-ci.org/andrewcooke/ParserCombinator.jl.png)](https://trav
 [![ParserCombinator](http://pkg.julialang.org/badges/ParserCombinator_release.svg)](http://pkg.julialang.org/?pkg=ParserCombinator&ver=release)
 
 
-
 # ParserCombinator
 
 * [Example](#example)
@@ -68,10 +67,10 @@ all = sum + Eos()
 # and test 
 
 # this prints 2.5
-calc(parse_one("1+2*3/4")[0])
+calc(parse_one("1+2*3/4", all)[1])
 
 # this prints [Sum([Prd([1.0]),Prd([2.0])])]
-parse_one("1+2")
+parse_one("1+2", all)
 ```
 
 Some explanation of the above:

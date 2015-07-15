@@ -26,7 +26,8 @@ Word, Space, Star, Plus,
 @with_names, set_name,
 @with_pre, @with_post, set_fix,
 TryIter, ExpiredContent, TryCache, TryNoCache, Try, ParserError, Error, 
-parse_try, parse_try_dbg, parse_try_nocache, parse_try_nocache_dbg
+parse_try, parse_try_dbg, parse_try_nocache, parse_try_nocache_dbg,
+Parsers
 
 include("types.jl")
 include("names.jl")
@@ -39,5 +40,7 @@ include("extras.jl")
 include("print.jl")
 include("fix.jl")
 include("try.jl")
+
+include("Parsers.jl")
 
 end

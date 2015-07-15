@@ -3,6 +3,7 @@ importall ParserCombinator
 using Base.Test
 using Compat
 
+if false
 include("fix.jl")
 include("print.jl")
 include("names.jl")
@@ -12,3 +13,6 @@ include("case.jl")
 include("calc.jl")
 include("debug.jl")
 include("try.jl")
+end
+
+include("gml/example1.jl")
