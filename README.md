@@ -9,11 +9,13 @@ Status](https://travis-ci.org/andrewcooke/ParserCombinator.jl.png)](https://trav
 * [Example](#example)
 * [Install](#install)
 * [Manual](#manual)
+* [Parsers](#parsers)
 * [Design](#design)
 * [Releases](#releases)
 
-A parser combinator library for Julia, similar to those in other
-languages, like Haskell's Parsec or Python's pyparsing.
+A parser combinator library for Julia, similar to those in other languages,
+like Haskell's Parsec or Python's pyparsing.  It can parse any iterable type
+(not just strings) (except for regexp matchers, of course).
 
 ParserCombinator's main advantage may be its flexible [design](#design), 
 which separates the matchers from the evaluation strategy.  That may 
@@ -21,8 +23,8 @@ sound odd, but makes it [easy](#evaluation) to "plug in" memoization, or
 debug traces, or to restrict backtracking in a similar way to Parsec -
 all while using the same grammar.
 
-It can also parse any iterable type (not just strings) (except for
-regexp matchers, of course).
+It also contains a pre-built [parser]{#graph-modelling-language) for the Graph
+Modelling Language.
 
 ## Example
 
@@ -991,6 +993,52 @@ For more details, I'm afraid your best bet is the source code:
 * [debug.jl](test/debug.jl) shows how to enable debug mode
 
 * [case.jl](test/case.jl) has an example of a user-defined combinator
+
+## Parsers
+
+### Graph Modelling Language
+
+* `parse_raw` returns lists and tuples that directly match the GML structure.
+
+* `parse_dict` places the same data in nested dicts and vectors.  The keys are
+  symbols, so you access a file using the syntax `dict[:field]`.
+
+For example, to print node IDs and edge connections in a graph:
+
+```julia
+using ParserCombinator.Parsers.GML
+
+my_graph = "graph [
+  node [id 1]
+  node [id 2]
+  node [id 3]
+  edge [source 1 target 2]
+  edge [source 2 target 3]
+  edge [source 3 target 1]
+]"
+
+root = parse_dict(my_graph)
+
+for graph in root[:graph]  # there could be multple graphs
+    for node in graph[:node]
+        println("node $(node[:id])")
+    end
+    for edge in graph[:edge]
+        println("edge $(edge[:source]) - $(edge[:target])")
+    end
+end
+```
+
+Which prints:
+
+```
+node 1
+node 2
+node 3
+edge 1 - 2
+edge 2 - 3
+edge 3 - 1
+```
 
 ## Design
 

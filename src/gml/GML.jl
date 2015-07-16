@@ -4,9 +4,7 @@ module GML
 using ...ParserCombinator
 using Compat
 
-export parse_raw
-
-# TODO - single line comments
+export parse_raw, parse_dict
 
 
 function mk_parser()
@@ -109,14 +107,45 @@ end
 # users with different requirements are free to take the "raw" parse and build
 # their own object models.
 
-type GMLDict
-    dict::Dict{Symbol, Any}
+type GMLError<:Exception
+    msg::AbstractString
 end
 
-immutable GMLList
-    list::Vector
+LISTS = [:graph,:node,:edge]
+
+typealias GMLDict Dict{Symbol, Any}
+
+function build(raw; lists=LISTS)
+    root = GMLDict()
+    if length(raw) > 0
+        build(root, raw[1]; lists=lists)
+    end
+    root
 end
 
+function build(dict::GMLDict, raw; lists=LISTS)
+    for (name, value) in raw
+        if isa(value, Vector)
+            entry = GMLDict()
+            build(entry, value; lists=lists)
+        else
+            entry = value
+        end
+        if name in lists
+            if !haskey(dict, name)
+                dict[name] = Any[]
+            end
+            push!(dict[name], entry)
+        else
+            if !haskey(dict, name)
+                dict[name] = entry
+            else
+                throw(GMLError("$name is a list"))
+            end
+        end
+    end
+end
 
+parse_dict(s::AbstractString; debug=false, lists=LISTS) = build(parse_raw(s; debug=debug); lists=lists)
 
 end

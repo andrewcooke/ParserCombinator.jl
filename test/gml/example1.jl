@@ -40,4 +40,15 @@ graph [
 ]
 "
 
-print(parse_raw(example1))
+root = parse_dict(example1)
+
+for graph in root[:graph]
+    println("graph $(graph[:label])")
+    for node in graph[:node]
+        println(" node $(node[:id])")
+    end
+    for edge in graph[:edge]
+        println(" edge $(edge[:label]): $(edge[:source]) - $(edge[:target])")
+    end
+end
+
