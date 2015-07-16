@@ -2,6 +2,7 @@
 module GML
 
 using ...ParserCombinator
+using Compat
 
 export parse_raw
 
@@ -78,8 +79,43 @@ function parse_raw(s::AbstractString; debug=false)
 end
 
 
-# structured model of GML graph files
+# (semi) structured model of GML graph files
 
+# the GML specs that i have found are really rather frustrating, because they
+# don't seme to acknowledge a fundamental problem with this format, which is
+# that you cannot tell, from the file alone, whether a particuar field is a
+# list or a single value.
+
+# obviously, a name that occurs multiple times in a single scope is a list.
+# but the opposite - an isolated is a single value - is not necessarily true,
+# because it may be a singleton list.
+
+# one solution is to make a model that very closely follows the "predefined
+# keys" part of himsolt's 1996 document, available as part of the tarball from
+# http://www.fim.uni-passau.de/fileadmin/files/lehrstuhl/brandenburg/projekte/gml/gml-documentation.tar.gz
+# but that seems very specific, perhaps dated, and still doesn't help with
+# additional fields.
+
+# another solution is to trate everything as a list, and use dictionaries of
+# lists.  bu that means that the idea of "keys" is meesed up with additional
+# [1] indexes into singleton lists.
+
+# after some reflection, i've decide to take a list of names of lists, and to
+# validate against that.  this isn't perfect - it doesn't allow for the same
+# name to have different meanings in different contexts, for example - but it
+# seems to be a good middle ground for "doing the right thing" in general
+# cases.
+
+# users with different requirements are free to take the "raw" parse and build
+# their own object models.
+
+type GMLDict
+    dict::Dict{Symbol, Any}
+end
+
+immutable GMLList
+    list::Vector
+end
 
 
 
