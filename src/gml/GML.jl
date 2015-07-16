@@ -5,17 +5,30 @@ using ...ParserCombinator
 
 export parse_raw
 
+# TODO - single line comments
+
 
 function mk_parser()
 
-    expect(x) = Error("Expected $x")
+    # this is such a simple grammar that we can use parse_try and Error() to
+    # give useful error messages (we don't need to backtrack to any degree).
+
+    # the only tricky things are getting the spaces right so that matching
+    # spaces doesn't commit us to anything unexpeted, and placing errors only
+    # when we're sure we're wrong (you can't have one in the definition of
+    # key, for example, because that can fail...).
+
+    # inside a function just to avoid junk in global namespace.
 
     @with_names begin
+
+        expect(x) = Error("Expected $x")
 
         parse_int(x) = parse(Int32, x)
         parse_flt(x) = parse(Float64, x)
 
-        wspace  = P"[\n\r\t ]+"
+        comment = P"(#.*)?"
+        wspace  = P"[\t ]+" | (P"[\r\n]+" + comment)
         space   = wspace[1:end]
         spc     = wspace[0:end]
 
@@ -31,7 +44,8 @@ function mk_parser()
         
         list.matcher = element[0:end]                         > vcat
         
-        spc + list + ((spc + Eos()) | expect("key"))
+        # first line comment must be explicit (no prefious linefeed)
+        comment + spc + list + ((spc + Eos()) | expect("key"))
 
     end
 end
@@ -48,6 +62,7 @@ function line(s::AbstractString, e::ParserError{TryIter})
     end
 end
 
+# this returns the "natural" representation as nested arrays and tuples
 function parse_raw(s::AbstractString; debug=false)
     try
         (debug ? parse_try_dbg : parse_try)(TrySource(s), Trace(parser))
@@ -61,5 +76,6 @@ function parse_raw(s::AbstractString; debug=false)
         end
     end
 end
+
 
 end
