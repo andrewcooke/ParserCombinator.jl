@@ -43,7 +43,7 @@ function mk_parser()
         
         list.matcher = Nullable{Matcher}(element[0:end]       > vcat)
         
-        # first line comment must be explicit (no prefious linefeed)
+        # first line comment must be explicit (no previous linefeed)
         comment + spc + list + ((spc + Eos()) | expect("key"))
 
     end
