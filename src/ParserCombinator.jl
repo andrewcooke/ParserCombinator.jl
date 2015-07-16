@@ -3,7 +3,7 @@ module ParserCombinator
 
 using Compat
 using AutoHashEquals
-import Base: start, next, done, endof, getindex, colon
+import Base: start, next, done, endof, getindex, colon, isless
 
 export Matcher, 
 Config, Cache, NoCache, make, make_all, make_one, once,

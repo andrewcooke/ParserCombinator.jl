@@ -30,6 +30,8 @@ TryIter(s::AbstractString) = TryIter(IOBuffer(s))
     col::Int
 end
 
+isless(a::TryIterState, b::TryIterState) = a.line < b.line || (a.line == b.line && a.col < b.col)
+
 immutable TryRange
     start::TryIterState
     stop::TryIterState
@@ -43,14 +45,16 @@ FLOAT_END = TryIterState(FLOAT_LINE, END_COL)
 function expire(f::TryIter, s::TryIterState)
     if f.frozen == 0
         n = s.line - f.zero
-        f.lines = f.lines[n:end]
-        f.zero += (n-1)
-        f.right = s.col
+        if n > 0
+            f.lines = f.lines[n:end]
+            f.zero += (n-1)
+            f.right = s.col
+        end
     end
 end
 
 function line_at(f::TryIter, s::TryIterState)
-    if s.line <= f.zero || (s.line == f.zero+1 && s.col <= f.right)
+    if s.line <= f.zero || (s.line == f.zero+1 && s.col < f.right)
         throw(ExpiredContent())
     end
     n = s.line - f.zero
@@ -259,7 +263,7 @@ parse_try_nocache_dbg = make_one(Debug; delegate=TryNoCache)
 
 # need to add some debug support for this iterator / source
 
-function src(s::TryIter, i::TryState; max=MAX_SRC)
+function src(s::TryIter, i::TryIterState; max=MAX_SRC)
     try
         pad(truncate(escape_string(s[i:end]), max), max)
     catch x
@@ -272,12 +276,12 @@ function src(s::TryIter, i::TryState; max=MAX_SRC)
 end
    
 function debug{S<:TryIter}(k::Debug{S}, e::Execute)
-    @printf("%3d:%3d:%s %02d %s%s->%s\n",
+    @printf("%3d,%-3d:%s %02d %s%s->%s\n",
             e.iter.line, e.iter.col, src(k.source, e.iter), k.depth[end], indent(k), e.parent.name, e.child.name)
 end
 
 function debug{S<:TryIter}(k::Debug{S}, s::Success)
-    @printf("%3d:%3d:%s %02d %s%s<-%s\n",
+    @printf("%3d,%-3d:%s %02d %s%s<-%s\n",
             s.iter.line, s.iter.col, src(k.source, s.iter), k.depth[end], indent(k), parent(k).name, short(s.result))
 end
 

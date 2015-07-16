@@ -98,6 +98,8 @@ function producer(k::Config, m::Matcher)
     root = Root()
     msg::Message = Execute(root, CLEAN, m, CLEAN, start(k.source))
 
+    try
+
     while true
         msg = dispatch(k, msg)
         if isempty(k.stack)
@@ -114,6 +116,12 @@ function producer(k::Config, m::Matcher)
         end
     end
     
+    catch x
+        println(x)
+        Base.show_backtrace(STDOUT, catch_backtrace())
+        throw(x)
+    end
+
 end
 
 

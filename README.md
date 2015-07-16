@@ -234,6 +234,25 @@ julia> parse_one("abc", s"a" & s"b")
 Where `Series()` is implemented as `Seq()` or `And()`, depending on the value
 of `flatten` (default `true`).
 
+**Warning** - The sugared syntax has to follow standard operator precedence,
+  where `|` binds *more tightly* that `+`.  This means that
+
+```julia
+   matcher1 + matcher2 | matcher3
+```
+
+is *almost always an error* because it means:
+
+```julia
+   matcher1 + (matcher2 | matcher3)
+```
+
+while what was intended was:
+
+```julia
+   (matcher1 + matcher2) | matcher3
+```
+
 #### Empty Values
 
 Often, you want to match something but then discard it.  An empty (or
@@ -272,6 +291,25 @@ julia> parse_one("abc", Alt(s"x", s"a"))
 julia> parse_one("abc", s"x" | s"a")
 1-element Array{Any,1}:
  "a"
+```
+
+**Warning** - The sugared syntax has to follow standard operator precedence,
+  where `|` binds *more tightly* that `+`.  This means that
+
+```julia
+   matcher1 + matcher2 | matcher3
+```
+
+is *almost always an error* because it means:
+
+```julia
+   matcher1 + (matcher2 | matcher3)
+```
+
+while what was intended was:
+
+```julia
+   (matcher1 + matcher2) | matcher3
 ```
 
 #### Regular Expressions

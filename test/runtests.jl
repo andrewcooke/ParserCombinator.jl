@@ -12,7 +12,7 @@ include("slow.jl")
 include("case.jl")
 include("calc.jl")
 include("debug.jl")
-include("try.jl")
 end
+#include("try.jl")
 
 include("gml/example1.jl")

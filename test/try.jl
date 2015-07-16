@@ -13,7 +13,7 @@ open("test1.txt", "r") do io
     @test f[i:end] == "bcdefghijklmnopqrstuvwxyz\n"
 end
 
-for parse in (parse_try, parse_try_nocache)
+for parse in (parse_try, parse_try_nocache, parse_try_dbg, parse_try_nocache_dbg)
 
     open("test1.txt", "r") do io
         @test_throws ParserException parse(TryIter(io), p"[a-z]"[0:end] + s"m" > string)
