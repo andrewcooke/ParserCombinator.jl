@@ -1040,6 +1040,8 @@ edge 2 - 3
 edge 3 - 1
 ```
 
+For further details, please read [GML.jl](src/gml/GML.jl).
+
 ## Design
 
 For a longer discussion of the design, please see 
