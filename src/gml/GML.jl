@@ -42,7 +42,7 @@ function mk_parser()
         value   = (real | int | str | sublist | expect("value")) + spc
         element = key + space + value                         > tuple
         
-        list.matcher = element[0:end]                         > vcat
+        list.matcher = Nullable{Matcher}(element[0:end]       > vcat)
         
         # first line comment must be explicit (no prefious linefeed)
         comment + spc + list + ((spc + Eos()) | expect("key"))
@@ -76,6 +76,11 @@ function parse_raw(s::AbstractString; debug=false)
         end
     end
 end
+
+
+# structured model of GML graph files
+
+
 
 
 end
