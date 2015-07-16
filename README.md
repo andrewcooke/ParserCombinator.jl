@@ -1003,7 +1003,7 @@ For more details, I'm afraid your best bet is the source code:
 * `parse_dict` places the same data in nested dicts and vectors.  The keys are
   symbols, so you access a file using the syntax `dict[:field]`.
 
-For example, to print node IDs and edge connections in a graph:
+For example, to print node IDs and edge connections in a graph
 
 ```julia
 using ParserCombinator.Parsers.GML
@@ -1019,7 +1019,7 @@ my_graph = "graph [
 
 root = parse_dict(my_graph)
 
-for graph in root[:graph]  # there could be multple graphs
+for graph in root[:graph]  # there could be multiple graphs
     for node in graph[:node]
         println("node $(node[:id])")
     end
@@ -1029,7 +1029,7 @@ for graph in root[:graph]  # there could be multple graphs
 end
 ```
 
-Which prints:
+giving
 
 ```
 node 1
