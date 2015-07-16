@@ -40,6 +40,4 @@ graph [
 ]
 "
 
-print(parse_raw("a 1"))
-
 print(parse_raw(example1))

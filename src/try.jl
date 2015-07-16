@@ -15,47 +15,52 @@
 
 type ExpiredContent<:Exception end
 
-type TryIter
+type TrySource
     io::IO
     frozen::Int    # non-zero is frozen; count allows nested Try()
     zero::Int      # offset to lines (lines[x] contains line x+zero)
     right::Int     # rightmost expired column
     lines::Array{AbstractString,1}
-    TryIter(io::IO) = new(io, 0, 0, 0, AbstractString[])
+    TrySource(io::IO) = new(io, 0, 0, 0, AbstractString[])
 end
-TryIter(s::AbstractString) = TryIter(IOBuffer(s))
+TrySource(s::AbstractString) = TrySource(IOBuffer(s))
 
-@auto_hash_equals immutable TryIterState
+@auto_hash_equals immutable TryIter
     line::Int
     col::Int
 end
 
-isless(a::TryIterState, b::TryIterState) = a.line < b.line || (a.line == b.line && a.col < b.col)
+isless(a::TryIter, b::TryIter) = a.line < b.line || (a.line == b.line && a.col < b.col)
 
 immutable TryRange
-    start::TryIterState
-    stop::TryIterState
+    start::TryIter
+    stop::TryIter
 end
 
 END_COL = typemax(Int)
 FLOAT_LINE = -1
-FLOAT_END = TryIterState(FLOAT_LINE, END_COL)
+FLOAT_END = TryIter(FLOAT_LINE, END_COL)
 
 
-function expire(f::TryIter, s::TryIterState)
-    if f.frozen == 0
-        n = s.line - f.zero
+function expire(s::TrySource, i::TryIter)
+#    println("expire $i $(s.zero) $(s.right)")
+    if s.frozen == 0
+        n = i.line - s.zero
         if n > 0
-            f.lines = f.lines[n:end]
-            f.zero += (n-1)
-            f.right = s.col
+            s.lines = s.lines[n:end]
+            s.zero += (n-1)
+            if n > 1 || i.col > s.right
+                s.right = i.col
+            end
         end
     end
 end
 
-function line_at(f::TryIter, s::TryIterState)
-    if s.line <= f.zero || (s.line == f.zero+1 && s.col < f.right)
-        throw(ExpiredContent())
+function line_at(f::TrySource, s::TryIter; check=true)
+    if check
+        if s.line <= f.zero || (s.line == f.zero+1 && s.col < f.right)
+            throw(ExpiredContent())
+        end
     end
     n = s.line - f.zero
     while length(f.lines) < n
@@ -64,18 +69,17 @@ function line_at(f::TryIter, s::TryIterState)
     f.lines[n]
 end
 
+unify_line(a::TryIter, b::TryIter) = b.line == FLOAT_LINE ? TryIter(a.line, b.col) : b
+unify_col(line::AbstractString, b::TryIter) = b.col == END_COL ? TryIter(b.line, endof(line)) : b
 
-unify_line(a::TryIterState, b::TryIterState) = b.line == FLOAT_LINE ? TryIterState(a.line, b.col) : b
-unify_col(line::AbstractString, b::TryIterState) = b.col == END_COL ? TryIterState(b.line, endof(line)) : b
+start(f::TrySource) = TryIter(1, 1)
+endof(f::TrySource) = FLOAT_END
 
-start(f::TryIter) = TryIterState(1, 1)
-endof(f::TryIter) = FLOAT_END
-
-colon(a::TryIterState, b::TryIterState) = TryRange(a, b)
+colon(a::TryIter, b::TryIter) = TryRange(a, b)
 
 # very restricted - just enough to support iter[i:end] as current line
 # for regexps.  step is ignored,
-function getindex(f::TryIter, r::TryRange)
+function getindex(f::TrySource, r::TryRange)
     start = r.start
     line = line_at(f, start)
     stop = unify_col(line, unify_line(start, r.stop))
@@ -86,7 +90,7 @@ function getindex(f::TryIter, r::TryRange)
     end
 end
 
-function next(f::TryIter, s::TryIterState)
+function next(f::TrySource, s::TryIter)
     # there's a subtlelty here.  the line is always correct for
     # reading more data (the check on done() comes *after* next).
     # this is so that getindex can access the line correctly if needed
@@ -95,19 +99,15 @@ function next(f::TryIter, s::TryIterState)
     line = line_at(f, s)
     c, col = next(line, s.col)
     if done(line, col)
-        c, TryIterState(s.line+1, 1)
+        c, TryIter(s.line+1, 1)
     else
-        c, TryIterState(s.line, col)
+        c, TryIter(s.line, col)
     end
 end
 
-function done(f::TryIter, s::TryIterState)
-    try
-        line = line_at(f, s)
-        done(line, s.col) && eof(f.io)
-    catch
-        true
-    end
+function done(f::TrySource, s::TryIter)
+    line = line_at(f, s; check=false)
+    done(line, s.col) && eof(f.io)
 end
 
 
@@ -119,9 +119,9 @@ abstract TryConfig<:Config
 # as NoCache, but treat ExpiredContent exceptions as failures
 
 type TryNoCache<:TryConfig
-    source::TryIter
+    source::TrySource
     @compat stack::Array{Tuple{Matcher,State},1}
-    @compat TryNoCache(source::TryIter) = new(source, Array(Tuple{Matcher,State}, 0))
+    @compat TryNoCache(source::TrySource) = new(source, Array(Tuple{Matcher,State}, 0))
 end
 
 function dispatch(k::TryNoCache, e::Execute)
@@ -169,10 +169,10 @@ end
 # (we really need mixins or multiple inheritance here...)
 
 type TryCache<:TryConfig
-    source::TryIter
+    source::TrySource
     @compat stack::Array{Tuple{Matcher,State,Key},1}
     cache::Dict{Key,Message}
-    @compat TryCache(source::TryIter) = new(source, Array(Tuple{Matcher,State,Key}, 0), Dict{Key,Message}())
+    @compat TryCache(source::TrySource) = new(source, Array(Tuple{Matcher,State,Key}, 0), Dict{Key,Message}())
 end
 
 function dispatch(k::TryCache, e::Execute)
@@ -263,7 +263,7 @@ parse_try_nocache_dbg = make_one(Debug; delegate=TryNoCache)
 
 # need to add some debug support for this iterator / source
 
-function src(s::TryIter, i::TryIterState; max=MAX_SRC)
+function src(s::TrySource, i::TryIter; max=MAX_SRC)
     try
         pad(truncate(escape_string(s[i:end]), max), max)
     catch x
@@ -275,17 +275,17 @@ function src(s::TryIter, i::TryIterState; max=MAX_SRC)
     end
 end
    
-function debug{S<:TryIter}(k::Debug{S}, e::Execute)
+function debug{S<:TrySource}(k::Debug{S}, e::Execute)
     @printf("%3d,%-3d:%s %02d %s%s->%s\n",
             e.iter.line, e.iter.col, src(k.source, e.iter), k.depth[end], indent(k), e.parent.name, e.child.name)
 end
 
-function debug{S<:TryIter}(k::Debug{S}, s::Success)
+function debug{S<:TrySource}(k::Debug{S}, s::Success)
     @printf("%3d,%-3d:%s %02d %s%s<-%s\n",
             s.iter.line, s.iter.col, src(k.source, s.iter), k.depth[end], indent(k), parent(k).name, short(s.result))
 end
 
-function debug{S<:TryIter}(k::Debug{S}, f::Failure)
+function debug{S<:TrySource}(k::Debug{S}, f::Failure)
     @printf("       :%s %02d %s%s<-!!!\n",
             pad(" ", MAX_SRC), k.depth[end], indent(k), parent(k).name)
 end
@@ -293,9 +293,9 @@ end
 
 # this is general, but usually not much use with backtracking
 
-type ParserError<:Exception
+type ParserError{I}<:Exception
     msg::AbstractString
-    iter
+    iter::I
 end
 
 @auto_hash_equals immutable Error<:Matcher
@@ -304,4 +304,6 @@ end
     Error(msg::AbstractString) = new(:Error, msg)
 end
 
-execute(k::Config, m::Error, s::Clean, i) = throw(ParserError(m.msg, i))
+execute{I}(k::Config, m::Error, s::Clean, i::I) = throw(ParserError{I}(m.msg, i))
+
+

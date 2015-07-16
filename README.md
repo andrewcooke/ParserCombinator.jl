@@ -549,7 +549,7 @@ To allow parsing of a wider range of grammars, Parsec then introduces
 the `Try` combinator, which enables backtracking in some (generally
 small) portion of the grammar.
 
-The same approach can be used with this library, using `TryIter` as a
+The same approach can be used with this library, using `TrySource` as a
 source with `parse_try`.
 
 ```
@@ -561,12 +561,12 @@ abcdefghijklmnopqrstuvwxyz
 ```julia
 open("test1.txt", "r") do io
     # this throws an execption because it requires backtracking
-    parse_try(TryIter(io), p"[a-z]"[0:end] + s"m" > string)
+    parse_try(TrySource(io), p"[a-z]"[0:end] + s"m" > string)
 end
 
 open("test1.txt", "r") do io
     # this (with Try(...)) works fine
-    parse_try(TryIter(io), Try(p"[a-z]"[0:end] + s"m" > string))
+    parse_try(TrySource(io), Try(p"[a-z]"[0:end] + s"m" > string))
 end
 ```
 
@@ -574,8 +574,8 @@ Without backtracking, error messages using the `Error()` matcher are
 much more useful (this is why Parsec can provide good error messages):
 
 ```julia
-parse_try(TryIter("?"), Alt!(p"[a-z]", p"\d", Error("not letter or number")))
-# ParserError("not letter or number",ParserCombinator.TryIterState(1,1))
+parse_try(TrySource("?"), Alt!(p"[a-z]", p"\d", Error("not letter or number")))
+# ParserError("not letter or number",ParserCombinator.TryIter(1,1))
 ```
 
 where the `(1,1)` (the `iter` field of the error) is line number and

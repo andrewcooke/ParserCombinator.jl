@@ -98,7 +98,7 @@ function producer(k::Config, m::Matcher)
     root = Root()
     msg::Message = Execute(root, CLEAN, m, CLEAN, start(k.source))
 
-    try
+#    try
 
     while true
         msg = dispatch(k, msg)
@@ -116,11 +116,11 @@ function producer(k::Config, m::Matcher)
         end
     end
     
-    catch x
-        println(x)
-        Base.show_backtrace(STDOUT, catch_backtrace())
-        throw(x)
-    end
+#    catch x
+#        println(x)
+#        Base.show_backtrace(STDOUT, catch_backtrace())
+#        throw(x)
+#    end
 
 end
 
