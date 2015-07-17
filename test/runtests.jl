@@ -3,15 +3,15 @@ importall ParserCombinator
 using Base.Test
 using Compat
 
-include("fix.jl")
-include("print.jl")
-include("names.jl")
-include("tests.jl")
-include("slow.jl")
-include("case.jl")
-include("calc.jl")
-include("debug.jl")
-include("try.jl")
+include("core/fix.jl")
+include("core/print.jl")
+include("core/names.jl")
+include("core/tests.jl")
+include("core/slow.jl")
+include("core/case.jl")
+include("core/calc.jl")
+include("core/debug.jl")
+include("core/try.jl")
 
 include("gml/ok.jl")
 include("gml/errors.jl")
