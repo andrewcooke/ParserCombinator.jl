@@ -121,7 +121,7 @@ abstract TryConfig<:Config
 type TryNoCache<:TryConfig
     source::TrySource
     @compat stack::Array{Tuple{Matcher,State},1}
-    @compat TryNoCache(source::TrySource) = new(source, Array(Tuple{Matcher,State}, 0))
+    @compat TryNoCache(source::TrySource; kargs...) = new(source, Array(Tuple{Matcher,State}, 0))
 end
 
 function dispatch(k::TryNoCache, e::Execute)
@@ -172,7 +172,7 @@ type TryCache<:TryConfig
     source::TrySource
     @compat stack::Array{Tuple{Matcher,State,Key},1}
     cache::Dict{Key,Message}
-    @compat TryCache(source::TrySource) = new(source, Array(Tuple{Matcher,State,Key}, 0), Dict{Key,Message}())
+    @compat TryCache(source::TrySource; kargs...) = new(source, Array(Tuple{Matcher,State,Key}, 0), Dict{Key,Message}())
 end
 
 function dispatch(k::TryCache, e::Execute)

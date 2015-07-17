@@ -41,7 +41,7 @@ function mk_parser()
         value   = (real | int | str | sublist | expect("value")) + spc
         element = key + space + value                         > tuple
         
-        list.matcher = Nullable{Matcher}(element[0:end]       > vcat)
+        list.matcher = Nullable{Matcher}(element[0:end]      |> x->x)
         
         # first line comment must be explicit (no previous linefeed)
         comment + spc + list + ((spc + Eos()) | expect("key"))
@@ -62,10 +62,14 @@ function line(s::AbstractString, e::ParserError{TryIter})
 end
 
 # this returns the "natural" representation as nested arrays and tuples
-function parse_raw(s::AbstractString; debug=false)
+function parse_raw(s; debug=false)
     try
-        (debug ? parse_try_dbg : parse_try)(TrySource(s), Trace(parser))
+        (debug ? parse_try_dbg : parse_try)(TrySource(s), Trace(parser); debug=debug)
+#        parse_try(TrySource(s), Trace(parser); debug=debug)
     catch x
+        if (debug) 
+            Base.show_backtrace(STDOUT, catch_backtrace())
+        end
         if isa(x, ParserError)
             l = line(s, x)
             arrow = string(repeat(" ", x.iter.col-1), "^")
@@ -146,6 +150,6 @@ function build(dict::GMLDict, raw; lists=LISTS)
     end
 end
 
-parse_dict(s::AbstractString; debug=false, lists=LISTS) = build(parse_raw(s; debug=debug); lists=lists)
+parse_dict(s; debug=false, lists=LISTS) = build(parse_raw(s; debug=debug); lists=lists)
 
 end

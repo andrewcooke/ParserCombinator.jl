@@ -15,7 +15,7 @@ parent(k::Config) = k.stack[end][1]
 type NoCache<:Config
     source::Any
     @compat stack::Array{Tuple{Matcher, State},1}
-    @compat NoCache(source) = new(source, Array(Tuple{Matcher,State}, 0))
+    @compat NoCache(source; kargs...) = new(source, Array(Tuple{Matcher,State}, 0))
 end
 
 function dispatch(k::NoCache, e::Execute)
@@ -42,7 +42,7 @@ type Cache<:Config
     source::Any
     @compat stack::Array{Tuple{Matcher,State,Key}}
     cache::Dict{Key,Message}
-    @compat Cache(source) = new(source, Array(Tuple{Matcher,State,Key}, 0), Dict{Key,Message}())
+    @compat Cache(source; kargs...) = new(source, Array(Tuple{Matcher,State,Key}, 0), Dict{Key,Message}())
 end
 
 function dispatch(k::Cache, e::Execute)
@@ -93,34 +93,36 @@ failure(k::Config, m::Root, s::State) = FAILURE
 # to modify the behaviour you can create a new Config subtype and then
 # add your own dispatch functions.
 
-function producer(k::Config, m::Matcher)
+function producer(k::Config, m::Matcher; debug=false)
 
     root = Root()
     msg::Message = Execute(root, CLEAN, m, CLEAN, start(k.source))
 
-#    try
+    try
 
-    while true
-        msg = dispatch(k, msg)
-        if isempty(k.stack)
-            @assert !isa(msg, Execute)
-            if isa(msg, Execute)
-                error("Unexpected execute message")
-            elseif isa(msg, Success)
-                produce(msg.result)
-                # my head hurts
-                msg = Execute(root, CLEAN, m, msg.child_state.state, start(k.source))
-            else
-                break
+        while true
+            msg = dispatch(k, msg)
+            if isempty(k.stack)
+                @assert !isa(msg, Execute)
+                if isa(msg, Execute)
+                    error("Unexpected execute message")
+                elseif isa(msg, Success)
+                    produce(msg.result)
+                    # my head hurts
+                    msg = Execute(root, CLEAN, m, msg.child_state.state, start(k.source))
+                else
+                    break
+                end
             end
         end
+        
+    catch x
+        if (debug)
+            println(x)
+            Base.show_backtrace(STDOUT, catch_backtrace())
+        end
+        throw(x)
     end
-    
-#    catch x
-#        println(x)
-#        Base.show_backtrace(STDOUT, catch_backtrace())
-#        throw(x)
-#    end
 
 end
 
@@ -131,9 +133,9 @@ end
 # these assume that any config construct takes a single source argument 
 # plus optional keyword args
 
-function make(config, source, matcher; kargs...)
-    k = config(source; kargs...)
-    (k, Task(() -> producer(k, matcher)))
+function make(config, source, matcher; debug=false, kargs...)
+    k = config(source; debug=debug, kargs...)
+    (k, Task(() -> producer(k, matcher; debug=debug)))
 end
 
 function make_all(config; kargs_make...)
