@@ -167,8 +167,8 @@ evaluate it against some input in various ways:
   info [here](#debugging).
 
 These are all implemented by providing different `Config` subtypes.
-For more information see [Design](#design), [types.jl](src/types.jl)
-and [parsers.jl](src/parsers.jl).
+For more information see [Design](#design), [types.jl](src/core/types.jl)
+and [parsers.jl](src/core/parsers.jl).
 
 ### Basic Matchers
 
@@ -584,7 +584,7 @@ where the `(1,1)` (the `iter` field of the error) is line number and
 column - so this failed on the first character of the first line.
 
 Finally, if you're really concerned about memory use, the
-[source](#src/try.jl) does include a Config instance that implements
+[source](src/core/try.jl) does include a Config instance that implements
 the "no backtracking" without memoization (the default `parse_try()`
 includes memoization to match lazy Haskell more closely).
 
@@ -651,8 +651,8 @@ this case (cf `parse_one()`).  Please email me if you think I should
 (currently it's unclear what features to support directly, and what to
 leave for "advanced" users).
 
-For more information see [parsers.jl](src/parsers.jl) and
-[debug.jl](src/debug.jl).
+For more information see [parsers.jl](src/core/parsers.jl) and
+[debug.jl](src/core/debug.jl).
 
 An alternative approach to error messages is to use `parse_try()` with
 the `Error()` matcher - see [here](#controlling-memory-use).
@@ -678,7 +678,7 @@ First, are you sure you need to add a matcher?  You can do a *lot* with
 
 If you do, here are some places to get started:
 
-* `Equal()` in [matchers.jl](src/matchers.jl) is a great example for
+* `Equal()` in [matchers.jl](src/core/matchers.jl) is a great example for
   something that does a simple, single thing, and returns success or failure.
 
 * Most matchers that call to a sub-matcher can be implemented as transforms.
@@ -892,7 +892,7 @@ Some things to note here:
   are replaced by variable names (eg `sum`) where appropriate.
 
 * This functionality is implemented as a separate parser `Config` instance, so
-  has no performance penalty when not used.  See [debug.jl](src/debug.jl) for
+  has no performance penalty when not used.  See [debug.jl](src/core/debug.jl) for
   more details.
 
 Finally, printing a matcher gives a useful tree view of the grammar.
@@ -975,18 +975,18 @@ all
 
 For more details, I'm afraid your best bet is the source code:
 
-* [types.jl](src/types/jl) introduces the types use throughout the code
+* [types.jl](src/core/types/jl) introduces the types use throughout the code
 
-* [matchers.jl](src/matchers.jl) defines things like `Seq` and `Repeat`
+* [matchers.jl](src/core/matchers.jl) defines things like `Seq` and `Repeat`
 
-* [sugar.jl](src/sugar.jl) adds `+`, `[...]` etc
+* [sugar.jl](src/core/sugar.jl) adds `+`, `[...]` etc
 
-* [extras.jl](src/extras.jl) has parsers for Int, Float, etc
+* [extras.jl](src/core/extras.jl) has parsers for Int, Float, etc
 
-* [parsers.jl](src/parsers.jl) has more info on creating the `parse_one` and
+* [parsers.jl](src/core/parsers.jl) has more info on creating the `parse_one` and
   `parse_all` functions
 
-* [transforms.jl](src/trasnforms.jl) defines how results can be manipulated
+* [transforms.jl](src/core/trasnforms.jl) defines how results can be manipulated
 
 * [tests.jl](test/tests.jl) has a pile of one-liner tests that might be useful
 
