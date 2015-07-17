@@ -23,7 +23,7 @@ sound odd, but makes it [easy](#evaluation) to "plug in" memoization, or
 debug traces, or to restrict backtracking in a similar way to Parsec -
 all while using the same grammar.
 
-It also contains a pre-built [parser]{#graph-modelling-language) for the Graph
+It also contains a pre-built [parser](#graph-modelling-language) for the Graph
 Modelling Language.
 
 ## Example
