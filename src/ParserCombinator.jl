@@ -30,17 +30,17 @@ ParserError, Error,
 parse_try, parse_try_dbg, parse_try_nocache, parse_try_nocache_dbg,
 Parsers
 
-include("types.jl")
-include("names.jl")
-include("matchers.jl")
-include("parsers.jl")
-include("debug.jl")
-include("transforms.jl")
-include("sugar.jl")
-include("extras.jl")
-include("print.jl")
-include("fix.jl")
-include("try.jl")
+include("core/types.jl")
+include("core/names.jl")
+include("core/matchers.jl")
+include("core/parsers.jl")
+include("core/debug.jl")
+include("core/transforms.jl")
+include("core/sugar.jl")
+include("core/extras.jl")
+include("core/print.jl")
+include("core/fix.jl")
+include("core/try.jl")
 
 include("Parsers.jl")
 
