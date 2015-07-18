@@ -24,5 +24,12 @@ success(k::Config, m::Transform, s, t, i, r::Value) = Success(TransformState(t),
 # simplified version for transforming Success (remove and re-add the Success
 # wrapper).
 
-App(m::Matcher, f::Union(Function,DataType)) = Transform(m, x -> Any[f(x...)])
 Appl(m::Matcher, f::Union(Function,DataType)) = Transform(m, x -> Any[f(x)])
+
+function App(m::Matcher, f::Union(Function,DataType))
+    if f == vcat
+        Transform(m, x -> Any[x])
+    else
+        Transform(m, x -> Any[f(x...)])
+    end
+end
