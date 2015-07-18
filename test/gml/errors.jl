@@ -19,3 +19,16 @@ for (text, msg) in [("a 1 ]", "Expected key"),
 
 end
 
+
+io = open("gml/error.gml")
+try
+    parse_raw(io)
+    @test false
+catch x
+#    println(x)
+#    println(typeof(x))
+#    Base.show_backtrace(STDOUT, catch_backtrace())
+    @test isa(x, ParserError)
+    println(x.msg)
+    @test x.msg == "Expected ] at (2,15)\n  node [ id 1 \"sausage\" ]\n              ^\n"
+end

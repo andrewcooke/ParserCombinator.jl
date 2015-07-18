@@ -4,7 +4,7 @@ module GML
 using ...ParserCombinator
 using Compat
 
-export parse_raw, parse_dict
+export parse_raw, parse_dict, parse_id_raw, parse_id_dict
 
 
 function mk_parser()
@@ -54,18 +54,23 @@ parser = mk_parser()
 
 function line(s::AbstractString, e::ParserError{TryIter})
     lines = split(s, "\n")
-    if e.iter.line <= length(lines)
-        lines[e.iter.line]
-    else
-        "[End of stream]"
+    e.iter.line <= length(lines) ? lines[e.iter.line] : "[End of stream]"
+end
+
+function line(io::IO, e::ParserError{TryIter})
+    seekstart(io)
+    line = ""
+    for i in 1:e.iter.line
+        line = readline(io)
     end
+    line == "" ? "[End of stream]" : line[1:end-1]
 end
 
 # this returns the "natural" representation as nested arrays and tuples
 function parse_raw(s; debug=false)
     try
+        # we don't seem to need the cache and it's 2x faster without
         (debug ? parse_try_nocache_dbg : parse_try_nocache)(TrySource(s), Trace(parser); debug=debug)
-#        parse_try(TrySource(s), Trace(parser); debug=debug)
     catch x
         if (debug) 
             Base.show_backtrace(STDOUT, catch_backtrace())
@@ -89,8 +94,8 @@ end
 # list or a single value.
 
 # obviously, a name that occurs multiple times in a single scope is a list.
-# but the opposite - an isolated is a single value - is not necessarily true,
-# because it may be a singleton list.
+# but the opposite - that an isolated name is a single value - is not
+# necessarily true, because it may be a singleton list.
 
 # one solution is to make a model that very closely follows the "predefined
 # keys" part of himsolt's 1996 document, available as part of the tarball from
@@ -98,8 +103,8 @@ end
 # but that seems very specific, perhaps dated, and still doesn't help with
 # additional fields.
 
-# another solution is to trate everything as a list, and use dictionaries of
-# lists.  bu that means that the idea of "keys" is meesed up with additional
+# another solution is to treat everything as a list, and use dictionaries of
+# lists.  but that means that the idea of "keys" is messed up with additional
 # [1] indexes into singleton lists.
 
 # after some reflection, i've decide to take a list of names of lists, and to

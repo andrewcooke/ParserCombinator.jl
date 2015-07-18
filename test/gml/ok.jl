@@ -1,15 +1,35 @@
 
 using ParserCombinator.Parsers.GML
 
-for text in ["a 1", "a 1.0", "a \"b\"",
-             " a 1", " a 1.0", " a \"b\"",
-             "a 1 ", "a 1.0 ", "a \"b\" ",
-             "a [b 1]", " a [b 1]", "a [ b 1]", "a [b 1 ]", "a [b 1] ", 
-             "a [b [c 1]]", "a [b [c 1 d 2.0 e \"3\"]]",
-             "a\n# comment\n1", " a \n# comment \n 1",
-             "#comment\na 1"]
-    println("'$(text)'")
-    println(parse_raw(text))
-    println()
-end
 
+@test parse_raw("a 1") == Any[Any[(:a,1)]]
+
+@test parse_raw("a 1.0") == Any[Any[(:a,1.0)]]
+
+@test parse_raw("a \"b\"") == Any[Any[(:a,"b")]]
+
+@test parse_raw(" a 1") == Any[Any[(:a,1)]]
+
+@test parse_raw(" a 1.0") == Any[Any[(:a,1.0)]]
+
+@test parse_raw(" a \"b\"") == Any[Any[(:a,"b")]]
+
+@test parse_raw("a 1 ") == Any[Any[(:a,1)]]
+
+@test parse_raw("a 1.0 ") == Any[Any[(:a,1.0)]]
+
+@test parse_raw("a \"b\" ") == Any[Any[(:a,"b")]]
+
+@test parse_raw("a [b 1]") == Any[Any[(:a,Any[(:b,1)])]]
+
+@test parse_raw(" a [b 1]") == Any[Any[(:a,Any[(:b,1)])]]
+
+@test parse_raw("a [ b 1]") == Any[Any[(:a,Any[(:b,1)])]]
+
+@test parse_raw("a [b 1 ]") == Any[Any[(:a,Any[(:b,1)])]]
+
+@test parse_raw("a [b 1] ") == Any[Any[(:a,Any[(:b,1)])]]
+
+@test parse_raw("a [b [c 1]]") == Any[Any[(:a,Any[(:b,Any[(:c,1)])])]]
+
+@test parse_raw("a [b [c 1 d 2.0 e \"3\"]]") == Any[Any[(:a,Any[(:b,Any[(:c,1),(:d,2.0),(:e,"3")])])]]
