@@ -64,7 +64,7 @@ end
 # this returns the "natural" representation as nested arrays and tuples
 function parse_raw(s; debug=false)
     try
-        (debug ? parse_try_dbg : parse_try)(TrySource(s), Trace(parser); debug=debug)
+        (debug ? parse_try_nocache_dbg : parse_try_nocache)(TrySource(s), Trace(parser); debug=debug)
 #        parse_try(TrySource(s), Trace(parser); debug=debug)
     catch x
         if (debug) 
