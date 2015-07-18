@@ -4,7 +4,7 @@ module GML
 using ...ParserCombinator
 using Compat
 
-export parse_raw, parse_dict, parse_id_raw, parse_id_dict
+export parse_raw, parse_dict, parse_id_raw, parse_id_dict, GMLError
 
 
 function mk_parser()
@@ -124,19 +124,19 @@ LISTS = [:graph,:node,:edge]
 
 typealias GMLDict Dict{Symbol, Any}
 
-function build(raw; lists=LISTS)
+function build(raw; lists=LISTS, unsafe=false)
     root = GMLDict()
     if length(raw) > 0
-        build(root, raw[1]; lists=lists)
+        build(root, raw[1]; lists=lists, unsafe=unsafe)
     end
     root
 end
 
-function build(dict::GMLDict, raw; lists=LISTS)
+function build(dict::GMLDict, raw; lists=LISTS, unsafe=false)
     for (name, value) in raw
         if isa(value, Vector)
             entry = GMLDict()
-            build(entry, value; lists=lists)
+            build(entry, value; lists=lists, unsafe=unsafe)
         else
             entry = value
         end
@@ -148,13 +148,16 @@ function build(dict::GMLDict, raw; lists=LISTS)
         else
             if !haskey(dict, name)
                 dict[name] = entry
-            else
+            elseif !unsafe
                 throw(GMLError("$name is a list"))
             end
         end
     end
 end
 
-parse_dict(s; debug=false, lists=LISTS) = build(parse_raw(s; debug=debug); lists=lists)
+# lists describes which symbols should be modelled as lists
+# if unsafe is false, multiple values for non-list symbols throw an error;
+# if true they are silently discarded
+parse_dict(s; debug=false, lists=LISTS, unsafe=false) = build(parse_raw(s; debug=debug); lists=lists, unsafe=unsafe)
 
 end
