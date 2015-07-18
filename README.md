@@ -1014,9 +1014,9 @@ For more details, I'm afraid your best bet is the source code:
 
 Note that the parser does not conform fully to the
 [specifications](https://en.wikipedia.org/wiki/Graph_Modelling_Language):
-ISO 8859-1 encoding is not handled (in fact, the parser should accept
-UTF 8); integers and floats are 64bit; strings can be any length; no
-check is made for required fields.
+ISO 8859-1 entities are not decoded (the parser should accept UTF 8);
+integers and floats are 64bit; strings can be any length; no check is
+made for required fields.
 
 For example, to print node IDs and edge connections in a graph
 
