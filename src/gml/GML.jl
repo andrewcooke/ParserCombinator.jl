@@ -59,11 +59,11 @@ end
 
 function line(io::IO, e::ParserError{TryIter})
     seekstart(io)
-    line = ""
+    lne = ""
     for i in 1:e.iter.line
-        line = readline(io)
+        lne = readline(io)
     end
-    line == "" ? "[End of stream]" : line[1:end-1]
+    lne == "" ? "[End of stream]" : lne[1:end-1]
 end
 
 # this returns the "natural" representation as nested arrays and tuples
