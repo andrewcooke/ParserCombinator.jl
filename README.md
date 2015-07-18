@@ -1008,9 +1008,9 @@ is a list of keys that should be stored as lists (default is `:graph,
 :node, :edge`); `unsafe` should be set to `true` if mutiple values for
 other keys should be discarded (default `false`).  The underlying
 issue is that it is not clear from the file format which keys are
-lists, so the user must specify them; `unsafe` by default triggers an
-error if this information is incomplete, but can be set to `true` if a
-user doesn't care about those attributes.
+lists, so the user must specify them; by default an error is thrown if
+this information is incomplete, but `unsafe` can be set if a user
+doesn't care about those attributes.
 
 For example, to print node IDs and edge connections in a graph
 
