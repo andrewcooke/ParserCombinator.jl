@@ -1003,14 +1003,20 @@ For more details, I'm afraid your best bet is the source code:
 * `parse_dict` places the same data in nested dicts and vectors.  The keys are
   symbols, so you access a file using the syntax `dict[:field]`.
 
-Note that `parse_dict()` has two important keyword arguments: `lists`
-is a list of keys that should be stored as lists (default is `:graph,
-:node, :edge`); `unsafe` should be set to `true` if mutiple values for
-other keys should be discarded (default `false`).  The underlying
-issue is that it is not clear from the file format which keys are
-lists, so the user must specify them; by default an error is thrown if
-this information is incomplete, but `unsafe` can be set if a user
-doesn't care about those attributes.
+  `parse_dict()` has two important keyword arguments: `lists`
+  is a list of keys that should be stored as lists (default is `:graph,
+  :node, :edge`); `unsafe` should be set to `true` if mutiple values for
+  other keys should be discarded (default `false`).  The underlying
+  issue is that it is not clear from the file format which keys are
+  lists, so the user must specify them; by default an error is thrown if
+  this information is incomplete, but `unsafe` can be set if a user
+  doesn't care about those attributes.
+
+Note that the parser does not conform fully to the
+[specifications](https://en.wikipedia.org/wiki/Graph_Modelling_Language)
+- ISO 8859-1 encoding is not handled (in fact, the parser should
+accept UTF 8); integers and floats are 64bit; strings can be any
+length; no check is made for required fields.
 
 For example, to print node IDs and edge connections in a graph
 
