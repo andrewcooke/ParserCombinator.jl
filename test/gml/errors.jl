@@ -25,9 +25,9 @@ try
     parse_raw(io)
     @test false
 catch x
-#    println(x)
-#    println(typeof(x))
-#    Base.show_backtrace(STDOUT, catch_backtrace())
+    println(x)
+    println(typeof(x))
+    Base.show_backtrace(STDOUT, catch_backtrace())
     @test isa(x, ParserError)
     println(x.msg)
     @test x.msg == "Expected ] at (2,15)\n  node [ id 1 \"sausage\" ]\n              ^\n"
