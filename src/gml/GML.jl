@@ -23,8 +23,8 @@ function mk_parser()
 
         expect(x) = Error("Expected $x")
 
-        parse_int(x) = parse(Int, x)
-        parse_flt(x) = parse(Float, x)
+        parse_int(x) = parse(Int64, x)
+        parse_flt(x) = parse(Float64, x)
 
         comment = P"(#.*)?"
         wspace  = P"[\t ]+" | (P"[\r\n]+" + comment)
