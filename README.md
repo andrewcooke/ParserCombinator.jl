@@ -986,7 +986,7 @@ For more details, I'm afraid your best bet is the source code:
 * [parsers.jl](src/core/parsers.jl) has more info on creating the `parse_one` and
   `parse_all` functions
 
-* [transforms.jl](src/core/trasnforms.jl) defines how results can be manipulated
+* [transforms.jl](src/core/transforms.jl) defines how results can be manipulated
 
 * [tests.jl](test/tests.jl) has a pile of one-liner tests that might be useful
 
