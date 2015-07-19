@@ -1181,6 +1181,8 @@ additional layer of lists).
 
 ## Releases
 
+1.3.0 - 2015-07-18 - Added GML parser; related parse_try fixes.
+
 1.2.0 - 2015-06-28 - Trampoline side rewritten; more execution modes.
 
 1.1.0 - 2015-06-07 - Fixed calc example; debug mode; much rewriting.
