@@ -56,6 +56,7 @@ Opt(m::Matcher) = Alt(m, Epsilon())
 
 # repeat via [lo:hi] or [n]
 endof{M<:Matcher}(m::M) = typemax(Int)
+size{M<:Matcher}(m::M, n) = endof(m)
 getindex(m::Matcher, r::Int, s::Symbol...) = getindex(m, r:r; s...)
 function getindex(m::Matcher, r::UnitRange, s::Symbol...)
     greedy = true
@@ -72,7 +73,7 @@ function getindex(m::Matcher, r::UnitRange, s::Symbol...)
             error("bad flag to []: $x")
         end
     end
-    Repeat(m, r.start, r.stop; greedy=greedy, flatten=flatten)
+    Repeat(m, r.start, r.stop; greedy=greedy, flatten=flatten, backtrack=backtrack)
 end
 
 

@@ -363,10 +363,11 @@ end
     Depth!(m, lo, hi; flatten=true) = new(:Depth!, m, lo, hi, flatten)
 end
 
-@auto_hash_equals type DepthSlurp!<:RepeatState
+type DepthSlurp!<:RepeatState
     result::Array{Value,1}
     iters::Array{Any,1}
 end
+hash(::DepthSlurp!) = throw(CacheException())
 
 arbitrary(s::DepthSlurp!) = s.iters[1]
 
@@ -385,7 +386,11 @@ function execute(k::Config, m::Depth!, s::DepthSlurp!, i)
     end
 end
 
-success(k::Config, m::Depth!, s::DepthSlurp!, t::State, i, r::Value) = execute(k, m, DepthSlurp!(Value[s.result..., r], Any[s.iters..., i]), i)
+function success(k::Config, m::Depth!, s::DepthSlurp!, t::State, i, r::Value)
+    push!(s.result, r)
+    push!(s.iters, i)
+    execute(k, m, s, i)
+end
 
 failure(k::Config, m::Depth!, s::DepthSlurp!) = execute(k, m, DepthYield!(s.result, s.iters), arbitrary(s))
 
@@ -725,11 +730,11 @@ function execute(k::Config, m::Pattern, s::Clean, i)
     if x == nothing
         FAILURE
     else
-        # advance iter by the number of characters consumed
-        # for some sources (ASCII strings for example) we can do better,
-        # but Julia string docs say that generally strings are partial functions
-        # so adding an offset to iter may not be so smart.  TODO - consider
-        # pulling into separate function
+        # advance iter by the number of characters consumed for some sources
+        # (ASCII strings for example) we can do better, but Julia string docs
+        # say that generally strings are partial functions so adding an offset
+        # to iter may not be so smart.
+        # TODO - consider pulling into separate function
         for _ in 1:(x.offsets[end]-1)
             discard, i = next(k.source, i)
         end

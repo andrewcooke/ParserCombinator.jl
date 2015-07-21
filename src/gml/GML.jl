@@ -28,8 +28,8 @@ function mk_parser()
 
         comment = P"(#.*)?"
         wspace  = P"[\t ]+" | (P"[\r\n]+" + comment)
-        space   = wspace[1:end]
-        spc     = wspace[0:end]
+        space   = wspace[1:end,:!]
+        spc     = wspace[0:end,:!]
 
         key     = p"[a-zA-Z][a-zA-Z0-9]*"                     > symbol
         int     = p"(\+|-)?\d+"                               > parse_int
@@ -41,7 +41,7 @@ function mk_parser()
         value   = (real | int | str | sublist | expect("value")) + spc
         element = key + space + value                         > tuple
         
-        list.matcher = Nullable{Matcher}(element[0:end]       > vcat)
+        list.matcher = Nullable{Matcher}(element[0:end,:!]    > vcat)
         
         # first line comment must be explicit (no previous linefeed)
         comment + spc + list + ((spc + Eos()) | expect("key"))

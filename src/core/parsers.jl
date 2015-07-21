@@ -57,13 +57,25 @@ end
 
 function dispatch(k::Cache, s::Success)
     parent, parent_state, key = pop!(k.stack)
-    k.cache[key] = s
+    try
+        k.cache[key] = s
+    catch x
+        if !isa(x, CacheException)
+            throw(x)
+        end
+    end
     success(k, parent, parent_state, s.child_state, s.iter, s.result)
 end
 
 function dispatch(k::Cache, f::Failure)
     parent, parent_state, key = pop!(k.stack)
-    k.cache[key] = f
+    try
+        k.cache[key] = f
+    catch x
+        if !isa(x, CacheException)
+            throw(x)
+        end
+    end
     failure(k, parent, parent_state)
 end
 

@@ -121,3 +121,5 @@ DIRTY = Dirty()
 immutable ParserException<:Exception
     msg
 end
+
+immutable CacheException<:Exception end

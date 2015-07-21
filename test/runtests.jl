@@ -3,7 +3,6 @@ importall ParserCombinator
 using Base.Test
 using Compat
 
-
 include("core/fix.jl")
 include("core/print.jl")
 include("core/names.jl")
@@ -20,3 +19,5 @@ include("gml/example1.jl")
 include("gml/example2.jl")
 #include("gml/polblogs.jl")
 #include("gml/celegansneural.jl")
+#include("gml/10k-49963.jl")
+

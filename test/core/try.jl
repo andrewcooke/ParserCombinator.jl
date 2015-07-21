@@ -1,4 +1,7 @@
 
+@test parse_one("aa", s"a"[0:end,:!]) == ["a", "a"]
+@test parse_one_cache("aa", s"a"[0:end,:!]) == ["a", "a"]
+
 open("test1.txt", "r") do io
     for c in TrySource(io)
         print(c)
