@@ -12,8 +12,8 @@ parent(k::Config) = k.stack[end][1]
 
 # evaluation without a cache (memoization)
 
-type NoCache<:Config
-    source::Any
+type NoCache{S}<:Config{S}
+    source::S
     @compat stack::Array{Tuple{Matcher, State},1}
     @compat NoCache(source; kargs...) = new(source, Array(Tuple{Matcher,State}, 0))
 end
@@ -38,8 +38,8 @@ end
 
 @compat typealias Key Tuple{Matcher,State,Any}  # final type is iter
 
-type Cache<:Config
-    source::Any
+type Cache{S}<:Config{S}
+    source::S
     @compat stack::Array{Tuple{Matcher,State,Key}}
     cache::Dict{Key,Message}
     @compat Cache(source; kargs...) = new(source, Array(Tuple{Matcher,State,Key}, 0), Dict{Key,Message}())
@@ -145,8 +145,8 @@ end
 # these assume that any config construct takes a single source argument 
 # plus optional keyword args
 
-function make(config, source, matcher; debug=false, kargs...)
-    k = config(source; debug=debug, kargs...)
+function make{S}(config, source::S, matcher; debug=false, kargs...)
+    k = config{S}(source; debug=debug, kargs...)
     (k, Task(() -> producer(k, matcher; debug=debug)))
 end
 

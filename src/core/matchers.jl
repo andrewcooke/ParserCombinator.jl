@@ -726,22 +726,14 @@ end
 print_field(m::Pattern, ::Type{Val{:regex}}) = "r\"$(m.regex.pattern[2:end-5])\""
 
 function execute(k::Config, m::Pattern, s::Clean, i)
-    x = match(m.regex, k.source[i:end])
+    x = match(m.regex, forwards(k.source, i))
     if x == nothing
         FAILURE
     else
-        # advance iter by the number of characters consumed for some sources
-        # (ASCII strings for example) we can do better, but Julia string docs
-        # say that generally strings are partial functions so adding an offset
-        # to iter may not be so smart.
-        # TODO - consider pulling into separate function
-        for _ in 1:(x.offsets[end]-1)
-            discard, i = next(k.source, i)
-        end
-        Success(DIRTY, i, Any[x.match])
+        i = discard(k.source, i, x.offsets[end]-1)
+        Success(DIRTY, i, Any[string(bytestring(x.match))])
     end
 end
-
 
 
 # support loops

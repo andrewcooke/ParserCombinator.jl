@@ -113,12 +113,12 @@ end
 
 # and now the Config(s)
 
-abstract TryConfig<:Config
+abstract TryConfig{S<:TrySource}<:Config{S}
 
 
 # as NoCache, but treat ExpiredContent exceptions as failures
 
-type TryNoCache<:TryConfig
+type TryNoCache{S<:TrySource}<:TryConfig{S}
     source::TrySource
     @compat stack::Array{Tuple{Matcher,State},1}
     @compat TryNoCache(source::TrySource; kargs...) = new(source, Array(Tuple{Matcher,State}, 0))
@@ -168,7 +168,7 @@ end
 # ditto, but with cache too (Key from Cache in parsers.jl)
 # (we really need mixins or multiple inheritance here...)
 
-type TryCache<:TryConfig
+type TryCache{S<:TrySource}<:TryConfig{S}
     source::TrySource
     @compat stack::Array{Tuple{Matcher,State,Key},1}
     cache::Dict{Key,Message}

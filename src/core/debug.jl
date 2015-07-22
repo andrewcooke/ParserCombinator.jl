@@ -8,17 +8,17 @@
 # construct your own with any type by using the delegate=... keyword.  see
 # test/calc.j for an example.
 
-type Debug{S}<:Config
+type Debug{S}<:Config{S}
     source::S
     stack::Array
-    delegate::Config
+    delegate::Config{S}
     depth::Array{Int,1}
     abs_depth::Int
     max_depth::Int
     max_iter
     n_calls::Int
     function Debug(source::S; delegate=NoCache, kargs...)
-        k = delegate(source; kargs...)
+        k = delegate{S}(source; kargs...)
         new(k.source, k.stack, k, Array(Int, 0), 0, 0, start(k.source), 0)
     end
 end

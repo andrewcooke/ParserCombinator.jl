@@ -6,6 +6,7 @@ using AutoHashEquals
 import Base: start, next, done, endof, getindex, colon, isless, size, hash
 
 export Matcher, 
+diagnostic, forwards, LineSource, LineIter,
 Config, Cache, NoCache, make, make_all, make_one, once,
 parse_one, parse_one_cache, parse_one_nocache, 
 parse_all, parse_all_cache, parse_all_nocache,
@@ -31,6 +32,7 @@ parse_try, parse_try_dbg, parse_try_nocache, parse_try_nocache_dbg,
 Parsers
 
 include("core/types.jl")
+include("core/sources.jl")
 include("core/names.jl")
 include("core/matchers.jl")
 include("core/parsers.jl")

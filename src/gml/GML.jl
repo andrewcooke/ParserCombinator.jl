@@ -52,11 +52,6 @@ end
 parser = mk_parser()
 
 
-function line(s::AbstractString, e::ParserError{TryIter})
-    lines = split(s, "\n")
-    e.iter.line <= length(lines) ? lines[e.iter.line] : "[End of stream]"
-end
-
 function line(io::IO, e::ParserError{TryIter})
     seekstart(io)
     lne = ""

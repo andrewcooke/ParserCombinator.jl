@@ -40,7 +40,7 @@ calc(s::Sum) = signed_sum(map(calc, s.val))
     end
 end
 
-parse_one(" 1 + 2 * 3 / 4 ", Trace(all))
+parse_one(" 1 + 2 * 3 / 4 ", Trace(all); debug=true)
 
 for (src, val) in [
                    (" 1 ", 1),
