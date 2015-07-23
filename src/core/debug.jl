@@ -114,6 +114,32 @@ function debug{S<:AbstractString}(k::Debug{S}, f::Failure)
             pad(" ", MAX_SRC), k.depth[end], indent(k), parent(k).name)
 end
 
+function src(s::LineAt, i::LineIter; max=MAX_SRC)
+    try
+        pad(truncate(escape_string(forwards(s, i)), max), max)
+    catch x
+        if isa(x, LineException)
+            pad(truncate("[unavailable]", max), max)
+        else
+            rethrow()
+        end
+    end
+end
+   
+function debug{S<:LineAt}(k::Debug{S}, e::Execute)
+    @printf("%3d,%-3d:%s %02d %s%s->%s\n",
+            e.iter.line, e.iter.column, src(k.source, e.iter), k.depth[end], indent(k), e.parent.name, e.child.name)
+end
+
+function debug{S<:LineAt}(k::Debug{S}, s::Success)
+    @printf("%3d,%-3d:%s %02d %s%s<-%s\n",
+            s.iter.line, s.iter.column, src(k.source, s.iter), k.depth[end], indent(k), parent(k).name, short(s.result))
+end
+
+function debug{S<:LineAt}(k::Debug{S}, f::Failure)
+    @printf("       :%s %02d %s%s<-!!!\n",
+            pad(" ", MAX_SRC), k.depth[end], indent(k), parent(k).name)
+end
 
 
 # this does nothing except delegate and, by simply "being seen" during

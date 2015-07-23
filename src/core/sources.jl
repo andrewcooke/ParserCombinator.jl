@@ -72,7 +72,10 @@ end
 # depth (in lines) after which data are discarded.  it might be useful
 # somewhere.
 
-type LineSource{S}
+# all the below is based on line_at()
+abstract LineAt
+
+type LineSource{S}<:LineAt
     io::IO
     zero::Int      # offset to lines (lines[x] contains line x+zero)
     limit::Int     # maximum number of lines
@@ -94,10 +97,13 @@ immutable LineException<:FailureException end
     column::Int
 end
 
+# used in debug
+
+isless(a::LineIter, b::LineIter) = a.line < b.line || (a.line == b.line && a.column < b.column)
+
 # iter protocol
 
-start(f::LineSource) = LineIter(1, 1)
-endof(f::LineSource) = FLOAT_END
+start(f::LineAt) = LineIter(1, 1)
 
 function line_at(s::LineSource, i::LineIter)
     if i.line <= s.zero || i.column < 1
@@ -137,7 +143,7 @@ end
 
 # other api
 
-function diagnostic(s::LineSource, i::LineIter, msg)
+function diagnostic(s::LineAt, i::LineIter, msg)
     line = "[Not available]"
     try
         line = line_at(s, i)
@@ -153,12 +159,12 @@ function diagnostic(s::LineSource, i::LineIter, msg)
 end
 
 # regexp only works within the current line
-forwards(s::LineSource, i::LineIter) = line_at(s, i)[i.column:end]
+forwards(s::LineAt, i::LineIter) = line_at(s, i)[i.column:end]
 
-function discard(s::LineSource, i::LineIter, n)
-    while n
-        l = line_at(i)
-        available = length(l) - i.column
+function discard(s::LineAt, i::LineIter, n)
+    while n > 0 && !done(s, i)
+        l = line_at(s, i)
+        available = length(l) - i.column + 1
         if n < available
             i = LineIter(i.line, i.column+n)
             n = 0
@@ -169,3 +175,5 @@ function discard(s::LineSource, i::LineIter, n)
     end
     i
 end
+
+

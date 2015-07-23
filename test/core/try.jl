@@ -9,14 +9,18 @@ open("test1.txt", "r") do io
 end
 
 open("test1.txt", "r") do io
-    f = TrySource(io)
-    i = start(f)
-    (c, i) = next(f, i)
+    s = TrySource(io)
+    i = start(s)
+    (c, i) = next(s, i)
     @test c == 'a'
-    @test f[i:end] == "bcdefghijklmnopqrstuvwxyz\n"
+    @test forwards(s, i) == "bcdefghijklmnopqrstuvwxyz\n"
 end
 
-for parse in (parse_try, parse_try_nocache, parse_try_dbg, parse_try_nocache_dbg)
+#open("test1.txt", "r") do io
+#    parse_one_dbg(TrySource(io), Trace(p"[a-z]"[0:end] + s"m" > string); debug=true)
+#end
+
+for parse in (parse_one, parse_one_cache, parse_one_dbg, parse_one_cache_dbg)
 
     open("test1.txt", "r") do io
         @test_throws ParserException parse(TrySource(io), Trace(p"[a-z]"[0:end] + s"m" > string))

@@ -790,3 +790,28 @@ function execute(k::Config, m::Eos, s::Clean, i)
         FAILURE
     end
 end
+
+
+# this is general, but usually not much use with backtracking
+
+type ParserError{I}<:Exception
+    msg::AbstractString
+    iter::I
+end
+
+@auto_hash_equals immutable Error<:Matcher
+    name::Symbol
+    msg::AbstractString
+    Error(msg::AbstractString) = new(:Error, msg)
+end
+
+function execute{I}(k::Config, m::Error, s::Clean, i::I)
+    msg = m.msg
+    try
+        msg = diagnostics(k.source, i, m.msg)
+    catch x
+        # ignore
+    end
+    throw(ParserError{I}(msg, i))
+end
+

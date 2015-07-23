@@ -52,7 +52,7 @@ end
 parser = mk_parser()
 
 
-function line(io::IO, e::ParserError{TryIter})
+function line(io::IO, e::ParserError{LineIter})
     seekstart(io)
     lne = ""
     for i in 1:e.iter.line

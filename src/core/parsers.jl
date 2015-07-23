@@ -20,17 +20,29 @@ end
 
 function dispatch(k::NoCache, e::Execute)
     push!(k.stack, (e.parent, e.parent_state))
-    execute(k, e.child, e.child_state, e.iter)
+    try
+        execute(k, e.child, e.child_state, e.iter)
+    catch x
+        isa(x, FailureException) ? FAILURE : rethrow()
+    end
 end
 
 function dispatch(k::NoCache, s::Success)
     (parent, parent_state) = pop!(k.stack)
-    success(k, parent, parent_state, s.child_state, s.iter, s.result)
+    try
+        success(k, parent, parent_state, s.child_state, s.iter, s.result)
+    catch x
+        isa(x, FailureException) ? FAILURE : rethrow()
+    end
 end
 
 function dispatch(k::NoCache, f::Failure)
     (parent, parent_state) = pop!(k.stack)
-    failure(k, parent, parent_state)
+    try
+        failure(k, parent, parent_state)
+    catch x
+        isa(x, FailureException) ? FAILURE : rethrow()
+    end
 end
 
 
@@ -51,7 +63,11 @@ function dispatch(k::Cache, e::Execute)
     if haskey(k.cache, key)
         k.cache[key]
     else
-        execute(k, e.child, e.child_state, e.iter)
+        try
+            execute(k, e.child, e.child_state, e.iter)
+        catch x
+            isa(x, FailureException) ? FAILURE : rethrow()
+        end
     end
 end
 
@@ -60,11 +76,13 @@ function dispatch(k::Cache, s::Success)
     try
         k.cache[key] = s
     catch x
-        if !isa(x, CacheException)
-            throw(x)
-        end
+        isa(x, CacheException) ? nothing : rethrow()
     end
-    success(k, parent, parent_state, s.child_state, s.iter, s.result)
+    try
+        success(k, parent, parent_state, s.child_state, s.iter, s.result)
+    catch x
+        isa(x, FailureException) ? FAILURE : rethrow()
+    end
 end
 
 function dispatch(k::Cache, f::Failure)
@@ -72,11 +90,13 @@ function dispatch(k::Cache, f::Failure)
     try
         k.cache[key] = f
     catch x
-        if !isa(x, CacheException)
-            throw(x)
-        end
+        isa(x, CacheException) ? nothing : rethrow()
     end
-    failure(k, parent, parent_state)
+    try
+        failure(k, parent, parent_state)
+    catch x
+        isa(x, FailureException) ? FAILURE : rethrow()
+    end
 end
 
 
