@@ -27,7 +27,7 @@ PInt, PInt8, PInt16, PInt32, PInt64, PFloat32, PFloat64,
 Word, Space, Star, Plus,
 @with_names, set_name,
 @with_pre, @with_post, set_fix,
-TrySource, Try, 
+TrySource, Try, parse_try, parse_try_dbg, parse_try_cache, parse_try_cache_dbg,
 Parsers
 
 include("core/types.jl")

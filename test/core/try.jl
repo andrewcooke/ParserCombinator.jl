@@ -1,7 +1,4 @@
 
-@test parse_one("aa", s"a"[0:end,:!]) == ["a", "a"]
-@test parse_one_cache("aa", s"a"[0:end,:!]) == ["a", "a"]
-
 open("test1.txt", "r") do io
     for c in TrySource(io)
         print(c)
@@ -20,7 +17,7 @@ end
 #    parse_one_dbg(TrySource(io), Trace(p"[a-z]"[0:end] + s"m" > string); debug=true)
 #end
 
-for parse in (parse_one, parse_one_cache, parse_one_dbg, parse_one_cache_dbg)
+for parse in (parse_try, parse_try_cache, parse_try_dbg, parse_try_cache_dbg)
 
     open("test1.txt", "r") do io
         @test_throws ParserException parse(TrySource(io), Trace(p"[a-z]"[0:end] + s"m" > string))

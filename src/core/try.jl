@@ -134,3 +134,11 @@ function dispatch{S<:TrySource}(k::Cache{S}, s::Success)
     end
 end
 
+
+
+# and a simple interface
+
+parse_try(source, matcher; kargs...) = parse_one(TrySource(source), matcher; kargs...)
+parse_try_dbg(source, matcher; kargs...) = parse_one_dbg(TrySource(source), matcher; kargs...)
+parse_try_cache(source, matcher; kargs...) = parse_one_cache(TrySource(source), matcher; kargs...)
+parse_try_cache_dbg(source, matcher; kargs...) = parse_one_cache_dbg(TrySource(source), matcher; kargs...)
