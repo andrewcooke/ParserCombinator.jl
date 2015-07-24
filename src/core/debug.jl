@@ -19,7 +19,7 @@ type Debug{S,I}<:Config{S,I}
     n_calls::Int
     function Debug(source::S; delegate=NoCache, kargs...)
         k = delegate{S,I}(source; kargs...)
-        new(k.source, k.stack, k, Vector{Int}(), 0, 0, start(k.source), 0)
+        @compat new(k.source, k.stack, k, Vector{Int}(), 0, 0, start(k.source), 0)
     end
 end
 # i don't get why this is necessary, but it seems to work
