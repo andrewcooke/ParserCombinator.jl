@@ -12,10 +12,10 @@ parent(k::Config) = k.stack[end][1]
 
 # evaluation without a cache (memoization)
 
-type NoCache{S}<:Config{S}
+type NoCache{S,I}<:Config{S,I}
     source::S
-    @compat stack::Array{Tuple{Matcher, State},1}
-    @compat NoCache(source; kargs...) = new(source, Array(Tuple{Matcher,State}, 0))
+    @compat stack::Vector{Tuple{Matcher, State}}
+    @compat NoCache(source; kargs...) = new(source, Vector{Tuple{Matcher,State}}())
 end
 
 function dispatch(k::NoCache, e::Execute)
@@ -48,13 +48,13 @@ end
 
 # evaluation with a complete cache (all intermediate results memoized)
 
-@compat typealias Key Tuple{Matcher,State,Any}  # final type is iter
+@compat typealias Key{I} Tuple{Matcher,State,I}
 
-type Cache{S}<:Config{S}
+type Cache{S,I}<:Config{S,I}
     source::S
-    @compat stack::Array{Tuple{Matcher,State,Key}}
-    cache::Dict{Key,Message}
-    @compat Cache(source; kargs...) = new(source, Array(Tuple{Matcher,State,Key}, 0), Dict{Key,Message}())
+    @compat stack::Vector{Tuple{Matcher,State,Key{I}}}
+    cache::Dict{Key{I},Message}
+    @compat Cache(source; kargs...) = new(source, Vector{Tuple{Matcher,State,Key{I}}}(), Dict{Key{I},Message}())
 end
 
 function dispatch(k::Cache, e::Execute)
@@ -166,7 +166,8 @@ end
 # plus optional keyword args
 
 function make{S}(config, source::S, matcher; debug=false, kargs...)
-    k = config{S}(source; debug=debug, kargs...)
+    I = typeof(start(source))
+    k = config{S,I}(source; debug=debug, kargs...)
     (k, Task(() -> producer(k, matcher; debug=debug)))
 end
 

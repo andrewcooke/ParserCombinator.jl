@@ -1,5 +1,7 @@
 
 
+# TODO - hy aren't State instances immutable?
+
 # some basic definitions for generic matches
 
 execute(k::Config, m, s, i) = error("$m did not expect to be called with state $s")
@@ -48,7 +50,7 @@ end
 execute(k::Config, m::Insert, s::Clean, i) = Success(DIRTY, i, Any[m.text])
 
 
-@auto_hash_equals immutable Dot<:Matcher 
+@auto_hash_equals type Dot<:Matcher 
     name::Symbol
     Dot() = new(:Dot)
 end
@@ -63,7 +65,7 @@ function execute(k::Config, m::Dot, s::Clean, i)
 end
 
 
-@auto_hash_equals immutable Fail<:Matcher
+@auto_hash_equals type Fail<:Matcher
     name::Symbol
     Fail() = new(:Fail)
 end
@@ -146,7 +148,7 @@ print_field(m::Repeat_, ::Type{Val{:lo}}) = "lo=$(m.lo)"
 print_field(m::Repeat_, ::Type{Val{:hi}}) = "hi=$(m.hi)"
 print_field(m::Repeat_, ::Type{Val{:flatten}}) = "flatten=$(m.flatten)"
 
-function repeat_success(m::Repeat_, results::Array{Value,1})
+function repeat_success(m::Repeat_, results::Vector{Value})
     if m.flatten
         flatten(results)
     else
@@ -182,30 +184,30 @@ abstract DepthState<:RepeatState
 # failure)
 arbitrary(s::DepthState) = s.iters[1]
 
-@auto_hash_equals type DepthSlurp<:DepthState
+@auto_hash_equals immutable DepthSlurp{I}<:DepthState
     # there's a mismatch in lengths here because the empty results is
     # associated with an iter and state
-    results::Array{Value,1} # accumulated.  starts []
-    iters::Array{Any,1}     # at the end of the result.  starts [i].
-    states::Array{State,1}  # at the end of the result.  starts [DIRTY],
-                            # since [] at i is returned last.
+    results::Vector{Value} # accumulated.  starts []
+    iters::Vector{I}       # at the end of the result.  starts [i].
+    states::Vector{State}  # at the end of the result.  starts [DIRTY],
+                           # since [] at i is returned last.
 end
 
-@auto_hash_equals type DepthYield<:DepthState
-    results::Array{Value,1}
-    iters::Array{Any,1}
-    states::Array{State,1}
+@auto_hash_equals immutable DepthYield{I}<:DepthState
+    results::Vector{Value}
+    iters::Vector{I}
+    states::Vector{State}
 end
 
-@auto_hash_equals type DepthBacktrack<:DepthState
-    results::Array{Value,1}
-    iters::Array{Any,1}
-    states::Array{State,1}
+@auto_hash_equals immutable DepthBacktrack{I}<:DepthState
+    results::Vector{Value}
+    iters::Vector{I}
+    states::Vector{State}
 end
 
 # when first called, create base state and make internal transition
 
-execute(k::Config, m::Depth, s::Clean, i) = execute(k, m, DepthSlurp(Array(Value, 0), [i], State[DIRTY]), i)
+execute{S,I}(k::Config{S,I}, m::Depth, s::Clean, i::I) = execute(k, m, DepthSlurp{I}(Vector{Value}(), I[i], State[DIRTY]), i)
 
 # repeat matching until at bottom of this branch (or maximum depth)
 
@@ -292,29 +294,29 @@ end
 # than for the greedy match (wikipedia calls this "level order" so my 
 # terminology may be wrong).
 
-@auto_hash_equals type Entry
-    iter
+@auto_hash_equals immutable Entry{I}
+    iter::I
     state::State
-    results::Array{Value,1}
+    results::Vector{Value}
 end
 
 abstract BreadthState<:RepeatState
 
 arbitrary(s::BreadthState) = s.start
 
-@auto_hash_equals type BreadthGrow<:BreadthState
-    start  # initial iter
-    queue::Array{Entry,1}  # this has to be immutable for caching
+@auto_hash_equals immutable BreadthGrow{I}<:BreadthState
+    start::I  # initial iter
+    queue::Vector{Entry{I}}  # this has to be immutable for caching
 end
 
-@auto_hash_equals type BreadthYield<:BreadthState
-    start  # initial iter
-    queue::Array{Entry,1}  # this has to be immutable for caching
+@auto_hash_equals immutable BreadthYield{I}<:BreadthState
+    start::I  # initial iter
+    queue::Vector{Entry{I}}  # this has to be immutable for caching
 end
 
 # when first called, create base state and make internal transition
 
-execute(k::Config, m::Breadth, s::Clean, i) = execute(k, m, BreadthYield(i, Entry[Entry(i, CLEAN, [])]), i)
+execute{S,I}(k::Config{S,I}, m::Breadth, s::Clean, i::I) = execute(k, m, BreadthYield{I}(i, Entry{I}[Entry{I}(i, CLEAN, Any[])]), i)
 
 # yield the top state
 
@@ -363,20 +365,20 @@ end
     Depth!(m, lo, hi; flatten=true) = new(:Depth!, m, lo, hi, flatten)
 end
 
-type DepthSlurp!<:RepeatState
-    result::Array{Value,1}
-    iters::Array{Any,1}
+type DepthSlurp!{I}<:RepeatState
+    result::Vector{Value}
+    iters::Vector{I}
 end
 hash(::DepthSlurp!) = throw(CacheException())
 
 arbitrary(s::DepthSlurp!) = s.iters[1]
 
-@auto_hash_equals type DepthYield!<:RepeatState
-    result::Array{Value,1}
-    iters::Array{Any,1}
+@auto_hash_equals immutable DepthYield!{I}<:RepeatState
+    result::Vector{Value}
+    iters::Vector{I}
 end
 
-execute(k::Config, m::Depth!, s::Clean, i) = execute(k, m, DepthSlurp!(Value[], Any[i]), i)
+execute{S,I}(k::Config{S,I}, m::Depth!, s::Clean, i::I) = execute(k, m, DepthSlurp!{I}(Value[], I[i]), i)
 
 function execute(k::Config, m::Depth!, s::DepthSlurp!, i)
     if length(s.result) < m.hi
@@ -415,9 +417,9 @@ end
     Breadth!(m, lo, hi; flatten=true) = new(:Breadth!, m, lo, hi, flatten)
 end
 
-@auto_hash_equals type BreadthState!<:RepeatState
-    result::Array{Value,1}
-    iter
+@auto_hash_equals immutable BreadthState!{I}<:RepeatState
+    result::Vector{Value}
+    iter::I
 end
 
 function execute(k::Config, m::Breadth!, s::Clean, i)
@@ -473,27 +475,27 @@ abstract Series_<:Matcher
 
 @auto_hash_equals type Seq<:Series_
     name::Symbol
-    matchers::Array{Matcher,1}
+    matchers::Vector{Matcher}
     Seq(m::Matcher...) = new(:Seq, [m...])
-    Seq(m::Array{Matcher,1}) = new(:Seq, m)
+    Seq(m::Vector{Matcher}) = new(:Seq, m)
 end
 
-serial_success(m::Seq, results::Array{Value,1}) = flatten(results)
+serial_success(m::Seq, results::Vector{Value}) = flatten(results)
 
 @auto_hash_equals type And<:Series_
     name::Symbol
-    matchers::Array{Matcher,1}
-    And(m::Matcher...) = new(:And, [m...])
-    And(m::Array{Matcher,1}) = new(:And,m)
+    matchers::Vector{Matcher}
+    And(m::Matcher...) = new(:And, Matcher[m...])
+    And(m::Vector{Matcher}) = new(:And, m)
 end
 
 # copy to get type right (Array{Value,1} -> Array{Any,1})
-serial_success(m::And, results::Array{Value,1}) = Any[results...]
+serial_success(m::And, results::Vector{Value}) = Any[results...]
 
-@auto_hash_equals type SeriesState<:State
-    results::Array{Value, 1}
-    iters::Array{Any,1}
-    states::Array{State,1}
+@auto_hash_equals immutable SeriesState{I}<:State
+    results::Vector{Value}
+    iters::Vector{I}
+    states::Vector{State}
 end
 
 # when first called, call first matcher
@@ -546,24 +548,24 @@ abstract Series!<:Matcher
 
 @auto_hash_equals type Seq!<:Series!
     name::Symbol
-    matchers::Array{Matcher,1}
-    Seq!(m::Matcher...) = new(:Seq!, [m...])
-    Seq!(m::Array{Matcher,1}) = new(:Seq!, m)
+    matchers::Vector{Matcher}
+    Seq!(m::Matcher...) = new(:Seq!, Matcher[m...])
+    Seq!(m::Vector{Matcher}) = new(:Seq!, m)
 end
 
-serial_success(m::Seq!, results::Array{Value,1}) = flatten(results)
+serial_success(m::Seq!, results::Vector{Value}) = flatten(results)
 
 @auto_hash_equals type And!<:Series!
     name::Symbol
-    matchers::Array{Matcher,1}
-    And!(m::Matcher...) = new(:And!, [m...])
-    ANd!(m::Array{Matcher,1}) = new(:And!, m)
+    matchers::Vector{Matcher}
+    And!(m::Matcher...) = new(:And!, Matcher[m...])
+    ANd!(m::Vector{Matcher}) = new(:And!, m)
 end
 
-serial_success(m::And!, results::Array{Value,1}) = Any[results...]
+serial_success(m::And!, results::Vector{Value}) = Any[results...]
 
-@auto_hash_equals type SeriesState!<:State
-    results::Array{Value,1}
+@auto_hash_equals immutable SeriesState!<:State
+    results::Vector{Value}
     i  # index into current alternative
 end
 
@@ -595,15 +597,15 @@ abstract Alternatives_<:Matcher
 
 @auto_hash_equals type Alt<:Alternatives_
     name::Symbol
-    matchers::Array{Matcher,1}
-    Alt(matchers::Matcher...) = new(:Alt, [matchers...])
-    Alt(matchers::Array{Matcher,1}) = new(:Alt, matchers)    
+    matchers::Vector{Matcher}
+    Alt(matchers::Matcher...) = new(:Alt, Matcher[matchers...])
+    Alt(matchers::Vector{Matcher}) = new(:Alt, matchers)    
 end
 
-@auto_hash_equals type AltState<:State
+@auto_hash_equals immutable AltState{I}<:State
     state::State
-    iter
-    i  # index into current alternative
+    iter::I
+    i::Int  # index into current alternative
 end
 
 function execute(k::Config, m::Alt, s::Clean, i)
@@ -637,14 +639,14 @@ end
 
 @auto_hash_equals type Alt!<:Alternatives_
     name::Symbol
-    matchers::Array{Matcher,1}
-    Alt!(matchers::Matcher...) = new(:Alt!, [matchers...])
-    Alt!(matchers::Array{Matcher,1}) = new(:Alt!, matchers)    
+    matchers::Vector{Matcher}
+    Alt!(matchers::Matcher...) = new(:Alt!, Matcher[matchers...])
+    Alt!(matchers::Vector{Matcher}) = new(:Alt!, matchers)    
 end
 
-@auto_hash_equals type AltState!<:State
-    iter
-    i  # index into current alternative
+@auto_hash_equals immutable AltState!{I}<:State
+    iter::I
+    i::Int  # index into current alternative
 end
 
 execute(k::Config, m::Alt!, s::Clean, i) = execute(k, m, AltState!(i, 0), i)
@@ -672,7 +674,7 @@ end
 
 always_print(::Delegate) = true
 
-@auto_hash_equals type LookaheadState<:DelegateState
+@auto_hash_equals immutable LookaheadState<:DelegateState
     state::State
     iter
 end
@@ -778,7 +780,7 @@ end
 
 # end of stream / string
 
-@auto_hash_equals immutable Eos<:Matcher 
+@auto_hash_equals type Eos<:Matcher 
     name::Symbol
     Eos() = new(:Eos)
 end
@@ -799,19 +801,11 @@ type ParserError{I}<:Exception
     iter::I
 end
 
-@auto_hash_equals immutable Error<:Matcher
+@auto_hash_equals type Error<:Matcher
     name::Symbol
     msg::AbstractString
     Error(msg::AbstractString) = new(:Error, msg)
 end
 
-function execute{I}(k::Config, m::Error, s::Clean, i::I)
-    msg = m.msg
-    try
-        msg = diagnostics(k.source, i, m.msg)
-    catch x
-        # ignore
-    end
-    throw(ParserError{I}(msg, i))
-end
+execute{I}(k::Config, m::Error, s::Clean, i::I) = throw(ParserError{I}(m.msg, i))
 

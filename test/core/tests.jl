@@ -9,7 +9,7 @@
 @test parse_one("aa", Repeat(Equal("a"), 2, 2)) == ["a", "a"]
 @test parse_one("aa", Repeat(Equal("a"), 1, 2)) == ["a", "a"]
 @test parse_one("", Repeat(Equal("a"), 0, 0)) == []
-@test_throws ParserException parse_one("a", Repeat(Equal("a"), 2, 2; greedy=false))
+@test_throws ParserException parse_one("a", Repeat(Equal("a"), 2, 2; greedy=false); debug=true)
 @test parse_one("aa", Repeat(Equal("a"), 2, 2; greedy=false)) == ["a", "a"]
 @test parse_one("aa", Repeat(Equal("a"), 1, 2; greedy=false)) == ["a"]
 @test parse_one("", Repeat(Equal("a"), 0, 0; greedy=false)) == []

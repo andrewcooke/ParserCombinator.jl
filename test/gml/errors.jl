@@ -5,7 +5,7 @@ for (text, msg) in [("a 1 ]", "Expected key"),
                     ("a [1 2]", "Expected ]"),
                     ("a [a -w]", "Expected value")]
     try
-        println(parse_raw(text))
+        println(parse_raw(text; debug=true))
     catch x
         if isa(x, ParserError)
             print(x.msg)
@@ -20,9 +20,9 @@ for (text, msg) in [("a 1 ]", "Expected key"),
 end
 
 
-io = open("gml/error.gml")
+s = open(readall, "gml/error.gml")
 try
-    parse_raw(io)
+    parse_raw(s)
     @test false
 catch x
     println(x)

@@ -52,31 +52,18 @@ end
 parser = mk_parser()
 
 
-function line(io::IO, e::ParserError{LineIter})
-    seekstart(io)
-    lne = ""
-    for i in 1:e.iter.line
-        lne = readline(io)
-    end
-    lne == "" ? "[End of stream]" : lne[1:end-1]
-end
+parse_raw(s; kargs...) = parse_raw(utf8(s); kargs...)
 
 # this returns the "natural" representation as nested arrays and tuples
-function parse_raw(s; debug=false)
+function parse_raw(s::UTF8String; debug=false)
     try
         # we don't seem to need the cache and it's 2x faster without
-        (debug ? parse_try_nocache_dbg : parse_try_nocache)(TrySource(s), Trace(parser); debug=debug)
+        (debug ? parse_one_dbg : parse_one)(s, Trace(parser); debug=debug)
     catch x
         if (debug) 
             Base.show_backtrace(STDOUT, catch_backtrace())
         end
-        if isa(x, ParserError)
-            l = line(s, x)
-            arrow = string(repeat(" ", x.iter.col-1), "^")
-            throw(ParserError("$(x.msg) at ($(x.iter.line),$(x.iter.col))\n$l\n$(arrow)\n", x.iter))
-        else
-            throw(x)
-        end
+        rethrow()
     end
 end
 

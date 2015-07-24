@@ -17,7 +17,7 @@ abstract State     # state associated with Matchers during evaluation
 # constructor that takes the source as first argument and additional arguments
 # as keywords.  the type of the source is exposed and if it's a subclass of
 # string then the iterator is assumed to be a simple integer index.
-abstract Config{S}
+abstract Config{S,I}
 
 
 # important notes on mutability / hash / equality
@@ -60,7 +60,7 @@ abstract Config{S}
 
 # use an array to handle empty values in a natural way
 
-typealias Value Array{Any,1}
+typealias Value Vector{Any}
 
 EMPTY = Any[]
 
