@@ -733,6 +733,8 @@ function execute(k::Config, m::Pattern, s::Clean, i)
         FAILURE
     else
         i = discard(k.source, i, x.offsets[end]-1)
+        # the copy (string(bytestring(...)) below should not be needed
+        # after malmaud's patch in 4.0.0
         Success(DIRTY, i, Any[string(bytestring(x.match))])
     end
 end
@@ -807,5 +809,13 @@ end
     Error(msg::AbstractString) = new(:Error, msg)
 end
 
-execute{I}(k::Config, m::Error, s::Clean, i::I) = throw(ParserError{I}(m.msg, i))
-
+function execute{I}(k::Config, m::Error, s::Clean, i::I)
+    msg = m.msg
+    try
+        msg = diagnostic(k.source, i, m.msg)
+    catch x
+        println("cannot generate diagnostic for $(typeof(k.source))")
+        # continue with original message
+    end
+    throw(ParserError{I}(msg, i))
+end

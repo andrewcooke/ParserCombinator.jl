@@ -150,6 +150,7 @@ function producer(k::Config, m::Matcher; debug=false)
         
     catch x
         if (debug)
+            println("debug was set, so showing error from inside task")
             println(x)
             Base.show_backtrace(STDOUT, catch_backtrace())
         end

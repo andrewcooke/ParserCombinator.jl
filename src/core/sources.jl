@@ -12,7 +12,7 @@
 
 function fmt_error(line, col, text, msg)
     arrow = string(repeat(" ", max(col-1, 0)), "^")
-    "($(line), $(col)): $(msg)\n$(text)\n$(arrow)\n"
+    "$(msg) at ($(line),$(col))\n$(text)\n$(arrow)\n"
 end
 
 
