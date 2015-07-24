@@ -170,3 +170,5 @@ parse_all_cache_dbg = make_all(Debug; delegate=Cache)
 parse_all_nocache_dbg = make_all(Debug; delegate=NoCache)
 parse_all_dbg = parse_all_cache_dbg
 
+parse_lines_dbg(source, matcher; kargs...) = parse_one_dbg(LinesSource(source), matcher; kargs...)
+parse_lines_cache_dbg(source, matcher; kargs...) = parse_one_cache_dbg(LinesSource(source), matcher; kargs...)

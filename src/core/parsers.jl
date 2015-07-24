@@ -209,3 +209,6 @@ parse_all = parse_all_cache
 parse_one_cache = make_one(Cache)
 parse_one_nocache = make_one(NoCache)
 parse_one = parse_one_nocache
+
+parse_lines(source, matcher; kargs...) = parse_one(LinesSource(source), matcher; kargs...)
+parse_lines_cache(source, matcher; kargs...) = parse_one_cache(LinesSource(source), matcher; kargs...)

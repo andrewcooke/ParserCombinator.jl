@@ -155,6 +155,10 @@ evaluate it against some input in various ways:
 * `parse_all()` - a packrat parser, with memoization, that returns an
   iterator (evaluated lazily) over all possible parses of the input.
 
+* `parse_lines()` - a parser in which the source is parsed line by
+  line.  Pre-4.0.0 Julia copies strings that are passed to regex, so
+  this reduces memory use when using regular expressions.
+
 * `parse_try()` - similar to Haskell's Parsec, with backtracking only
   inside the `Try()` matcher.  More info
   [here](#controlling-memory-use).
