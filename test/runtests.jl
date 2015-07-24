@@ -5,8 +5,8 @@ using Compat
 
 #include("gml/polblogs.jl")
 #include("gml/celegansneural.jl")
-include("gml/10k-49963.jl")
-exit(0)
+#include("gml/10k-49963.jl")
+#exit(0)
 
 include("core/sources.jl")
 include("core/fix.jl")
