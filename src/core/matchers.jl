@@ -720,24 +720,44 @@ failure(k::Config, m::Not, s::NotState) = Success(s, s.iter, EMPTY)
 
 @auto_hash_equals type Pattern<:Matcher
     name::Symbol
+    text::AbstractString
     regex::Regex
-    Pattern(r::Regex) = new(:Pattern, Regex("^" * r.pattern * "(.??)"))
-    Pattern(s::AbstractString) = new(:Patterm. Regex("^" * s * "(.??)"))
+    Pattern(r::Regex) = new(:Pattern, r.pattern, Regex("^" * r.pattern * "(.??)"))
+    Pattern(s::AbstractString) = new(:Pattern. s, Regex("^" * s * "(.??)"))
 end
 
-print_field(m::Pattern, ::Type{Val{:regex}}) = "r\"$(m.regex.pattern[2:end-5])\""
+print_field(m::Pattern, ::Type{Val{:text}}) = "text=\"$(m.text)\""
+print_field(m::Pattern, ::Type{Val{:regex}}) = "regex=r\"$(m.regex.pattern)\""
+
+# needed pre malmaud patch
+strcopy(s) = string(bytestring(s))
 
 function execute(k::Config, m::Pattern, s::Clean, i)
-    x = match(m.regex, forwards(k.source, i))
+    x = match(m.regex, strcopy(forwards(k.source, i)))
     if x == nothing
         FAILURE
     else
         i = discard(k.source, i, x.offsets[end]-1)
         # the copy (string(bytestring(...)) below should not be needed
         # after malmaud's patch in 4.0.0
-        Success(DIRTY, i, Any[string(bytestring(x.match))])
+        Success(DIRTY, i, Any[strcopy(x.match)])
     end
 end
+
+# this version in pre 4.0.0 release avoids copies
+# nope.  doesn't work bexause .{N} gives an erorr (N too large)
+#function execute{S<:AbstractString,I<:Integer}(k::Config{S,I}, m::Pattern, s::Clean, i::I)
+#    regex = Regex("^(?:.{$(i-1)})($(m.text))(.??)", "s")
+#    x = match(regex, k.source)
+#    if x == nothing
+##        println("$(regex.pattern) failed on '$(k.source[min(i,length(k.source)):min(i+10,length(k.source))])...'")
+#        FAILURE
+#    else
+##        println("$(regex.pattern) succeeded on '$(k.source[min(i,length(k.source)):min(i+10,length(k.source))])...' giving '$(x.captures[1])'")
+#        i = discard(k.source, i, x.offsets[end]-i)
+#        Success(DIRTY, i, Any[string(bytestring(x.captures[1]))])
+#    end
+#end
 
 
 # support loops

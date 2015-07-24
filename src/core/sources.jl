@@ -105,8 +105,8 @@ isless(a::LineIter, b::LineIter) = a.line < b.line || (a.line == b.line && a.col
 
 start(f::LineAt) = LineIter(1, 1)
 
-function line_at(s::LineSource, i::LineIter)
-    if i.line <= s.zero || i.column < 1
+function line_at(s::LineSource, i::LineIter; check=true)
+    if check && i.line <= s.zero || i.column < 1
         throw(LineException())
     else
         n = i.line - s.zero
@@ -118,7 +118,7 @@ function line_at(s::LineSource, i::LineIter)
             pop!(s.lines)
         end
         line = s.lines[i.line - s.zero]
-        if i.column > length(line)
+        if check && i.column > length(line)
             throw(LineException())
         end
     end
@@ -137,8 +137,8 @@ function next(s::LineSource, i::LineIter)
 end
 
 function done(s::LineSource, i::LineIter)
-    line = line_at(s, i)
-    done(line, i.column) && eof(f.io)
+    line = line_at(s, i; check=false)
+    done(line, i.column) && eof(s.io)
 end
 
 # other api
@@ -159,7 +159,7 @@ function diagnostic(s::LineAt, i::LineIter, msg)
 end
 
 # regexp only works within the current line
-forwards(s::LineAt, i::LineIter) = line_at(s, i)[i.column:end]
+forwards(s::LineAt, i::LineIter) = done(s, i) ? "" : line_at(s, i)[i.column:end]
 
 function discard(s::LineAt, i::LineIter, n)
     while n > 0 && !done(s, i)

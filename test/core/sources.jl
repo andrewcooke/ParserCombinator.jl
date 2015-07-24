@@ -23,6 +23,8 @@
 @test diagnostic(LineSource("l1\nl2"), LineIter(1, 3), "bad") == "bad at (1,3)\nl1\n  ^\n"
 @test diagnostic(LineSource("l1\nl2"), LineIter(2, 1), "bad") == "bad at (2,1)\nl2\n^\n"
 
-
+line = Trace(p"(.|\n)+"[0:end] + Eos())
+@test parse_one("abc\n", line) == ["abc\n"]
+@test parse_one(LineSource("abc\n"), line) == ["abc\n"]
 
 println("sources ok")
