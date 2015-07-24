@@ -56,7 +56,7 @@ parser = mk_parser()
 function parse_raw(s; debug=false)
     try
         # we don't seem to need the cache and it's 2x faster without
-        (debug ? parse_one_dbg : parse_one)(LineSource(s), Trace(parser); debug=debug)
+        (debug ? parse_lines_dbg : parse_lines)(s, Trace(parser); debug=debug)
     catch x
         if (debug) 
             Base.show_backtrace(STDOUT, catch_backtrace())
