@@ -207,7 +207,7 @@ end
 
 # when first called, create base state and make internal transition
 
-execute{S,I}(k::Config{S,I}, m::Depth, s::Clean, i::I) = execute(k, m, DepthSlurp{I}(Vector{Value}(), I[i], State[DIRTY]), i)
+@compat execute{S,I}(k::Config{S,I}, m::Depth, s::Clean, i::I) = execute(k, m, DepthSlurp{I}(Vector{Value}(), I[i], State[DIRTY]), i)
 
 # repeat matching until at bottom of this branch (or maximum depth)
 
