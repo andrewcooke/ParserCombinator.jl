@@ -1173,20 +1173,19 @@ wants to re-call the child.
 
 ### Source (Input Text) Protocol
 
-The source text is read using the [standard Julia iterator
-protocol](http://julia.readthedocs.org/en/latest/stdlib/collections/?highlight=iterator).
+The source text is read using the
+[standard Julia iterator protocol](http://julia.readthedocs.org/en/latest/stdlib/collections/?highlight=iterator),
+extended with several methods defined in [sources.jl](src/core/sources.jl).
 
-This has the unfortunate result that `Dot()` returns characters, not
-strings.  But in practice that matcher is rarely used (particularly
-since, with strings, you can use regular expressions - `p"pattern"`
-for example), and you can construct a string from multiple characters
-using `> string` (similarly `> vcat` can be used to flatten an
-additional layer of lists).
+The use of iteratots means that `Dot()` returns characters, not strings.  But
+in practice that matcher is rarely used (particularly since, with strings, you
+can use regular expressions - `p"pattern"` for example), and you can construct
+a string from multiple characters using `> string`.
 
 ## Releases
 
 1.5.0 - 2015-07-25 - Clarified source handling; improved
-[GML speed](https://github.com/andrewcooke/ParserCombinator.jl/issues/5).
+[GML speed](issues/5).
 
 1.4.0 - 2015-07-18 - Added GML parser; related parse_try fixes.
 
