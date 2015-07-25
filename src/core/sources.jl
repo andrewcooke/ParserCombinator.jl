@@ -51,8 +51,7 @@ function diagnostic(s::AbstractString, i, msg)
 end
 
 # given a source and iterator, return following text for regexp
-#forwards(s::AbstractString, i) = SubString(s, i)
-forwards(s::AbstractString, i) = s[i:end]
+forwards(s::AbstractString, i) = SubString(s, i)
 
 discard(::ASCIIString, i, n) = i + n
 
