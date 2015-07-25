@@ -159,6 +159,8 @@ function diagnostic(s::LineAt, i::LineIter, msg)
 end
 
 # regexp only works within the current line
+#forwards(s::LineAt, i::LineIter) = done(s, i) ? "" : SubString(line_at(s, i), i.column)
+# currently (pre-patch) this is faster
 forwards(s::LineAt, i::LineIter) = done(s, i) ? "" : line_at(s, i)[i.column:end]
 
 function discard(s::LineAt, i::LineIter, n)
