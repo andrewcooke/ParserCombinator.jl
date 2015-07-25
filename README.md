@@ -566,7 +566,7 @@ abcdefghijklmnopqrstuvwxyz
 ```julia
 open("test1.txt", "r") do io
     # this throws an execption because it requires backtracking
-    parse_try(TrySource(io), p"[a-z]"[0:end] + s"m" > string)
+    parse_try(io, p"[a-z]"[0:end] + s"m" > string)
 end
 
 open("test1.txt", "r") do io
