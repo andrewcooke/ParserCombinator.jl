@@ -555,8 +555,7 @@ To allow parsing of a wider range of grammars, Parsec then introduces
 the `Try` combinator, which enables backtracking in some (generally
 small) portion of the grammar.
 
-The same approach can be used with this library, using `TrySource` as a
-source with `parse_try`.
+The same approach can be used with this library, using `parse_try`.
 
 ```
 file1.txt:
@@ -572,7 +571,7 @@ end
 
 open("test1.txt", "r") do io
     # this (with Try(...)) works fine
-    parse_try(TrySource(io), Try(p"[a-z]"[0:end] + s"m" > string))
+    parse_try(io, Try(p"[a-z]"[0:end] + s"m" > string))
 end
 ```
 
@@ -580,17 +579,18 @@ Without backtracking, error messages using the `Error()` matcher are
 much more useful (this is why Parsec can provide good error messages):
 
 ```julia
-parse_try(TrySource("?"), Alt!(p"[a-z]", p"\d", Error("not letter or number")))
-# ParserError("not letter or number",ParserCombinator.TryIter(1,1))
+julia> try
+         parse_try("?", Alt!(p"[a-z]", p"\d", Error("not letter or number")))
+       catch x
+         println(x.msg)
+       end
+not letter or number at (1,1)
+?
+^
 ```
 
-where the `(1,1)` (the `iter` field of the error) is line number and
-column - so this failed on the first character of the first line.
-
-Finally, if you're really concerned about memory use, the
-[source](src/core/try.jl) does include a Config instance that implements
-the "no backtracking" without memoization (the default `parse_try()`
-includes memoization to match lazy Haskell more closely).
+where the `(1,1)` is line number and column - so this failed on the first
+character of the first line.
 
 #### Spaces - Pre And Post-Fixes
 
