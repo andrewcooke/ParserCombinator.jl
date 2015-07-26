@@ -32,6 +32,8 @@ Word, Space, Star, Plus,
 TrySource, Try, parse_try, parse_try_dbg, parse_try_cache, parse_try_cache_dbg,
 Parsers
 
+FAST_REGEX = isdefined(Main, :FAST_REGEX) ? Main.FAST_REGEX : VERSION >= v"0.4.0"
+
 include("core/types.jl")
 include("core/sources.jl")
 include("core/names.jl")

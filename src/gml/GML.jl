@@ -27,24 +27,30 @@ function mk_parser()
         parse_flt(x) = parse(Float64, x)
 
         comment = P"(#.*)?"
-        wspace  = P"[\t ]+" | (P"[\r\n]+" + comment)
-        space   = wspace[1:end,:!]
-        spc     = wspace[0:end,:!]
+        if ParserCombinator.FAST_REGEX
+            wspace  = "([\t ]+|[\r\n]+(#.*)?)"
+            space   = ~Pattern(wspace * "+")
+            spc     = ~Pattern(wspace * "*")
+        else
+            wspace  = Alt!(P"[\t ]+", Seq!(P"[\r\n]+", comment))
+            space   = wspace[1:end,:!]
+            spc     = wspace[0:end,:!]
+        end
 
         key     = p"[a-zA-Z][a-zA-Z0-9]*"                     > symbol
         int     = p"(\+|-)?\d+"                               > parse_int
         real    = p"(\+|-)?\d+.\d+((E|e)(\+|-)?\d+)?"         > parse_flt
-        str     = S"\"" + p"[^\"]+"[0:end] + S"\""            > string
+        str     = Seq!(S"\"", p"[^\"]+"[0:end,:!], S"\"")     > string
 
         list    = Delayed()
-        sublist = S"[" + spc + list + ((S"]" + spc) | expect("]"))
-        value   = (real | int | str | sublist | expect("value")) + spc
-        element = key + space + value                         > tuple
+        sublist = Seq!(S"[", spc, list, Alt!(Seq!(S"]", spc), expect("]")))
+        value   = Seq!(Alt!(real, int, str, sublist, expect("value")), spc)
+        element = Seq!(key, space, value)                     > tuple
         
         list.matcher = Nullable{Matcher}(element[0:end,:!]    > vcat)
         
         # first line comment must be explicit (no previous linefeed)
-        comment + spc + list + ((spc + Eos()) | expect("key"))
+        Seq!(comment, spc, list, Alt!(Seq!(spc, Eos()), expect("key")))
 
     end
 end
@@ -55,8 +61,11 @@ parser = mk_parser()
 # this returns the "natural" representation as nested arrays and tuples
 function parse_raw(s; debug=false)
     try
-        # we don't seem to need the cache and it's 2x faster without
-        (debug ? parse_lines_dbg : parse_lines)(s, Trace(parser); debug=debug)
+        if ParserCombinator.FAST_REGEX
+            (debug ? parse_one_dbg : parse_one)(s, Trace(parser); debug=debug)
+        else
+            (debug ? parse_lines_dbg : parse_lines)(s, Trace(parser); debug=debug)
+        end
     catch x
         if (debug) 
             Base.show_backtrace(STDOUT, catch_backtrace())

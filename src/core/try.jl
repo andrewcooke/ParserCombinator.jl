@@ -43,7 +43,7 @@ function expire(s::TrySource, i::LineIter)
     end
 end
 
-function line_at(f::TrySource, s::LineIter; check=true)
+function line_at(f::TrySource, s::LineIter; check::Bool=true)
     if check
         if s.line <= f.zero || (s.line == f.zero+1 && s.column < f.right)
             throw(LineException())

@@ -78,25 +78,25 @@ end
 
 # parent and parent_state are popped from the stack.  a call is made to
 # success(config, parent, parent_state, child_state, iter, result)
-type Success{CS<:State}<:Message
+immutable Success{CS<:State,I}<:Message
     child_state::CS   # parent to store, passed in next call for backtracking
-    iter              # advanced as appropriate
+    iter::I           # advanced as appropriate
     result::Value     # possibly empty
 end
 
 # parent and parent_state are popped from the stack.  a call is made to
 # failure(config, parent, parent_state)
-type Failure<:Message end
+immutable Failure<:Message end
 FAILURE = Failure()
 
 # parent and parent_state are pushed to the stack.  a call is made to
 # execute(config, child, child_state, iter)
-type Execute{P<:Matcher,PS<:State,C<:Matcher,CS<:State}<:Message
-    parent::P         # stored by trampoline, added to response
-    parent_state::PS  # stored by trampoline, added to response
-    child::C          # the matcher to evaluate
-    child_state::CS   # needed by for evaluation (was stored by parent)
-    iter
+immutable Execute{I}<:Message
+    parent::Matcher         # stored by trampoline, added to response
+    parent_state::State  # stored by trampoline, added to response
+    child::Matcher          # the matcher to evaluate
+    child_state::State   # needed by for evaluation (was stored by parent)
+    iter::I
 end
 
 

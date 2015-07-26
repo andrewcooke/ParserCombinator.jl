@@ -1,12 +1,11 @@
 
-importall ParserCombinator
+# set this to force tetsing for malmaud branch
+#FAST_REGEX=true
+
+using ParserCombinator
+
 using Base.Test
 using Compat
-
-#include("gml/polblogs.jl")
-#include("gml/celegansneural.jl")
-#include("gml/10k-49963.jl")
-#exit(0)
 
 include("core/sources.jl")
 include("core/fix.jl")
@@ -23,6 +22,7 @@ include("gml/ok.jl")
 include("gml/errors.jl")
 include("gml/example1.jl")
 include("gml/example2.jl")
-#include("gml/polblogs.jl")
+# need zip files unpacking
 #include("gml/celegansneural.jl")
+#include("gml/polblogs.jl")
 #include("gml/10k-49963.jl")

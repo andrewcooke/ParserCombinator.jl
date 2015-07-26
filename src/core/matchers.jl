@@ -723,14 +723,19 @@ failure(k::Config, m::Not, s::NotState) = Success(s, s.iter, EMPTY)
     text::AbstractString
     regex::Regex
     Pattern(r::Regex) = new(:Pattern, r.pattern, Regex("^" * r.pattern * "(.??)"))
-    Pattern(s::AbstractString) = new(:Pattern. s, Regex("^" * s * "(.??)"))
+    Pattern(s::AbstractString) = new(:Pattern, s, Regex("^" * s * "(.??)"))
+    Pattern(s::AbstractString, flags::AbstractString) = new(:Pattern. s, Regex("^" * s * "(.??)", flags))
 end
 
 print_field(m::Pattern, ::Type{Val{:text}}) = "text=\"$(m.text)\""
 print_field(m::Pattern, ::Type{Val{:regex}}) = "regex=r\"$(m.regex.pattern)\""
 
 # needed pre malmaud patch
-strcopy(s) = string(bytestring(s))
+if FAST_REGEX
+    strcopy(s) = s
+else
+    strcopy(s) = string(bytestring(s))
+end
 
 function execute(k::Config, m::Pattern, s::Clean, i)
     x = match(m.regex, strcopy(forwards(k.source, i)))
