@@ -1184,6 +1184,9 @@ a string from multiple characters using `> string`.
 
 ## Releases
 
+1.6.0 - 2015-07-26 - Changed from `s"` to `e"`; added support for fast regex
+patch.
+
 1.5.0 - 2015-07-25 - Clarified source handling; improved
 [GML speed](issues/5).
 
