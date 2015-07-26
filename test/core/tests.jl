@@ -28,14 +28,14 @@
 @test parse_one("abc", Seq(p"."[1:2,:&,:?], p"."[1:2])) == Any[["a"], "b", "c"]
 @test_throws ErrorException parse_one("abc", Seq(p"."[1:2,:&,:?,:x], p"."[1:2]))
 @test parse_one("abc", Seq(p"."[1:2], p"."[1:2], Equal("c"))) == ["a", "b", "c"]
-@test parse_one("ab", p"." + s"b") == ["a", "b"]
-@test parse_one("abc", p"." + s"b" + s"c") == ["a", "b", "c"]
-@test parse_one("abc", p"." + S"b" + s"c") == ["a", "c"]
-@test parse_one("b", Alt(s"a", s"b", s"c")) == ["b"]
-@test parse_one("b", Alt!(s"a", s"b", s"c")) == ["b"]
-@test collect(parse_all("b", Trace(Alt(Epsilon(), Repeat(s"b", 0, 1))))) == Array[[], ["b"], []]
-@test collect(parse_all("b", Alt(Epsilon(), Repeat(s"b", 0, 1; greedy=false)))) == Array[[], [], ["b"]]
-@test parse_one("abc", p"." + (s"b" | s"c")) == ["a", "b"]
+@test parse_one("ab", p"." + e"b") == ["a", "b"]
+@test parse_one("abc", p"." + e"b" + e"c") == ["a", "b", "c"]
+@test parse_one("abc", p"." + E"b" + e"c") == ["a", "c"]
+@test parse_one("b", Alt(e"a", e"b", e"c")) == ["b"]
+@test parse_one("b", Alt!(e"a", e"b", e"c")) == ["b"]
+@test collect(parse_all("b", Trace(Alt(Epsilon(), Repeat(e"b", 0, 1))))) == Array[[], ["b"], []]
+@test collect(parse_all("b", Alt(Epsilon(), Repeat(e"b", 0, 1; greedy=false)))) == Array[[], [], ["b"]]
+@test parse_one("abc", p"." + (e"b" | e"c")) == ["a", "b"]
 @test length(collect(parse_all("abc", p"."[0:3]))) == 4
 @test length(collect(parse_all("abc", p"."[1:2]))) == 2
 @test parse_one("abc", p"."[3] > tuple) == [("a", "b", "c")]

@@ -50,17 +50,17 @@ calc(s::Sum) = Base.sum(map(calc, s.val))
 # the grammar (the combinators!)
 
 sum = Delayed()
-val = S"(" + sum + S")" | PFloat64()
+val = E"(" + sum + E")" | PFloat64()
 
 neg = Delayed()       # allow multiple (or no) negations (eg ---3)
-neg.matcher = val | (S"-" + neg > Neg)
+neg.matcher = val | (E"-" + neg > Neg)
 
-mul = S"*" + neg
-div = S"/" + neg > Inv
+mul = E"*" + neg
+div = E"/" + neg > Inv
 prd = neg + (mul | div)[0:end] |> Prd
 
-add = S"+" + prd
-sub = S"-" + prd > Neg
+add = E"+" + prd
+sub = E"-" + prd > Neg
 sum.matcher = prd + (add | sub)[0:end] |> Sum
 
 all = sum + Eos()
@@ -81,7 +81,7 @@ Some explanation of the above:
   "parser combinator" style if you prefer.  For example, `Seq(...)` instead of
   `+`, or `App(...)` instead of `>`.
 
-* The matcher `S"xyz"` matches and then discards the string `"xyz"`.
+* The matcher `E"xyz"` matches and then discards the string `"xyz"`.
 
 * Every matcher returns a list of matched values.  This can be an empty list
   if the match succeeded but matched nothing.
@@ -190,12 +190,12 @@ julia> parse_one("abc", Equal("abx"))
 ERROR: ParserCombinator.ParserException("cannot parse")
 ```
 
-This is so common that there's a corresponding [string
-literal](http://julia.readthedocs.org/en/latest/manual/strings/#non-standard-string-literals)
-(it's "s" for "string").
+This is so common that there's a corresponding
+[string literal](http://julia.readthedocs.org/en/latest/manual/strings/#non-standard-string-literals)
+(it's "e" for `Equal(), the corresponding matcher).
 
 ```julia
-julia> parse_one("abc", s"ab")
+julia> parse_one("abc", e"ab")
 1-element Array{Any,1}:
  "ab"
 ```
@@ -226,12 +226,12 @@ julia> parse_one("abc", And(Equal("a"), Equal("b")))
  Any["a"]
  Any["b"]
 
-julia> parse_one("abc", s"a" + s"b")
+julia> parse_one("abc", e"a" + e"b")
 2-element Array{Any,1}:
  "a"
  "b"
 
-julia> parse_one("abc", s"a" & s"b")
+julia> parse_one("abc", e"a" & e"b")
 2-element Array{Any,1}:
  Any["a"]
  Any["b"]
@@ -275,11 +275,11 @@ julia> parse_one("abc", Seq(Drop(Equal("a")), Equal("b")))
 1-element Array{Any,1}:
  "b"
 
-julia> parse_one("abc", ~s"a" + s"b")
+julia> parse_one("abc", ~e"a" + e"b")
 1-element Array{Any,1}:
  "b"
 
-julia> parse_one("abc", S"a" + s"b")
+julia> parse_one("abc", E"a" + e"b")
 1-element Array{Any,1}:
  "b"
 ```
@@ -290,11 +290,11 @@ examples, respectively.
 #### Alternates
 
 ```julia
-julia> parse_one("abc", Alt(s"x", s"a"))
+julia> parse_one("abc", Alt(e"x", e"a"))
 1-element Array{Any,1}:
  "a"
 
-julia> parse_one("abc", s"x" | s"a")
+julia> parse_one("abc", e"x" | e"a")
 1-element Array{Any,1}:
  "a"
 ```
@@ -531,12 +531,12 @@ theory, the following two grammars have different backtracking
 behaviour:
 
 ```julia
-Series(Repeat(s"a", 0, 3), s"b"; backtrack=false)
-Series(Repeat(s"a", 0, 3; backtrack=false), s"b"; backtrack=false)
+Series(Repeat(e"a", 0, 3), e"b"; backtrack=false)
+Series(Repeat(e"a", 0, 3; backtrack=false), e"b"; backtrack=false)
 ```
 
 (although, in practice, they are identical, in this contrived example,
-because `s"a"` doesn't backtrack anyway).
+because `e"a"` doesn't backtrack anyway).
 
 This makes a grammar more efficient, but also more specific.  It can
 reduce the memory consumed by the parser, but does not guarantee that
@@ -566,12 +566,12 @@ abcdefghijklmnopqrstuvwxyz
 ```julia
 open("test1.txt", "r") do io
     # this throws an execption because it requires backtracking
-    parse_try(io, p"[a-z]"[0:end] + s"m" > string)
+    parse_try(io, p"[a-z]"[0:end] + e"m" > string)
 end
 
 open("test1.txt", "r") do io
     # this (with Try(...)) works fine
-    parse_try(io, Try(p"[a-z]"[0:end] + s"m" > string))
+    parse_try(io, Try(p"[a-z]"[0:end] + e"m" > string))
 end
 ```
 
@@ -607,17 +607,17 @@ spc = Drop(Star(Space()))
 @with_pre spc begin
 
     sum = Delayed()
-    val = S"(" + spc + sum + spc + S")" | PFloat64()
+    val = E"(" + spc + sum + spc + E")" | PFloat64()
 
     neg = Delayed()             # allow multiple negations (eg ---3)
-    neg.matcher = Nullable{Matcher}(val | (S"-" + neg > Neg))
+    neg.matcher = Nullable{Matcher}(val | (E"-" + neg > Neg))
 
-    mul = S"*" + neg
-    div = S"/" + neg > Inv
+    mul = E"*" + neg
+    div = E"/" + neg > Inv
     prd = neg + (mul | div)[0:end] |> Prd
 
-    add = S"+" + prd
-    sub = S"-" + prd > Neg
+    add = E"+" + prd
+    sub = E"-" + prd > Neg
     sum.matcher = Nullable{Matcher}(prd + (add | sub)[0:end] |> Sum)
 
     all = sum + spc + Eos()
@@ -709,17 +709,17 @@ matchers you care about):
 @with_names begin
 
     sum = Delayed()
-    val = S"(" + sum + S")" | PFloat64()
+    val = E"(" + sum + E")" | PFloat64()
 
     neg = Delayed()             # allow multiple negations (eg ---3)
-    neg.matcher = val | (S"-" + neg > Neg)
+    neg.matcher = val | (E"-" + neg > Neg)
     
-    mul = S"*" + neg
-    div = S"/" + neg > Inv
+    mul = E"*" + neg
+    div = E"/" + neg > Inv
     prd = neg + (mul | div)[0:end] |> Prd
     
-    add = S"+" + prd
-    sub = S"-" + prd > Neg
+    add = E"+" + prd
+    sub = E"-" + prd > Neg
     sum.matcher = prd + (add | sub)[0:end] |> Sum
     
     all = sum + Eos()

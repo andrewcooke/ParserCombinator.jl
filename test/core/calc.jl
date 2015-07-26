@@ -18,17 +18,17 @@ calc(s::Sum) = signed_sum(map(calc, s.val))
 @with_names begin
 
     sum = Delayed()
-    val = S"(" + sum + S")" | PFloat64()
+    val = E"(" + sum + E")" | PFloat64()
 
     neg = Delayed()             # allow multiple negations (eg ---3)
-    neg.matcher = Nullable{Matcher}(val | (S"-" + neg > Neg))
+    neg.matcher = Nullable{Matcher}(val | (E"-" + neg > Neg))
     
-    mul = S"*" + neg
-    div = S"/" + neg > Inv
+    mul = E"*" + neg
+    div = E"/" + neg > Inv
     prd = neg + (mul | div)[0:end] |> Prd
     
-    add = S"+" + prd
-    sub = S"-" + prd > Neg
+    add = E"+" + prd
+    sub = E"-" + prd > Neg
     sum.matcher = Nullable{Matcher}(prd + (add | sub)[0:end] |> Sum)
     
     all = sum + Eos()

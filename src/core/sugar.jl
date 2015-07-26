@@ -11,12 +11,12 @@ macro P_str(s)
     Drop(Pattern(Regex(s)))
 end
 
-# s"..." creates a matcher for the given string
-macro s_str(s)
+# e"..." creates a matcher for the given string
+macro e_str(s)
     Equal(s)
 end
 
-macro S_str(s)
+macro E_str(s)
     Drop(Equal(s))
 end
 

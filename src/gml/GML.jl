@@ -40,10 +40,10 @@ function mk_parser()
         key     = p"[a-zA-Z][a-zA-Z0-9]*"                     > symbol
         int     = p"(\+|-)?\d+"                               > parse_int
         real    = p"(\+|-)?\d+.\d+((E|e)(\+|-)?\d+)?"         > parse_flt
-        str     = Seq!(S"\"", p"[^\"]+"[0:end,:!], S"\"")     > string
+        str     = Seq!(E"\"", p"[^\"]+"[0:end,:!], E"\"")     > string
 
         list    = Delayed()
-        sublist = Seq!(S"[", spc, list, Alt!(Seq!(S"]", spc), expect("]")))
+        sublist = Seq!(E"[", spc, list, Alt!(Seq!(E"]", spc), expect("]")))
         value   = Seq!(Alt!(real, int, str, sublist, expect("value")), spc)
         element = Seq!(key, space, value)                     > tuple
         

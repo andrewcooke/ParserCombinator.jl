@@ -1,5 +1,5 @@
 
 println(Seq())
-println(s"a" + S"b" | p"c" > tuple)
+println(e"a" + E"b" | p"c" > tuple)
 
 println("print ok")
