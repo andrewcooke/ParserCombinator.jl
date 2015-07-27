@@ -7,7 +7,7 @@ using Compat
 export parse_raw, parse_dict, parse_id_raw, parse_id_dict, GMLError
 
 
-function mk_parser()
+function mk_parser(fast)
 
     # this is such a simple grammar that we can use parse_try and Error() to
     # give useful error messages (we don't need to backtrack to any degree).
@@ -28,7 +28,7 @@ function mk_parser()
 
         comment = P"(#.*)?"
 
-        if ParserCombinator.FAST_REGEX
+        if fast && ParserCombinator.FAST_REGEX
 
             wspace   = "([\t ]+|[\r\n]+(#.*)?)"
             wstar(x) = string(x, wspace, "*")
@@ -73,11 +73,10 @@ function mk_parser()
     end
 end
 
-parser = mk_parser()
-
 
 # this returns the "natural" representation as nested arrays and tuples
 function parse_raw(s; debug=false)
+    parser = mk_parser(isa(s, AbstractString))
     try
         if ParserCombinator.FAST_REGEX
             (debug ? parse_one_dbg : parse_one)(s, Trace(parser); debug=debug)
