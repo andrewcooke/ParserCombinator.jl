@@ -592,6 +592,11 @@ not letter or number at (1,1)
 where the `(1,1)` is line number and column - so this failed on the first
 character of the first line.
 
+Finally, note that this is implemented at the source level, by restricting
+what text is visible to the matchers.  Matchers that *could* backtrack will
+still make the attempt.  So you should also [disable backtracking in the 
+matchers](#backtracking), where you do not need it, for an efficient grammar.
+
 #### Spaces - Pre And Post-Fixes
 
 The lack of a lexer can complicate the handling of whitespace when
