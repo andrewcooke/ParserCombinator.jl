@@ -7,9 +7,6 @@ using ParserCombinator
 using Base.Test
 using Compat
 
-#include("gml/10k-49963.jl")
-#exit(0)
-
 include("core/sources.jl")
 include("core/fix.jl")
 include("core/print.jl")

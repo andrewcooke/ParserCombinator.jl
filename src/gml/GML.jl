@@ -23,29 +23,47 @@ function mk_parser()
 
         expect(x) = Error("Expected $x")
 
-        parse_int(x) = parse(Int64, x)
-        parse_flt(x) = parse(Float64, x)
+        pint(x) = parse(Int64, x)
+        pflt(x) = parse(Float64, x)
 
         comment = P"(#.*)?"
+
         if ParserCombinator.FAST_REGEX
-            wspace  = "([\t ]+|[\r\n]+(#.*)?)"
-            space   = ~Pattern(wspace * "+")
-            spc     = ~Pattern(wspace * "*")
+
+            wspace   = "([\t ]+|[\r\n]+(#.*)?)"
+            wstar(x) = string(x, wspace, "*")
+            wplus(x) = string(x, wspace, "+")
+            space    = ~Pattern(wplus(""))
+            spc      = ~Pattern(wstar(""))
+
+            open     = ~Pattern(wstar("\\["))
+            close    = ~Pattern(wstar("]"))
+
+            key      = Pattern(wplus("([a-zA-Z][a-zA-Z0-9]*)"), 1)    > symbol
+            int      = Pattern(wstar("((\\+|-)?\\d+)"), 1)            > pint
+            real     = Pattern(wstar("((\\+|-)?\\d+.\\d+((E|e)(\\+|-)?\\d+)?)"), 1) > pflt
+            str      = Pattern(wstar("\"([^\"]*)\""), 1)
+
         else
-            wspace  = Alt!(P"[\t ]+", Seq!(P"[\r\n]+", comment))
-            space   = wspace[1:end,:!]
-            spc     = wspace[0:end,:!]
+
+            wspace   = Alt!(P"[\t ]+", Seq!(P"[\r\n]+", comment))
+            space    = wspace[1:end,:!]
+            spc      = wspace[0:end,:!]
+
+            open     = Seq!(E"[", spc)
+            close    = Seq!(E"]", spc)
+
+            key      = Seq!(p"[a-zA-Z][a-zA-Z0-9]*", space)           > symbol
+            int      = Seq!(p"(\+|-)?\d+", spc)                       > pint
+            real     = Seq!(p"(\+|-)?\d+.\d+((E|e)(\+|-)?\d+)?", spc) > pflt
+            str      = Seq!(Pattern("\"([^\"]*)\"", 1), spc)
+
         end
 
-        key     = p"[a-zA-Z][a-zA-Z0-9]*"                     > symbol
-        int     = p"(\+|-)?\d+"                               > parse_int
-        real    = p"(\+|-)?\d+.\d+((E|e)(\+|-)?\d+)?"         > parse_flt
-        str     = Seq!(E"\"", p"[^\"]+"[0:end,:!], E"\"")     > string
-
         list    = Delayed()
-        sublist = Seq!(E"[", spc, list, Alt!(Seq!(E"]", spc), expect("]")))
-        value   = Seq!(Alt!(real, int, str, sublist, expect("value")), spc)
-        element = Seq!(key, space, value)                     > tuple
+        sublist = Seq!(open, list, Alt!(close, expect("]")))
+        value   = Alt!(real, int, str, sublist, expect("value"))
+        element = Seq!(key, value)                            > tuple
         
         list.matcher = Nullable{Matcher}(element[0:end,:!]    > vcat)
         
