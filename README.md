@@ -1177,7 +1177,7 @@ The source text is read using the
 [standard Julia iterator protocol](http://julia.readthedocs.org/en/latest/stdlib/collections/?highlight=iterator),
 extended with several methods defined in [sources.jl](src/core/sources.jl).
 
-The use of iteratots means that `Dot()` returns characters, not strings.  But
+The use of iterators means that `Dot()` returns characters, not strings.  But
 in practice that matcher is rarely used (particularly since, with strings, you
 can use regular expressions - `p"pattern"` for example), and you can construct
 a string from multiple characters using `> string`.
