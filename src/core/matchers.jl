@@ -745,7 +745,7 @@ function execute(k::Config, m::Pattern, s::Clean, i)
     else
         i = discard(k.source, i, x.offsets[end]-1)
         if length(m.groups) > 0
-            Success(DIRTY, i, Any[strcopy(x[i]) for i in m.groups])
+            Success(DIRTY, i, Any[strcopy(x.captures[i]) for i in m.groups])
         else
             Success(DIRTY, i, Any[strcopy(x.match)])
         end
