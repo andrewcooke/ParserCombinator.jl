@@ -7,17 +7,15 @@ using Compat
 export parse_raw, parse_dict, parse_id_raw, parse_id_dict, GMLError
 
 
-function mk_parser(fast)
+function mk_parser(string_input)
 
-    # this is such a simple grammar that we can use parse_try and Error() to
-    # give useful error messages (we don't need to backtrack to any degree).
+    # this is such a simple grammar that we can use don't need backtracking,
+    # so we can use Seq! et al, and Error for useful diagnostics.
 
     # the only tricky things are getting the spaces right so that matching
     # spaces doesn't commit us to anything unexpeted, and placing errors only
     # when we're sure we're wrong (you can't have one in the definition of
     # key, for example, because that can fail...).
-
-    # inside a function just to avoid junk in global namespace.
 
     @with_names begin
 
@@ -28,7 +26,8 @@ function mk_parser(fast)
 
         comment = P"(#.*)?"
 
-        if fast && ParserCombinator.FAST_REGEX
+        # we need string input as we match multiple lines
+        if string_input && ParserCombinator.FAST_REGEX
 
             wspace   = "([\t ]+|[\r\n]+(#.*)?)"
             wstar(x) = string(x, wspace, "*")
