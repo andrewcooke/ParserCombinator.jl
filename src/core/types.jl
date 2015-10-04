@@ -129,3 +129,9 @@ immutable CacheException<:Exception end
 # this is equivalent to a matcher returning Failure.  used when source
 # information is not available.
 abstract FailureException<:Exception
+
+if VERSION >= v"0.4.0-"
+    typealias Applicable Union{Function, DataType}
+else
+    typealias Applicable Union(Function, DataType)
+end

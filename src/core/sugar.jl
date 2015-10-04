@@ -78,8 +78,8 @@ end
 
 
 # the raw Result instance
->=(m::Matcher, f::Union(Function, DataType)) = TransResult(m, f)
+>=(m::Matcher, f::Applicable) = TransResult(m, f)
 # interpolate multiple values (list or tuple)
->(m::Matcher, f::Union(Function, DataType)) = App(m, f)
+>(m::Matcher, f::Applicable) = App(m, f)
 # a single value
-|>(m::Matcher, f::Union(Function, DataType)) = Appl(m, f)
+|>(m::Matcher, f::Applicable) = Appl(m, f)

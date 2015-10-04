@@ -4,7 +4,7 @@ module GML
 using ...ParserCombinator
 using Compat
 
-export parse_raw, parse_dict, parse_id_raw, parse_id_dict, GMLError
+export parse_raw, parse_dict, GMLError
 
 
 function mk_parser(string_input)
@@ -13,7 +13,7 @@ function mk_parser(string_input)
     # use Seq! et al, and Error for useful diagnostics.
 
     # the only tricky things are getting the spaces right so that matching
-    # spaces doesn't commit us to anything unexpeted, and placing errors only
+    # spaces doesn't commit us to anything unexpected, and placing errors only
     # when we're sure we're wrong (you can't have one in the definition of
     # key, for example, because that can fail...).
 
