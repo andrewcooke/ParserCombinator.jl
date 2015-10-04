@@ -1,4 +1,6 @@
 
+import Base: ==
+
 # https://github.com/JuliaLang/julia/issues/11618
 signed_prod(lst) = length(lst) == 1 ? lst[1] : Base.prod(lst)
 signed_sum(lst) = length(lst) == 1 ? lst[1] : Base.sum(lst)
