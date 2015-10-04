@@ -9,8 +9,8 @@ export parse_raw, parse_dict, parse_id_raw, parse_id_dict, GMLError
 
 function mk_parser(string_input)
 
-    # this is such a simple grammar that we can use don't need backtracking,
-    # so we can use Seq! et al, and Error for useful diagnostics.
+    # this is such a simple grammar that we don't need backtracking, so we can
+    # use Seq! et al, and Error for useful diagnostics.
 
     # the only tricky things are getting the spaces right so that matching
     # spaces doesn't commit us to anything unexpeted, and placing errors only
