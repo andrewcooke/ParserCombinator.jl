@@ -3,6 +3,12 @@ module DOT
 
 using ...ParserCombinator
 using Compat
+using AutoHashEquals
+import Base: ==
+
+export Statement, Statements, ID, StringID, NumericID, HtmlID, Attribute,
+       Attributes, Graph, Port, Node, Edge, Edges, SimpleEdge, ComplexEdge,
+       GraphAttributes, NodeAttributes, EdgeAttributes, SubGraph
 
 # i've gone with a very literal parsing, which returns a structure that is
 # pretty much what is described in the grammar at
@@ -19,11 +25,11 @@ using Compat
 
 abstract Statement
 
-typealias Vector{Statement} Statements
+typealias Statements Vector{Statement}
 
 abstract ID
 
-immutable StringID <: ID
+@auto_hash_equals immutable StringID <: ID
     id::AbstractString
 end
 
@@ -40,11 +46,16 @@ immutable Attribute <: Statement
     value::ID
 end
 
-typealias Vector{Attribute} Attributes
+typealias Attributes Vector{Attribute}
 
 immutable Graph
     strict::Bool
     directed::Bool
+    id::Nullable{ID}
+    stmts::Statements
+end
+
+immutable SubGraph <: Statement
     id::Nullable{ID}
     stmts::Statements
 end
@@ -88,9 +99,44 @@ immutable EdgeAttributes <: Statement
     attrs::Attributes
 end
 
-immutable SubGraph <: Statement
-    id::Nullable{ID}
-    stmts::Statements
-end
+
+# IDs
+
+spc = "([ \t]|\n#.*|\n|//.*|/\\*[.\n]*?\\*/)"
+spc_init = ~Pattern(string("(#.*)?", spc, "*"))
+spc_star = ~Pattern(string(spc, "*"))
+spc_plus = ~Pattern(string(spc, "+"))
+
+wrd = p"[a-zA-Z\200-\377_][a-zA-Z\200-\377_0-9]*"
+
+str = Pattern("((?:[^\"]|\\\")*?)(?:\\\n)?", 1)
+str_once = Seq!(P"\"", str, P"\"")
+str_join = Seq!(str_once, 
+                Star!(Seq!(spc_star, P"\\+", spc_star, str_once))) > string
+
+str_id = Alt!(wrd, str_join) > StringID
+
+num_id = P"-?(\.[0-9]+|[0-9]+(\.[0-9]*)?)" > NumericID
+
+xml_sngl = p"<(\n|[^>])*?/>"
+xml_open = p"<(\n|[^>])*?(\n|[^/])>"
+xml_clos = p"</(\n|[^>])*?>"
+xml_spc  = p"(\n|[^<])*"
+xml      = Delayed()
+# we are not checking that the closing element name matches the opening
+# name, and this could involve a pile of backtracking
+# TODO - make this more efficient
+xml_nest = Seq(xml_open, xml_spc, Opt(xml), xml_spc, xml_clos) > string
+xml.matcher = Alt(xml_sngl, xml_nest)
+
+xml_id = xml > HtmlID
+
+id = Alt!(str_id, num_id, xml_id)
+
+
+
+
+
+#Seq!(spc_init, graph)
 
 end

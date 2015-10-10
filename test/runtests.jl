@@ -7,6 +7,9 @@ using ParserCombinator
 using Base.Test
 using Compat
 
+include("dot/fragments.jl")
+exit()
+
 include("core/sources.jl")
 include("core/fix.jl")
 include("core/print.jl")
