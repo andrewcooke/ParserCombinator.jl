@@ -171,11 +171,12 @@ end
 
     stmt = Delayed()
 
-    # not a list because canhave a trailing ;
+    # not a list because we can have a trailing ;
     # this eats trailing spaces, but i don't think it matters
     stmt_list = Star!(Seq!(stmt, spc_star, Opt!(Seq!(E";", spc_star)))) |> Statements
+    stmt_brak = Seq!(E"{", spc_star, stmt_list, spc_star, E"}")
 
-    sub_graph = Seq!(~NoCase("subgraph"), spc_star, Opt!(id), spc_star, E"{", spc_star, stmt_list, spc_star, E"}") > SubGraph
+    sub_graph = Seq!(~NoCase("subgraph"), spc_star, Opt!(id), spc_star, stmt_brak) > SubGraph
 
     # order important here, since we don't backtrack and "subgraph" could
     # be a node
@@ -194,7 +195,7 @@ end
     strict = Alt!(Seq!(~NoCase("strict"), Insert(true)), Insert(false))
     direct = Alt!(Seq!(~NoCase("digraph"), Insert(true)),
                   Seq!(~NoCase("graph"), Insert(false)))
-    graph = Seq!(strict, spc_star, direct, spc_star, Opt!(id), spc_star, E"{", spc_star, stmt_list, spc_star, E"}") > Graph
+    graph = Seq!(strict, spc_star, direct, spc_star, Opt!(id), spc_star, stmt_brak) > Graph
 
     dot = Seq!(spc_star, graph, spc_star, Eos())
 
@@ -218,6 +219,7 @@ end
 
 
 # expend both nodes and edges, then use sets to de-duplication
+# this generates a simple, flattened set of all node IDs
 nodes(g::Graph) = union(map(nodes, g.stmts)...)
 nodes(s::Statement) = Set()
 nodes(s::SubGraph) = union(map(nodes, s.stmts)...)
@@ -225,6 +227,9 @@ nodes(n::Node) = nodes(n.id)
 nodes(n::NodeID) = Set([n.id.id])
 nodes(e::Edge) = union(map(nodes, e.nodes)...)
 
+# this generates a set of all node pairs that correspond to edges
+# see test/subgraphs.jl for how subgraphs in edges are handled - i have
+# no idea if it's ok or not.
 edges(g::Graph) = vcat(map(edges, g.stmts)...)
 edges(s::Statement) = []
 edges(s::SubGraph) = vcat(map(edges, s.stmts)...)
