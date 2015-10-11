@@ -8,6 +8,8 @@ using Base.Test
 using Compat
 
 include("dot/fragments.jl")
+include("dot/subgraphs.jl")
+include("dot/simple.jl")
 exit()
 
 include("core/sources.jl")

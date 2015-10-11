@@ -8,7 +8,7 @@ import Base: ==, print
 
 export Statement, Statements, ID, StringID, NumericID, HtmlID, Attribute,
        Attributes, Graph, Port, NodeID, Node, EdgeNode, Edge, GraphAttributes, 
-       NodeAttributes, EdgeAttributes, SubGraph, dot
+       NodeAttributes, EdgeAttributes, SubGraph, parse_dot, nodes, edges
 
 # i've gone with a very literal parsing, which returns a structure that is
 # pretty much what is described in the grammar at
@@ -53,8 +53,8 @@ typealias Attributes Vector{Attribute}
     directed::Bool
     id::Nullable{ID}
     stmts::Statements
-    Graph(s::Bool, d::Bool, id::ID, s::Statements) = new(s, d, id, s)
-    Graph(s::Bool, d::Bool, s::Statements) = new(s, d, Nullable{ID}(), s)
+    Graph(s::Bool, d::Bool, id::ID, st::Statements) = new(s, d, id, st)
+    Graph(s::Bool, d::Bool, st::Statements) = new(s, d, Nullable{ID}(), st)
 end
 
 @auto_hash_equals immutable SubGraph <: Statement
@@ -108,89 +108,127 @@ end
 end
 
 
-# IDs
+@with_names begin
 
-spc = "([ \t]|\n#.*|\n|//.*|/\\*[.\n]*?\\*/)"
-spc_init = ~Pattern(string("(#.*)?", spc, "*"))
-spc_star = ~Pattern(string(spc, "*"))
-spc_plus = ~Pattern(string(spc, "+"))
+    spc = "([ \t]|\n#.*|\n|//.*|/\\*[.\n]*?\\*/)"
+    spc_init = ~Pattern(string("(#.*)?", spc, "*"))
+    spc_star = ~Pattern(string(spc, "*"))
+    spc_plus = ~Pattern(string(spc, "+"))
+    
+    wrd = p"[a-zA-Z\200-\377_][a-zA-Z\200-\377_0-9]*"
+    
+    # valid strings include:
+    # 1 - "..."
+    # 2 - "...\
+    #      ..."
+    # 3 = "..." + "..."
+    # and all can contain quoted quotes
+    unesc(s) = replace(s, "\\\"", "\"")
+    unesc_join(s...) = string(map(unesc, s)...)
+    str_cont = Pattern("((?:[^\"\n]|\\\\\")*)\\\\\\\n", 1)
+    str_end = p"([^\"\n]|\\\\\")*"
+    str_one = Seq!(E"\"", Star!(str_cont), str_end, E"\"")
+    str_many = Seq!(str_one, Star!(Seq!(spc_star, E"+", spc_star, str_one))) > unesc_join
 
-wrd = p"[a-zA-Z\200-\377_][a-zA-Z\200-\377_0-9]*"
+    str_id = Alt!(wrd, str_many) > StringID
 
-# valid strings include:
-# 1 - "..."
-# 2 - "...\
-#      ..."
-# 3 = "..." + "..."
-# and all can contain quoted quotes
-unesc(s) = replace(s, "\\\"", "\"")
-unesc_join(s...) = string(map(unesc, s)...)
-str_cont = Pattern("((?:[^\"\n]|\\\\\")*)\\\\\\\n", 1)
-str_end = p"([^\"\n]|\\\\\")*"
-str_one = Seq!(E"\"", Star!(str_cont), str_end, E"\"")
-str_many = Seq!(str_one, Star!(Seq!(spc_star, E"+", spc_star, str_one))) > unesc_join
+    num_id = p"-?(\.[0-9]+|[0-9]+(\.[0-9]*)?)" > NumericID
 
-str_id = Alt!(wrd, str_many) > StringID
+    xml_sngl = p"<(\n|[^>])*?/>"
+    xml_open = p"<(\n|[^>])*?(\n|[^/])>"
+    xml_clos = p"</(\n|[^>])*?>"
+    xml_spc  = p"(\n|[^<])*"
+    xml      = Delayed()
+    # we are not checking that the closing element name matches the opening
+    # name, and this could involve a pile of backtracking
+    # TODO - make this more efficient
+    xml_nest = Seq(xml_open, xml_spc, Opt!(xml), xml_spc, xml_clos) > string
+    xml.matcher = Alt(xml_sngl, xml_nest)
 
-num_id = p"-?(\.[0-9]+|[0-9]+(\.[0-9]*)?)" > NumericID
+    xml_id = xml > HtmlID
 
-xml_sngl = p"<(\n|[^>])*?/>"
-xml_open = p"<(\n|[^>])*?(\n|[^/])>"
-xml_clos = p"</(\n|[^>])*?>"
-xml_spc  = p"(\n|[^<])*"
-xml      = Delayed()
-# we are not checking that the closing element name matches the opening
-# name, and this could involve a pile of backtracking
-# TODO - make this more efficient
-xml_nest = Seq(xml_open, xml_spc, Opt!(xml), xml_spc, xml_clos) > string
-xml.matcher = Alt(xml_sngl, xml_nest)
+    id = Alt!(str_id, num_id, xml_id)
 
-xml_id = xml > HtmlID
+    cmp = p"(n|ne|e|se|s|sw|w|nw|c|_)"
+    col = E":"
 
-id = Alt!(str_id, num_id, xml_id)
+    # port grammar seeems to be ambiguous, since :ID could be :point
+    # this is a best guess at what was meant
+    port = Alt!(Seq!(col, spc_star, id, spc_star, col, spc_star, cmp),
+                Seq!(col, spc_star, cmp),
+                Seq!(col, spc_star, id)) > Port
 
-cmp = p"(n|ne|e|se|s|sw|w|nw|c|_)"
-col = E":"
+    # this is a raw ID=ID, not the attr_stmt in the grammar
+    attr = Seq!(id, spc_star, E"=", spc_star, id) > Attribute
 
-# port grammar seeems to be ambiguous, since :ID could be :point
-# this is a best guess at what was meant
-port = Alt!(Seq!(col, spc_star, id, spc_star, col, spc_star, cmp),
-            Seq!(col, spc_star, cmp),
-            Seq!(col, spc_star, id)) > Port
+    attr_sep = Seq!(spc_star, P"[;,]?", spc_star)
+    attr_list = PlusList!(Seq!(E"[", StarList!(attr, attr_sep), E"]"), spc_star) |> Vector{Attribute}
 
-# this is a raw ID=ID, not the attr_stmt in the grammar
-attr = Seq!(id, spc_star, E"=", spc_star, id) > Attribute
+    node_id = Seq!(id, spc_star, Opt!(port)) > NodeID
+    node_stmt = Seq!(node_id, spc_star, Opt!(attr_list)) > Node
 
-attr_sep = Seq!(spc_star, P"[;,]?", spc_star)
-attr_list = PlusList!(Seq!(E"[", StarList!(attr, attr_sep), E"]"), spc_star) |> Vector{Attribute}
+    NoCase(s) = Pattern(join(["[$(lowercase(c))$(uppercase(c))]" for c in s]))
 
-node_id = Seq!(id, spc_star, Opt!(port)) > NodeID
-node_stmt = Seq!(node_id, spc_star, Opt!(attr_list)) > Node
+    stmt = Delayed()
 
-NoCase(s) = Pattern(join(["[$(lowercase(c))$(uppercase(c))]" for c in s]))
+    # not a list because canhave a trailing ;
+    # this eats trailing spaces, but i don't think it matters
+    stmt_list = Star!(Seq!(stmt, spc_star, Opt!(Seq!(E";", spc_star)))) |> Statements
 
-stmt = Delayed()
+    sub_graph = Seq!(~NoCase("subgraph"), spc_star, Opt!(id), spc_star, E"{", spc_star, stmt_list, spc_star, E"}") > SubGraph
 
-stmt_list = StarList!(stmt, Seq!(spc_star, E";", spc_star))
+    # order important here, since we don't backtrack and "subgraph" could
+    # be a node
+    edge_node = Alt!(sub_graph, node_id)
+    edge_sep = Seq!(spc_star, P"(--|->)", spc_star)
+    edge_list = Seq!(edge_node, edge_sep, PlusList!(edge_node, edge_sep)) |> Vector{EdgeNode}
+    edge_stmt = Seq!(edge_list, spc_star, Opt!(attr_list)) > Edge
 
-sub_graph = Seq!(~NoCase("subgraph"), spc_star, Opt!(id), spc_star, E"{", stmt_list, E"}") > SubGraph
+    attr_stmt = Alt!(Seq!(~NoCase("graph"), spc_star, attr_list) > GraphAttributes,
+                     Seq!(~NoCase("node"), spc_star, attr_list) > NodeAttributes,
+                     Seq!(~NoCase("edge"), spc_star, attr_list) > EdgeAttributes)
 
-edge_node = Alt!(node_id, sub_graph)
-edge_sep = Seq!(spc_star, P"(--|->)", spc_star)
-edge_list = Seq!(edge_node, edge_sep, PlusList!(edge_node, edge_sep)) |> Vector{EdgeNode}
-edge_stmt = Seq!(edge_list, spc_star, Opt!(attr_list)) > Edge
+    # order important here as node_stmt can match almost anything
+    stmt.matcher = Alt!(edge_stmt, attr_stmt, attr, sub_graph, node_stmt)
 
-attr_stmt = Alt!(Seq!(~NoCase("graph"), spc_star, attr_list) > GraphAttributes,
-                 Seq!(~NoCase("node"), spc_star, attr_list) > NodeAttributes,
-                 Seq!(~NoCase("edge"), spc_star, attr_list) > EdgeAttributes)
+    strict = Alt!(Seq!(~NoCase("strict"), Insert(true)), Insert(false))
+    direct = Alt!(Seq!(~NoCase("digraph"), Insert(true)),
+                  Seq!(~NoCase("graph"), Insert(false)))
+    graph = Seq!(strict, spc_star, direct, spc_star, Opt!(id), spc_star, E"{", spc_star, stmt_list, spc_star, E"}") > Graph
 
-stmt.matcher = Alt!(node_stmt, edge_stmt, attr_stmt, attr, sub_graph)
+    dot = Seq!(spc_star, graph, spc_star, Eos())
 
-strict = Alt!(Seq!(~NoCase("strict"), Insert(true)), Insert(false))
-direct = Alt!(Seq!(~NoCase("digraph"), Insert(true)),
-              Seq!(~NoCase("graph"), Insert(false)))
-graph = Seq!(strict, spc_star, direct, spc_star, Opt!(id), spc_star, E"{", spc_star, stmt_list, spc_star, E"}") > Graph
+end
 
-dot = Seq!(spc_star, graph, spc_star, Eos())
+
+function parse_dot(s; debug=false)
+    try
+        if debug
+            parse_one_dbg(s, Trace(dot); debug=true)[1]
+        else
+            parse_one(s, dot)[1]
+        end
+    catch x
+        if debug
+            Base.show_backtrace(STDOUT, catch_backtrace())
+        end
+        rethrow()
+    end
+end
+
+
+# expend both nodes and edges, then use sets to de-duplication
+nodes(g::Graph) = union(map(nodes, g.stmts)...)
+nodes(s::Statement) = Set()
+nodes(s::SubGraph) = union(map(nodes, s.stmts)...)
+nodes(n::Node) = nodes(n.id)
+nodes(n::NodeID) = Set([n.id.id])
+nodes(e::Edge) = union(map(nodes, e.nodes)...)
+
+edges(g::Graph) = vcat(map(edges, g.stmts)...)
+edges(s::Statement) = []
+edges(s::SubGraph) = vcat(map(edges, s.stmts)...)
+edges(e::Edge) = []
+
 
 end
