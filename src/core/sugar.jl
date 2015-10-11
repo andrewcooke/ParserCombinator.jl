@@ -22,7 +22,7 @@ end
 
 
 Opt(m::Matcher) = Alt(m, Epsilon())
-
+Opt!(m::Matcher) = Alt!(m, Epsilon())
 
 
 # sweet, sweet sugar

@@ -4,11 +4,11 @@ module DOT
 using ...ParserCombinator
 using Compat
 using AutoHashEquals
-import Base: ==
+import Base: ==, print
 
 export Statement, Statements, ID, StringID, NumericID, HtmlID, Attribute,
-       Attributes, Graph, Port, Node, Edge, Edges, SimpleEdge, ComplexEdge,
-       GraphAttributes, NodeAttributes, EdgeAttributes, SubGraph
+       Attributes, Graph, Port, NodeID, Node, EdgeNode, Edge, GraphAttributes, 
+       NodeAttributes, EdgeAttributes, SubGraph
 
 # i've gone with a very literal parsing, which returns a structure that is
 # pretty much what is described in the grammar at
@@ -58,33 +58,39 @@ end
 @auto_hash_equals immutable SubGraph <: Statement
     id::Nullable{ID}
     stmts::Statements
+    SubGraph(id::ID, s::Statements) = new(id, s)
+    SubGraph(s::Statements) = new(Nullable{ID}(), s)
 end
 
 @auto_hash_equals immutable Port
     id::Nullable{ID}
     point::Nullable{AbstractString}
+    Port(id::ID, p::AbstractString) = new(id, p)
+    Port(id::ID) = new(id, Nullable{AbstractString}())
+    Port(p::AbstractString) = new(Nullable{ID}(), p)
 end
 
-@auto_hash_equals immutable Node <: Statement
+@auto_hash_equals immutable NodeID
     id::ID
     port::Nullable{Port}
+    NodeID(id::ID, p::Port) = new(id, p)
+    NodeID(id::ID) = new(id, Nullable{Port}())
+end    
+
+@auto_hash_equals immutable Node <: Statement
+    id::NodeID
     attrs::Attributes
+    Node(id::NodeID, a::Attributes) = new(id, a)
+    Node(id::NodeID) = new(id, Attributes())
 end
 
-abstract Edge
+typealias EdgeNode Union{NodeID, SubGraph}
 
-@auto_hash_equals immutable Edges <: Statement
-    edges::Vector{Edge}
-end
-
-@auto_hash_equals immutable SimpleEdge
-    id::ID
+@auto_hash_equals immutable Edge <: Statement
+    nodes::Vector{EdgeNode}
     attrs::Attributes
-end
-
-@auto_hash_equals immutable ComplexEdge
-    subgraph::SubGraph
-    attrs::Attributes
+    Edge(n::Vector{EdgeNode}, a::Attributes) = new(n, a)
+    Edge(n::Vector{EdgeNode}) = new(n, Attributes())
 end
 
 @auto_hash_equals immutable GraphAttributes <: Statement
@@ -134,7 +140,7 @@ xml      = Delayed()
 # we are not checking that the closing element name matches the opening
 # name, and this could involve a pile of backtracking
 # TODO - make this more efficient
-xml_nest = Seq(xml_open, xml_spc, Opt(xml), xml_spc, xml_clos) > string
+xml_nest = Seq(xml_open, xml_spc, Opt!(xml), xml_spc, xml_clos) > string
 xml.matcher = Alt(xml_sngl, xml_nest)
 
 xml_id = xml > HtmlID
@@ -146,14 +152,35 @@ col = E":"
 
 # port grammar seeems to be ambiguous, since :ID could be :point
 # this is a best guess at what was meant
-port = Alt!(Seq!(col, spc_star, id, spc_star, col, cmp) > Port,
-            Seq!(col, spc_star, cmp) > (c -> Port(nothing, c)),
-            Seq!(col, spc_star, id) > (i -> Port(i, nothing)))
+port = Alt!(Seq!(col, spc_star, id, spc_star, col, spc_star, cmp),
+            Seq!(col, spc_star, cmp),
+            Seq!(col, spc_star, id)) > Port
 
-atr = Seq!(id, spc_star, E"=", spc_star, id) > Attribute
-sep = Seq!(spc_star, P"[;,]?", spc_star)
+# this is a raw ID=ID, not the attr_stmt in the grammar
+attr = Seq!(id, spc_star, E"=", spc_star, id) > Attribute
 
-atr_list = PlusList!(Seq!(E"[", StarList!(atr, sep), E"]"), spc_star) |> Vector{Attribute}()
+attr_sep = Seq!(spc_star, P"[;,]?", spc_star)
+attr_list = PlusList!(Seq!(E"[", StarList!(attr, attr_sep), E"]"), spc_star) |> Vector{Attribute}
+
+node_id = Seq!(id, spc_star, Opt!(port)) > NodeID
+node_stmt = Seq!(node_id, spc_star, Opt!(attr_list)) > Node
+
+
+NoCase(s) = Pattern(join(["[$(lowercase(c))$(uppercase(c))]" for c in s]))
+
+stmt = Delayed()
+
+stmt_list = StarList!(stmt, Seq!(spc_star, E";", spc_star))
+
+sub_graph = Seq!(~NoCase("subgraph"), spc_star, Opt!(id), spc_star, E"{", stmt_list, E"}") > SubGraph
+
+edge_node = Alt!(node_id, sub_graph)
+
+edge_sep = Seq!(spc_star, P"(--|->)", spc_star)
+edge_list = Seq!(edge_node, edge_sep, PlusList!(edge_node, edge_sep)) |> Vector{EdgeNode}
+edge_stmt = Seq!(edge_list, spc_star, Opt!(attr_list)) > Edge
+
+stmt = Alt!(node_stmt, edge_stmt, attr, sub_graph)
 
 #Seq!(spc_init, graph)
 

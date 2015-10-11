@@ -28,19 +28,28 @@ str_one = D.str_one > D.unesc_join
 @test parse_one("<abc/>", D.id)[1] == HtmlID("<abc/>")
 
 @test parse_one(":A:n", D.port)[1] == Port(StringID("A"), "n")
-@test parse_one(":n", D.port)[1] == Port(nothing, "n")
-@test parse_one(":A", D.port)[1] == Port(StringID("A"), nothing)
+@test parse_one(":n", D.port)[1] == Port("n")
+@test parse_one(":A", D.port)[1] == Port(StringID("A"))
 
-@test parse_one("[a=b]", D.atr_list)[1] == Attribute(StringID("a"), StringID("b"))
-@test parse_one("[a=b c = d]", D.atr_list) == 
-Any[Attribute(StringID("a"), StringID("b")), 
-    Attribute(StringID("c"), StringID("d"))]
-@test parse_one("[a=b; c = d]", D.atr_list) == 
-Any[Attribute(StringID("a"), StringID("b")), 
-    Attribute(StringID("c"), StringID("d"))]
-@test parse_one("[a=b,c=d][e=f]", D.atr_list) == 
-Any[Attribute(StringID("a"), StringID("b")), 
-    Attribute(StringID("c"), StringID("d")),
-    Attribute(StringID("e"), StringID("f"))]
+@test parse_one("[a=b]", D.attr_list)[1] == 
+Attribute[Attribute(StringID("a"), StringID("b"))]
+@test parse_one("[a=b c = d]", D.attr_list)[1] == 
+Attribute[Attribute(StringID("a"), StringID("b")), 
+          Attribute(StringID("c"), StringID("d"))]
+@test parse_one("[a=b; c = d]", D.attr_list)[1] == 
+Attribute[Attribute(StringID("a"), StringID("b")), 
+          Attribute(StringID("c"), StringID("d"))]
+@test parse_one("[a=b,c=d][e=f]", D.attr_list)[1] == 
+Attribute[Attribute(StringID("a"), StringID("b")), 
+          Attribute(StringID("c"), StringID("d")),
+          Attribute(StringID("e"), StringID("f"))]
+
+@test parse_one("a:b:c[d=e]", D.node_stmt)[1] == 
+Node(NodeID(StringID("a"), Port(StringID("b"), "c")), 
+     Attribute[Attribute(StringID("d"), StringID("e"))])
+
+@test parse_one("a--b[c=d]", D.edge_stmt)[1] ==
+Edge(EdgeNode[NodeID(StringID("a")), NodeID(StringID("b"))], 
+     Attribute[Attribute(StringID("c"), StringID("d"))])
 
 println("fragments ok")
