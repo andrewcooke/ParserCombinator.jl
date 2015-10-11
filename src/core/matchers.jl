@@ -1,6 +1,6 @@
 
 
-# TODO - hy aren't State instances immutable?
+# TODO - why aren't State instances immutable?
 
 # some basic definitions for generic matches
 

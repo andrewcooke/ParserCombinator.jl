@@ -150,7 +150,10 @@ port = Alt!(Seq!(col, spc_star, id, spc_star, col, cmp) > Port,
             Seq!(col, spc_star, cmp) > (c -> Port(nothing, c)),
             Seq!(col, spc_star, id) > (i -> Port(i, nothing)))
 
+atr = Seq!(id, spc_star, E"=", spc_star, id) > Attribute
+sep = Seq!(spc_star, P"[;,]?", spc_star)
 
+atr_list = PlusList!(Seq!(E"[", StarList!(atr, sep), E"]"), spc_star)
 
 #Seq!(spc_init, graph)
 

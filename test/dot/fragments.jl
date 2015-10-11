@@ -31,5 +31,16 @@ str_one = D.str_one > D.unesc_join
 @test parse_one(":n", D.port)[1] == Port(nothing, "n")
 @test parse_one(":A", D.port)[1] == Port(StringID("A"), nothing)
 
+@test parse_one("[a=b]", D.atr_list)[1] == Attribute(StringID("a"), StringID("b"))
+@test parse_one("[a=b c = d]", D.atr_list) == 
+Any[Attribute(StringID("a"), StringID("b")), 
+    Attribute(StringID("c"), StringID("d"))]
+@test parse_one("[a=b; c = d]", D.atr_list) == 
+Any[Attribute(StringID("a"), StringID("b")), 
+    Attribute(StringID("c"), StringID("d"))]
+@test parse_one("[a=b,c=d][e=f]", D.atr_list) == 
+Any[Attribute(StringID("a"), StringID("b")), 
+    Attribute(StringID("c"), StringID("d")),
+    Attribute(StringID("e"), StringID("f"))]
 
 println("fragments ok")

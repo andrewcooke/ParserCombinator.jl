@@ -29,3 +29,10 @@ Star(m::Matcher; flatten=true) = flatten ? m[0:end] : m[0:end,:&]
 Plus(m::Matcher; flatten=true) = flatten ? m[1:end] : m[1:end,:&] 
 Star!(m::Matcher; flatten=true) = flatten ? m[0:end,:!] : m[0:end,:&,:!] 
 Plus!(m::Matcher; flatten=true) = flatten ? m[1:end,:!] : m[1:end,:&,:!] 
+
+# list with separator
+
+StarList(m::Matcher, s::Matcher) = Alt(Seq(m, Star(Seq(s, m))), Epsilon())
+StarList!(m::Matcher, s::Matcher) = Alt!(Seq!(m, Star!(Seq!(s, m))), Epsilon())
+PlusList(m::Matcher, s::Matcher) = Seq(m, Star(Seq(s, m)))
+PlusList!(m::Matcher, s::Matcher) = Seq!(m, Star!(Seq!(s, m)))
