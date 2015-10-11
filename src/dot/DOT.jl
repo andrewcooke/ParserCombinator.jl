@@ -8,7 +8,7 @@ import Base: ==, print
 
 export Statement, Statements, ID, StringID, NumericID, HtmlID, Attribute,
        Attributes, Graph, Port, NodeID, Node, EdgeNode, Edge, GraphAttributes, 
-       NodeAttributes, EdgeAttributes, SubGraph
+       NodeAttributes, EdgeAttributes, SubGraph, dot
 
 # i've gone with a very literal parsing, which returns a structure that is
 # pretty much what is described in the grammar at
@@ -53,6 +53,8 @@ typealias Attributes Vector{Attribute}
     directed::Bool
     id::Nullable{ID}
     stmts::Statements
+    Graph(s::Bool, d::Bool, id::ID, s::Statements) = new(s, d, id, s)
+    Graph(s::Bool, d::Bool, s::Statements) = new(s, d, Nullable{ID}(), s)
 end
 
 @auto_hash_equals immutable SubGraph <: Statement
@@ -184,8 +186,11 @@ attr_stmt = Alt!(Seq!(~NoCase("graph"), spc_star, attr_list) > GraphAttributes,
 
 stmt.matcher = Alt!(node_stmt, edge_stmt, attr_stmt, attr, sub_graph)
 
+strict = Alt!(Seq!(~NoCase("strict"), Insert(true)), Insert(false))
+direct = Alt!(Seq!(~NoCase("digraph"), Insert(true)),
+              Seq!(~NoCase("graph"), Insert(false)))
+graph = Seq!(strict, spc_star, direct, spc_star, Opt!(id), spc_star, E"{", spc_star, stmt_list, spc_star, E"}") > Graph
 
-
-#Seq!(spc_init, graph)
+dot = Seq!(spc_star, graph, spc_star, Eos())
 
 end
