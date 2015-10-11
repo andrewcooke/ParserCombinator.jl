@@ -8,7 +8,7 @@ using Base.Test
 using Compat
 
 include("dot/fragments.jl")
-exit()
+#exit()
 
 include("core/sources.jl")
 include("core/fix.jl")
