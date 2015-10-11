@@ -165,7 +165,6 @@ attr_list = PlusList!(Seq!(E"[", StarList!(attr, attr_sep), E"]"), spc_star) |> 
 node_id = Seq!(id, spc_star, Opt!(port)) > NodeID
 node_stmt = Seq!(node_id, spc_star, Opt!(attr_list)) > Node
 
-
 NoCase(s) = Pattern(join(["[$(lowercase(c))$(uppercase(c))]" for c in s]))
 
 stmt = Delayed()
@@ -175,12 +174,15 @@ stmt_list = StarList!(stmt, Seq!(spc_star, E";", spc_star))
 sub_graph = Seq!(~NoCase("subgraph"), spc_star, Opt!(id), spc_star, E"{", stmt_list, E"}") > SubGraph
 
 edge_node = Alt!(node_id, sub_graph)
-
 edge_sep = Seq!(spc_star, P"(--|->)", spc_star)
 edge_list = Seq!(edge_node, edge_sep, PlusList!(edge_node, edge_sep)) |> Vector{EdgeNode}
 edge_stmt = Seq!(edge_list, spc_star, Opt!(attr_list)) > Edge
 
-stmt = Alt!(node_stmt, edge_stmt, attr, sub_graph)
+attr_stmt = Alt!(Seq!(~NoCase("graph"), spc_star, attr_list) > GraphAttributes,
+                 Seq!(~NoCase("node"), spc_star, attr_list) > NodeAttributes,
+                 Seq!(~NoCase("edge"), spc_star, attr_list) > EdgeAttributes)
+
+stmt.matcher = Alt!(node_stmt, edge_stmt, attr_stmt, attr, sub_graph)
 
 #Seq!(spc_init, graph)
 
