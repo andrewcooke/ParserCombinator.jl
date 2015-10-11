@@ -153,7 +153,7 @@ port = Alt!(Seq!(col, spc_star, id, spc_star, col, cmp) > Port,
 atr = Seq!(id, spc_star, E"=", spc_star, id) > Attribute
 sep = Seq!(spc_star, P"[;,]?", spc_star)
 
-atr_list = PlusList!(Seq!(E"[", StarList!(atr, sep), E"]"), spc_star)
+atr_list = PlusList!(Seq!(E"[", StarList!(atr, sep), E"]"), spc_star) |> Vector{Attribute}()
 
 #Seq!(spc_init, graph)
 
