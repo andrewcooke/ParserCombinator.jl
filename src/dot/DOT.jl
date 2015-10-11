@@ -33,69 +33,69 @@ abstract ID
     id::AbstractString
 end
 
-immutable NumericID <: ID
+@auto_hash_equals immutable NumericID <: ID
     id::AbstractString
 end
 
-immutable HtmlID <: ID
+@auto_hash_equals immutable HtmlID <: ID
     id::AbstractString
 end 
 
-immutable Attribute <: Statement
+@auto_hash_equals immutable Attribute <: Statement
     name::ID
     value::ID
 end
 
 typealias Attributes Vector{Attribute}
 
-immutable Graph
+@auto_hash_equals immutable Graph
     strict::Bool
     directed::Bool
     id::Nullable{ID}
     stmts::Statements
 end
 
-immutable SubGraph <: Statement
+@auto_hash_equals immutable SubGraph <: Statement
     id::Nullable{ID}
     stmts::Statements
 end
 
-immutable Port
+@auto_hash_equals immutable Port
     id::Nullable{ID}
     point::Nullable{AbstractString}
 end
 
-immutable Node <: Statement
+@auto_hash_equals immutable Node <: Statement
     id::ID
-    ports::Vector{Port}
+    port::Nullable{Port}
     attrs::Attributes
 end
 
 abstract Edge
 
-immutable Edges <: Statement
+@auto_hash_equals immutable Edges <: Statement
     edges::Vector{Edge}
 end
 
-immutable SimpleEdge
+@auto_hash_equals immutable SimpleEdge
     id::ID
     attrs::Attributes
 end
 
-immutable ComplexEdge
+@auto_hash_equals immutable ComplexEdge
     subgraph::SubGraph
     attrs::Attributes
 end
 
-immutable GraphAttributes <: Statement
+@auto_hash_equals immutable GraphAttributes <: Statement
     attrs::Attributes
 end
 
-immutable NodeAttributes <: Statement
+@auto_hash_equals immutable NodeAttributes <: Statement
     attrs::Attributes
 end
 
-immutable EdgeAttributes <: Statement
+@auto_hash_equals immutable EdgeAttributes <: Statement
     attrs::Attributes
 end
 
@@ -109,14 +109,22 @@ spc_plus = ~Pattern(string(spc, "+"))
 
 wrd = p"[a-zA-Z\200-\377_][a-zA-Z\200-\377_0-9]*"
 
-str = Pattern("((?:[^\"]|\\\")*?)(?:\\\n)?", 1)
-str_once = Seq!(P"\"", str, P"\"")
-str_join = Seq!(str_once, 
-                Star!(Seq!(spc_star, P"\\+", spc_star, str_once))) > string
+# valid strings include:
+# 1 - "..."
+# 2 - "...\
+#      ..."
+# 3 = "..." + "..."
+# and all can contain quoted quotes
+unesc(s) = replace(s, "\\\"", "\"")
+unesc_join(s...) = string(map(unesc, s)...)
+str_cont = Pattern("((?:[^\"\n]|\\\\\")*)\\\\\\\n", 1)
+str_end = p"([^\"\n]|\\\\\")*"
+str_one = Seq!(E"\"", Star!(str_cont), str_end, E"\"")
+str_many = Seq!(str_one, Star!(Seq!(spc_star, E"+", spc_star, str_one))) > unesc_join
 
-str_id = Alt!(wrd, str_join) > StringID
+str_id = Alt!(wrd, str_many) > StringID
 
-num_id = P"-?(\.[0-9]+|[0-9]+(\.[0-9]*)?)" > NumericID
+num_id = p"-?(\.[0-9]+|[0-9]+(\.[0-9]*)?)" > NumericID
 
 xml_sngl = p"<(\n|[^>])*?/>"
 xml_open = p"<(\n|[^>])*?(\n|[^/])>"
@@ -133,7 +141,14 @@ xml_id = xml > HtmlID
 
 id = Alt!(str_id, num_id, xml_id)
 
+cmp = p"(n|ne|e|se|s|sw|w|nw|c|_)"
+col = E":"
 
+# port grammar seeems to be ambiguous, since :ID could be :point
+# this is a best guess at what was meant
+port = Alt!(Seq!(col, spc_star, id, spc_star, col, cmp) > Port,
+            Seq!(col, spc_star, cmp) > (c -> Port(nothing, c)),
+            Seq!(col, spc_star, id) > (i -> Port(i, nothing)))
 
 
 
