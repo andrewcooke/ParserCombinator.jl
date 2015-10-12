@@ -226,7 +226,7 @@ end
 
 
 # set of all nodes
-# expand both nodes and edges, then use sets to de-duplication
+# expand both nodes and edges, then use sets to de-duplicate
 nodes(g::Graph) = union(map(nodes, g.stmts)...)
 nodes(s::Statement) = Set()
 nodes(s::SubGraph) = union(map(nodes, s.stmts)...)
