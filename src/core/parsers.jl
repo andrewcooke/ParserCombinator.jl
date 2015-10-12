@@ -135,7 +135,6 @@ function producer(k::Config, m::Matcher; debug=false)
         while true
             msg = dispatch(k, msg)
             if isempty(k.stack)
-                @assert !isa(msg, Execute)
                 if isa(msg, Execute)
                     error("Unexpected execute message")
                 elseif isa(msg, Success)

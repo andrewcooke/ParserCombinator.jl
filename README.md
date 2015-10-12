@@ -980,6 +980,9 @@ all
 `-[2]:Eos
 ```
 
+Also, `parse_XXX(...., debug=true)` will show a strack trace from within the
+main parse loop (which gives more information on the source of any error).
+
 #### More Information
 
 For more details, I'm afraid your best bet is the source code:

@@ -1,6 +1,12 @@
 
 using ParserCombinator.Parsers.DOT; D = ParserCombinator.Parsers.DOT
 
+for s in ("", " ", "  ", " // ", " /*  */ ", "\n\t")
+    parse_one(s, Trace(D.spc_star + Eos()))
+end
+
+# test wrd too for high bit
+
 str_one = D.str_one > D.unesc_join
 @test parse_one("\"abc\"", str_one)[1] == "abc"
 @test parse_one("\"abc\\\ndef\"", str_one)[1] == "abcdef"

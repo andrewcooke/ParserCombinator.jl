@@ -23,6 +23,8 @@ export Statement, Statements, ID, StringID, NumericID, HtmlID, Attribute,
 # "program" (where order is important, with the "global" node attributes
 # changing as the file is "processed") than a specification.
 
+# see test/dot/examples.jl for examples accessing fields in this structure
+
 abstract Statement
 
 typealias Statements Vector{Statement}
@@ -110,10 +112,9 @@ end
 
 @with_names begin
 
-    spc = "([ \t]|\n#.*|\n|//.*|/\\*[.\n]*?\\*/)"
-    spc_init = ~Pattern(string("(#.*)?", spc, "*"))
-    spc_star = ~Pattern(string(spc, "*"))
-    spc_plus = ~Pattern(string(spc, "+"))
+    spc = "([ \t]|\n#.*|\n|//.*|/\\*(.|\n)*?\\*/)*"
+    spc_init = ~Pattern(string("(#.*)?", spc))
+    spc_star = ~Pattern(spc)
     
     wrd = p"[a-zA-Z\200-\377_][a-zA-Z\200-\377_0-9]*"
     
@@ -173,10 +174,15 @@ end
 
     # not a list because we can have a trailing ;
     # this eats trailing spaces, but i don't think it matters
-    stmt_list = Star!(Seq!(stmt, spc_star, Opt!(Seq!(E";", spc_star)))) |> Statements
+    # the comma (",") below is not in the grammar at graphviz.org but is 
+    # needed to parse the examples in test/examples.jl
+    # related, note that using a comma in this way seems to trigger bugs
+    # in dot itself - see 
+    # https://github.com/JuliaGraphs/LightGraphs.jl/issues/107#issuecomment-131401430
+    stmt_list = Star!(Seq!(stmt, spc_star, P"[;,]?", spc_star)) |> Statements
     stmt_brak = Seq!(E"{", spc_star, stmt_list, spc_star, E"}")
 
-    sub_graph = Seq!(~NoCase("subgraph"), spc_star, Opt!(id), spc_star, stmt_brak) > SubGraph
+    sub_graph = Seq!(Opt!(~NoCase("subgraph")), spc_star, Opt!(id), spc_star, stmt_brak) > SubGraph
 
     # order important here, since we don't backtrack and "subgraph" could
     # be a node
@@ -197,7 +203,7 @@ end
                   Seq!(~NoCase("graph"), Insert(false)))
     graph = Seq!(strict, spc_star, direct, spc_star, Opt!(id), spc_star, stmt_brak) > Graph
 
-    dot = Seq!(spc_star, graph, spc_star, Eos())
+    dot = Seq!(spc_init, graph, spc_star, Eos())
 
 end
 
@@ -229,31 +235,15 @@ nodes(n::NodeID) = Set([n.id.id])
 nodes(e::Edge) = union(map(nodes, e.nodes)...)
 
 # set of all node pairs that correspond to edges
-function edges(g::Graph)
-    e = vcat(map(edges, g.stmts)...)
-    if g.directed
-        Set(e)
-    else
-        Set([tuple(sort([p...])...) for p in e])
-    end
-end
+fix_directed(g::Graph, e) = g.directed ? Set(e) : Set([tuple(sort([p...])...) for p in e])
+edges(g::Graph) = fix_directed(g, vcat(map(edges, g.stmts)...))
 edges(s::Statement) = []
 edges(s::SubGraph) = vcat(map(edges, s.stmts)...)
-edges(n::NodeID) = n.id.id  # special case - list of nodes - expanded below
-pair(a::AbstractString, b::AbstractString) = [(a, b)]
-pair{S1<:AbstractString, S2<:AbstractString}(a::AbstractString, b::Vector{Tuple{S1, S2}}) = 
-vcat([(a, c) for (c, d) in b], [(a, d) for (c, d) in b], b)
-pair{S1<:AbstractString, S2<:AbstractString}(a::Vector{Tuple{S1, S2}}, b::AbstractString) = 
-vcat([(d, b) for (c, d) in a], [(c, b) for (c, d) in a], a)
-pair{S1<:AbstractString, S2<:AbstractString, S3<:AbstractString, S4<:AbstractString}(a::Vector{Tuple{S1, S2}}, b::Vector{Tuple{S3, S4}}) = 
-vcat(vec([(c, e) for (c, d) in a, (e, f) in b]),
-     vec([(c, f) for (c, d) in a, (e, f) in b]),
-     vec([(d, e) for (c, d) in a, (e, f) in b]),
-     vec([(d, f) for (c, d) in a, (e, f) in b]),
-     a, b)
-function edges(e::Edge)
-    nodes = map(edges, e.nodes)
-    vcat([pair(a, b) for (a, b) in zip(nodes, nodes[2:end])]...)
-end
+pair(n1::NodeID, n2::NodeID) = [(n1.id.id, n2.id.id)]
+pair(n::NodeID, s::SubGraph) = vcat([(n.id.id, x) for x in nodes(s)], edges(s))
+pair(s::SubGraph, n::NodeID) = vcat([(x, n.id.id) for x in nodes(s)], edges(s))
+pair(s1::SubGraph, s2::SubGraph) = 
+vcat(vec([(x, y) for x in nodes(s1), y in nodes(s2)]), edges(s1), edges(s2))
+edges(e::Edge) = vcat([pair(a, b) for (a, b) in zip(e.nodes, e.nodes[2:end])]...)
 
 end
