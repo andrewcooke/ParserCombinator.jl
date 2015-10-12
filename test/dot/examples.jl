@@ -10,5 +10,9 @@ d = parse_dot(open(readall, "dot/k6.dot"))
 @test nodes(d) == Set(["a", "b", "c", "d", "e", "f"])
 @test length(edges(d)) == 6*5/2
 
+d = parse_dot(open(readall, "dot/simple-digraph.dot"))
+@test nodes(d) == Set(["a", "b", "c", "d"])
+@test edges(d) == Set([("a","b"),("b","c"),("c","d"),("d","a")])
+
 
 println("examples ok")
