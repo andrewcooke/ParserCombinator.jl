@@ -23,8 +23,8 @@ sound odd, but makes it [easy](#evaluation) to "plug in" memoization, or
 debug traces, or to restrict backtracking in a similar way to Parsec -
 all while using the same grammar.
 
-It also contains a pre-built [parser](#graph-modelling-language) for the Graph
-Modelling Language.
+It also contains pre-built parsers for
+[Graph Modelling Language](#graph-modelling-language) and [DOT](#dot).
 
 ## Example
 
@@ -1068,6 +1068,17 @@ edge 3 - 1
 ```
 
 For further details, please read [GML.jl](src/gml/GML.jl).
+
+### DOT
+
+* `parse_dot` returns a structured AST (see the types in
+  [DOT.jl](src/dot/DOT.jl)).  It has one keyword argument, `debug`, which
+  takes a `Bool` and enables the usual debugging output.
+
+* `nodes(g::Graph)` extracts a set of node names from the structured AST.
+
+* `edges(g::Graph)` extracts a set of edge names (node name pairs) from the
+  structured AST.
 
 ## Design
 
