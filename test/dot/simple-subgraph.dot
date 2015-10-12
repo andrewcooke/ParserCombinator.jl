@@ -1,0 +1,19 @@
+#ignore me
+
+digraph { 
+  subgraph cluster_0 {
+    label="Subgraph A";  
+    a -> b;
+    b -> c;
+    c -> d;
+  }
+
+  // second cluster
+  subgraph cluster_1 {
+    label="Subgraph B";
+    a -> f;
+    f -> c;
+  }
+/* let's try some
+   comments too */
+}
