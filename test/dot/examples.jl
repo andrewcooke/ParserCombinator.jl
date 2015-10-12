@@ -37,7 +37,7 @@ for f in ("path1.dot", "path2.dot")
     @test edges(d) == Set([("a","b"),("a","d"),("b","c"),("b","d"),("c","d"),("c","f"),("e","f"),("d","e")])
 end
 
-# this example also has ocmments (ignored in parse)
+# this example also has comments (ignored in parse)
 d = parse_dot(open(readall, "dot/simple-subgraph.dot"))
 @test nodes(d) == Set(["a", "b", "c", "d", "f"])
 @test edges(d) == Set([("a","b"),("a","f"),("b","c"),("c","d"),("f","c")])
