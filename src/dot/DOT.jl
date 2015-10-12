@@ -4,7 +4,7 @@ module DOT
 using ...ParserCombinator
 using Compat
 using AutoHashEquals
-import Base: ==, print
+import Base: ==
 
 export Statement, Statements, ID, StringID, NumericID, HtmlID, Attribute,
        Attributes, Graph, Port, NodeID, Node, EdgeNode, Edge, GraphAttributes, 
@@ -236,14 +236,14 @@ nodes(e::Edge) = union(map(nodes, e.nodes)...)
 
 # set of all node pairs that correspond to edges
 fix_directed(g::Graph, e) = g.directed ? Set(e) : Set([tuple(sort([p...])...) for p in e])
-edges(g::Graph) = fix_directed(g, vcat(map(edges, g.stmts)...))
-edges(s::Statement) = []
-edges(s::SubGraph) = vcat(map(edges, s.stmts)...)
+edges(g::Graph) = fix_directed(g, vcat(map(edges_, g.stmts)...))
+edges_(s::Statement) = []
+edges_(s::SubGraph) = vcat(map(edges_, s.stmts)...)
 pair(n1::NodeID, n2::NodeID) = [(n1.id.id, n2.id.id)]
-pair(n::NodeID, s::SubGraph) = vcat([(n.id.id, x) for x in nodes(s)], edges(s))
-pair(s::SubGraph, n::NodeID) = vcat([(x, n.id.id) for x in nodes(s)], edges(s))
+pair(n::NodeID, s::SubGraph) = vcat([(n.id.id, x) for x in nodes(s)], edges_(s))
+pair(s::SubGraph, n::NodeID) = vcat([(x, n.id.id) for x in nodes(s)], edges_(s))
 pair(s1::SubGraph, s2::SubGraph) = 
-vcat(vec([(x, y) for x in nodes(s1), y in nodes(s2)]), edges(s1), edges(s2))
-edges(e::Edge) = vcat([pair(a, b) for (a, b) in zip(e.nodes, e.nodes[2:end])]...)
+vcat(vec([(x, y) for x in nodes(s1), y in nodes(s2)]), edges_(s1), edges_(s2))
+edges_(e::Edge) = vcat([pair(a, b) for (a, b) in zip(e.nodes, e.nodes[2:end])]...)
 
 end
