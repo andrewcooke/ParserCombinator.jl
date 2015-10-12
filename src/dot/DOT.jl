@@ -202,6 +202,7 @@ end
 end
 
 
+# the file structured using the types above.
 function parse_dot(s; debug=false)
     try
         if debug
@@ -227,13 +228,32 @@ nodes(n::Node) = nodes(n.id)
 nodes(n::NodeID) = Set([n.id.id])
 nodes(e::Edge) = union(map(nodes, e.nodes)...)
 
-# this generates a set of all node pairs that correspond to edges
-# see test/subgraphs.jl for how subgraphs in edges are handled - i have
-# no idea if it's ok or not.
-edges(g::Graph) = vcat(map(edges, g.stmts)...)
+# generate a set of all node pairs that correspond to edges
+function edges(g::Graph)
+    e = vcat(map(edges, g.stmts)...)
+    if g.directed
+        Set(e)
+    else
+        Set([tuple(sort([p...])...) for p in e])
+    end
+end
 edges(s::Statement) = []
 edges(s::SubGraph) = vcat(map(edges, s.stmts)...)
-edges(e::Edge) = []
-
+edges(n::NodeID) = n.id.id  # special case - list of nodes - expanded below
+pair(a::AbstractString, b::AbstractString) = [(a, b)]
+pair{S1<:AbstractString, S2<:AbstractString}(a::AbstractString, b::Vector{Tuple{S1, S2}}) = 
+vcat([(a, c) for (c, d) in b], [(a, d) for (c, d) in b], b)
+pair{S1<:AbstractString, S2<:AbstractString}(a::Vector{Tuple{S1, S2}}, b::AbstractString) = 
+vcat([(d, b) for (c, d) in a], [(c, b) for (c, d) in a], a)
+pair{S1<:AbstractString, S2<:AbstractString, S3<:AbstractString, S4<:AbstractString}(a::Vector{Tuple{S1, S2}}, b::Vector{Tuple{S3, S4}}) = 
+vcat(vec([(c, e) for (c, d) in a, (e, f) in b]),
+     vec([(c, f) for (c, d) in a, (e, f) in b]),
+     vec([(d, e) for (c, d) in a, (e, f) in b]),
+     vec([(d, f) for (c, d) in a, (e, f) in b]),
+     a, b)
+function edges(e::Edge)
+    nodes = map(edges, e.nodes)
+    vcat([pair(a, b) for (a, b) in zip(nodes, nodes[2:end])]...)
+end
 
 end

@@ -7,10 +7,11 @@ graph {
     a -- b
     a -- c
   }
-  c -- b
+  d -- e
 }
 """)
-@test nodes(d) == Set(["a", "b", "c"])
+@test nodes(d) == Set(["a", "b", "c", "d", "e"])
+@test edges(d) == Set([("d","e"),("a","c"),("a","b")])
 
 d = parse_dot("""
 graph {
@@ -18,10 +19,11 @@ graph {
     a -- b
     a -- c
   }
-  c; d;
+  d; e;
 }
 """)
-@test nodes(d) == Set(["a", "b", "c", "d"])
+@test nodes(d) == Set(["a", "b", "c", "d", "e"])
+@test edges(d) == Set([("a","c"),("a","b")])
 
 d = parse_dot("""
 graph {
@@ -32,5 +34,14 @@ graph {
 }
 """)
 @test nodes(d) == Set(["a", "b", "c", "d", "e"])
+@test edges(d) == Set([("a","b"),("a","c"),("a","d"),("b","c"),("b","e"),("c","d"),("c","e"),("d","e")])
+
+d = parse_dot("""
+graph {
+  subgraph { a -- b } -- subgraph { c -- d }
+}
+""")
+@test nodes(d) == Set(["a", "b", "c", "d"])
+@test edges(d) == Set([("a","b"),("a","c"),("a","d"),("b","c"),("b","d"),("c","d")])
 
 println("subgraphs ok")
