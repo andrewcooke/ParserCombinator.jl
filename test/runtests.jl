@@ -9,7 +9,7 @@ using Compat
 
 include("dot/fragments.jl")
 include("dot/subgraphs.jl")
-include("dot/simple.jl")
+include("dot/examples.jl")
 exit()
 
 include("core/sources.jl")
