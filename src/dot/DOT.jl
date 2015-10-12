@@ -219,8 +219,8 @@ function parse_dot(s; debug=false)
 end
 
 
-# expend both nodes and edges, then use sets to de-duplication
-# this generates a simple, flattened set of all node IDs
+# set of all nodes
+# expand both nodes and edges, then use sets to de-duplication
 nodes(g::Graph) = union(map(nodes, g.stmts)...)
 nodes(s::Statement) = Set()
 nodes(s::SubGraph) = union(map(nodes, s.stmts)...)
@@ -228,7 +228,7 @@ nodes(n::Node) = nodes(n.id)
 nodes(n::NodeID) = Set([n.id.id])
 nodes(e::Edge) = union(map(nodes, e.nodes)...)
 
-# generate a set of all node pairs that correspond to edges
+# set of all node pairs that correspond to edges
 function edges(g::Graph)
     e = vcat(map(edges, g.stmts)...)
     if g.directed
