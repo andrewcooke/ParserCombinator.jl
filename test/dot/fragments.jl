@@ -23,12 +23,6 @@ str_one = D.str_one > D.unesc_join
 
 @test parse_one("-3.14", D.num_id)[1] == NumericID("-3.14")
 
-#@test parse_one("<abc/>", D.xml_id)[1] == HtmlID("<abc/>")
-#@test parse_one("<abc></abc>", D.xml_id)[1] == HtmlID("<abc></abc>")
-#@test parse_one("<abc> \n</abc>", D.xml_id)[1] == HtmlID("<abc> \n</abc>")
-#@test parse_one("<abc><def/></abc>", D.xml_id)[1] == HtmlID("<abc><def/></abc>")
-#@test parse_one("<abc><abc></abc></abc>", D.xml_id)[1] == HtmlID("<abc><abc></abc></abc>")
-
 @test parse_one("<<abc/>>", D.html_id)[1] == HtmlID("<abc/>")
 @test parse_one("<<abc></abc>>", D.html_id)[1] == HtmlID("<abc></abc>")
 @test parse_one("<<abc> \n</abc>>", D.html_id)[1] == HtmlID("<abc> \n</abc>")
