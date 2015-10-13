@@ -55,29 +55,29 @@ typealias Attributes Vector{Attribute}
     directed::Bool
     id::Nullable{ID}
     stmts::Statements
-    Graph(s::Bool, d::Bool, id::ID, st::Statements) = new(s, d, id, st)
+    Graph(s::Bool, d::Bool, id::ID, st::Statements) = new(s, d, Nullable{ID}(id), st)
     Graph(s::Bool, d::Bool, st::Statements) = new(s, d, Nullable{ID}(), st)
 end
 
 @auto_hash_equals immutable SubGraph <: Statement
     id::Nullable{ID}
     stmts::Statements
-    SubGraph(id::ID, s::Statements) = new(id, s)
+    SubGraph(id::ID, s::Statements) = new(Nullable{ID}(id), s)
     SubGraph(s::Statements) = new(Nullable{ID}(), s)
 end
 
 @auto_hash_equals immutable Port
     id::Nullable{ID}
     point::Nullable{AbstractString}
-    Port(id::ID, p::AbstractString) = new(id, p)
-    Port(id::ID) = new(id, Nullable{AbstractString}())
-    Port(p::AbstractString) = new(Nullable{ID}(), p)
+    Port(id::ID, p::AbstractString) = new(Nullable{ID}(id), Nullable{AbstractString}(p))
+    Port(id::ID) = new(Nullable{ID}(id), Nullable{AbstractString}())
+    Port(p::AbstractString) = new(Nullable{ID}(), Nullable{AbstractString}(p))
 end
 
 @auto_hash_equals immutable NodeID
     id::ID
     port::Nullable{Port}
-    NodeID(id::ID, p::Port) = new(id, p)
+    NodeID(id::ID, p::Port) = new(id, Nullable{Port}(p))
     NodeID(id::ID) = new(id, Nullable{Port}())
 end    
 
@@ -85,16 +85,17 @@ end
     id::NodeID
     attrs::Attributes
     Node(id::NodeID, a::Attributes) = new(id, a)
-    Node(id::NodeID) = new(id, Attributes())
+    Node(id::NodeID) = new(id, Attribute[])
 end
 
-typealias EdgeNode Union{NodeID, SubGraph}
+@compat typealias EdgeNode Union{NodeID, SubGraph}
+typealias EdgeNodes Vector{EdgeNode}
 
 @auto_hash_equals immutable Edge <: Statement
-    nodes::Vector{EdgeNode}
+    nodes::EdgeNodes
     attrs::Attributes
-    Edge(n::Vector{EdgeNode}, a::Attributes) = new(n, a)
-    Edge(n::Vector{EdgeNode}) = new(n, Attributes())
+    Edge(n::EdgeNodes, a::Attributes) = new(n, a)
+    Edge(n::EdgeNodes) = new(n, Attribute[])
 end
 
 @auto_hash_equals immutable GraphAttributes <: Statement
@@ -157,7 +158,8 @@ end
     attr = Seq!(id, spc_star, E"=", spc_star, id) > Attribute
 
     spc_attr = ~Pattern(mkspc("|;|,"))
-    attr_list = PlusList!(Seq!(E"[", StarList!(attr, spc_attr), E"]"), spc_star) |> Vector{Attribute}
+    # for some reason 0.3 does not like |> Attributes here
+    attr_list = PlusList!(Seq!(E"[", StarList!(attr, spc_attr), E"]"), spc_star) |> (x -> Attribute[x...])
 
     node_id = Seq!(id, spc_star, Opt!(port)) > NodeID
     node_stmt = Seq!(node_id, spc_star, Opt!(attr_list)) > Node
@@ -174,7 +176,8 @@ end
     # in dot itself - see 
     # https://github.com/JuliaGraphs/LightGraphs.jl/issues/107#issuecomment-131401430
     spc_stmt = ~Pattern(mkspc("|;|,"))
-    stmt_list = Star!(Seq!(stmt, spc_stmt)) |> Statements
+    # |> Statements but for 0.3
+    stmt_list = Star!(Seq!(stmt, spc_stmt)) |> (x -> Statement[x...])
     stmt_brak = Seq!(E"{", spc_star, stmt_list, spc_star, E"}")
 
     sub_graph = Seq!(Opt!(~NoCase("subgraph")), spc_star, Opt!(id), spc_star, stmt_brak) > SubGraph
@@ -183,7 +186,8 @@ end
     # be a node
     edge_node = Alt!(sub_graph, node_id)
     edge_sep = Seq!(spc_star, P"(--|->)", spc_star)
-    edge_list = Seq!(edge_node, edge_sep, PlusList!(edge_node, edge_sep)) |> Vector{EdgeNode}
+    # |> EdgeNodes but for 0.3
+    edge_list = Seq!(edge_node, edge_sep, PlusList!(edge_node, edge_sep)) |> (x -> EdgeNode[x...])
     edge_stmt = Seq!(edge_list, spc_star, Opt!(attr_list)) > Edge
 
     attr_stmt = Alt!(Seq!(~NoCase("graph"), spc_star, attr_list) > GraphAttributes,
@@ -191,7 +195,7 @@ end
                      Seq!(~NoCase("edge"), spc_star, attr_list) > EdgeAttributes)
 
     # order important here as node_stmt can match almost anything
-    stmt.matcher = Alt!(edge_stmt, attr_stmt, attr, sub_graph, node_stmt)
+    stmt.matcher = Nullable{Matcher}(Alt!(edge_stmt, attr_stmt, attr, sub_graph, node_stmt))
 
     strict = Alt!(Seq!(~NoCase("strict"), Insert(true)), Insert(false))
     direct = Alt!(Seq!(~NoCase("digraph"), Insert(true)),

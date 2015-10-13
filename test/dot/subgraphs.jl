@@ -9,7 +9,7 @@ graph {
   }
   d -- e
 }
-""")
+""", debug=true)
 @test nodes(d) == Set(["a", "b", "c", "d", "e"])
 @test edges(d) == Set([("d","e"),("a","c"),("a","b")])
 
