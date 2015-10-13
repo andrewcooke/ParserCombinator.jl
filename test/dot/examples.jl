@@ -63,4 +63,12 @@ d2 = parse_dot(open(readall, "dot/large2.dot"))
 @test nodes(d1) == nodes(d2)
 @test edges(d1) == edges(d2)
 
+s = open(readall, "dot/tictactoe.dot")
+@time d = parse_dot(s)
+@time n = nodes(d)
+@time e = edges(d)
+# these numbers are not really checks, just what the code returns
+@test length(n) == 744
+@test length(e) == 4361
+
 println("examples ok")

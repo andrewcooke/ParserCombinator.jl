@@ -112,7 +112,9 @@ end
 
 @with_names begin
 
-    spc = "([ \t]|\n#.*|\n|//.*|/\\*(.|\n)*?\\*/)*"
+    mkspc(x) = "([ \t]|\n#.*|\n|//.*|/\\*(.|\n)*?\\*/$x)*"
+
+    spc = mkspc("")
     spc_init = ~Pattern(string("(#.*)?", spc))
     spc_star = ~Pattern(spc)
     
@@ -135,35 +137,27 @@ end
 
     num_id = p"-?(\.[0-9]+|[0-9]+(\.[0-9]*)?)" > NumericID
 
-    xml_sngl = p"<(\n|[^>])*?/>"
-    xml_open = p"<(\n|[^>])*?(\n|[^/])>"
-    xml_clos = p"</(\n|[^>])*?>"
-    xml_spc  = p"(\n|[^<])*"
-    xml      = Delayed()
-    # we are not checking that the closing element name matches the opening
-    # name, and this could involve a pile of backtracking
-    # TODO - make this more efficient
-    xml_nest = Seq(xml_open, xml_spc, Opt!(xml), xml_spc, xml_clos) > string
-    xml.matcher = Alt(xml_sngl, xml_nest)
+    # this is bracketed by <> (in addition to the xml).  not clear from
+    # the grammar, but see test/dot/tictactoe.dot
+    html_id = Pattern("<((:?[ \t\n]|<(:?[^<>]|\n)+>)*)>", 1) > HtmlID
 
-    xml_id = xml > HtmlID
-
-    id = Alt!(str_id, num_id, xml_id)
+    id = Alt!(str_id, num_id, html_id)
 
     cmp = p"(n|ne|e|se|s|sw|w|nw|c|_)"
+    spc_col = ~Pattern(mkspc("|:"))
     col = E":"
 
     # port grammar seeems to be ambiguous, since :ID could be :point
     # this is a best guess at what was meant
-    port = Alt!(Seq!(col, spc_star, id, spc_star, col, spc_star, cmp),
+    port = Alt!(Seq!(col, spc_star, id, spc_col, cmp),
                 Seq!(col, spc_star, cmp),
                 Seq!(col, spc_star, id)) > Port
 
     # this is a raw ID=ID, not the attr_stmt in the grammar
     attr = Seq!(id, spc_star, E"=", spc_star, id) > Attribute
 
-    attr_sep = Seq!(spc_star, P"[;,]?", spc_star)
-    attr_list = PlusList!(Seq!(E"[", StarList!(attr, attr_sep), E"]"), spc_star) |> Vector{Attribute}
+    spc_attr = ~Pattern(mkspc("|;|,"))
+    attr_list = PlusList!(Seq!(E"[", StarList!(attr, spc_attr), E"]"), spc_star) |> Vector{Attribute}
 
     node_id = Seq!(id, spc_star, Opt!(port)) > NodeID
     node_stmt = Seq!(node_id, spc_star, Opt!(attr_list)) > Node
@@ -179,7 +173,8 @@ end
     # related, note that using a comma in this way seems to trigger bugs
     # in dot itself - see 
     # https://github.com/JuliaGraphs/LightGraphs.jl/issues/107#issuecomment-131401430
-    stmt_list = Star!(Seq!(stmt, spc_star, P"[;,]?", spc_star)) |> Statements
+    spc_stmt = ~Pattern(mkspc("|;|,"))
+    stmt_list = Star!(Seq!(stmt, spc_stmt)) |> Statements
     stmt_brak = Seq!(E"{", spc_star, stmt_list, spc_star, E"}")
 
     sub_graph = Seq!(Opt!(~NoCase("subgraph")), spc_star, Opt!(id), spc_star, stmt_brak) > SubGraph
