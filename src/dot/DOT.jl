@@ -112,6 +112,7 @@ end
 
 @with_names begin
 
+    # x can include alternatives that can also be discarded
     mkspc(x) = "([ \t]|\n#.*|\n|//.*|/\\*(.|\n)*?\\*/$x)*"
 
     spc = mkspc("")
@@ -144,12 +145,11 @@ end
     id = Alt!(str_id, num_id, html_id)
 
     cmp = p"(n|ne|e|se|s|sw|w|nw|c|_)"
-    spc_col = ~Pattern(mkspc("|:"))
     col = E":"
 
     # port grammar seeems to be ambiguous, since :ID could be :point
     # this is a best guess at what was meant
-    port = Alt!(Seq!(col, spc_star, id, spc_col, cmp),
+    port = Alt!(Seq!(col, spc_star, id, spc_star, col, spc_star, cmp),
                 Seq!(col, spc_star, cmp),
                 Seq!(col, spc_star, id)) > Port
 
