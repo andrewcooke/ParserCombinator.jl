@@ -40,7 +40,7 @@ graph [
 ]
 "
 
-root = parse_dict(example1; debug=true)
+root = parse_dict(example1)
 
 for graph in root[:graph]
     println("graph $(graph[:label])")
