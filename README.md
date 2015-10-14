@@ -1205,7 +1205,7 @@ next value from the source, plus a new iter.
 The initial call (ie the first time a given value of `i` is used,
 before any backtracking) will have `s` equal to `CLEAN`.
 
-A matcher returns a `Message` which indicates to the trampine how
+A matcher returns a `Message` which indicates to the trampoline how
 processing should continue:
 
 * `Failure` indicates that the match has failed and probably (depending
