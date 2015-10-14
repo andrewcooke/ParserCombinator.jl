@@ -1010,6 +1010,9 @@ For more details, I'm afraid your best bet is the source code:
 
 ### Graph Modelling Language
 
+GML describes a graph using a general dict / list format (something like
+JSON).
+
 * `parse_raw` returns lists and tuples that directly match the GML structure.
 
 * `parse_dict` places the same data in nested dicts and vectors.  The keys are
@@ -1071,6 +1074,10 @@ For further details, please read [GML.jl](src/gml/GML.jl).
 
 ### DOT
 
+DOT describes a graph using a complex format that resembles a program (with
+mutable state) more than a specification (see comments in
+[source](src/dot/DOT.jl).
+
 * `parse_dot` returns a structured AST (see the types in
   [DOT.jl](src/dot/DOT.jl)).  It has one keyword argument, `debug`, which
   takes a `Bool` and enables the usual debugging output.
@@ -1079,6 +1086,41 @@ For further details, please read [GML.jl](src/gml/GML.jl).
 
 * `edges(g::Graph)` extracts a set of edge names (node name pairs) from the
   structured AST.
+
+For example, to print node IDs and edge connections in a graph
+
+```julia
+using ParserCombinator.Parsers.DOT
+
+my_graph = "graph {
+  1 -- 2
+  2 -- 3
+  3 -- 1
+}"
+
+root = parse_dot(my_graph)
+
+for node in nodes(root)
+    println("node $(node)")
+end
+for (node1, node2) in edges(root)
+    println("edge $(node1) - $(node2)")
+end
+```
+
+giving
+
+```
+node 2
+node 3
+edge 2 - 3
+edge 1 - 3
+edge 1 - 2
+```
+
+Nodes and edges are unordered (returned as a `Set`).  The graph specification
+is undirected (cf `digraph {...}`) and so the order of nodes in an edge is in
+canonical (sorted) form.
 
 ## Design
 
@@ -1202,6 +1244,8 @@ can use regular expressions - `p"pattern"` for example), and you can construct
 a string from multiple characters using `> string`.
 
 ## Releases
+
+1.7.0 - 2015-10-13 - Added DOT parser.
 
 1.6.0 - 2015-07-26 - Changed from `s"` to `e"`; added support for fast regex
 patch.

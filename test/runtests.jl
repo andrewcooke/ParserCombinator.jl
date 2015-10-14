@@ -38,6 +38,7 @@ module DotTest
 using ParserCombinator
 using Base.Test
 using Compat
+include("dot/example.jl")
 include("dot/fragments.jl")
 include("dot/subgraphs.jl")
 include("dot/examples.jl")
