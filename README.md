@@ -1209,7 +1209,7 @@ A matcher returns a `Message` which indicates to the trampoline how
 processing should continue:
 
 * `Failure` indicates that the match has failed and probably (depending
-  on parent matcher and configuration triggers backtracking).  There
+  on parent matcher and configuration) triggers backtracking.  There
   is a single instance of the type, `FAILURE`.
 
 * `Success` indicates that the match succeeded, and so contains a
@@ -1231,7 +1231,7 @@ failure(k::Config, m::Matcher, s::State) :: Message
 success(k::Config, m::Matcher, s::State, t::State, i, r::Value) :: Message
 ```
 
-where the parent matcher can do any clean-up work, resulting in a new
+where the parent matcher (`m`) can do any clean-up work, resulting in a new
 `Message`.
 
 Note that the child's state, `t`, is returned to the parent.  It is
