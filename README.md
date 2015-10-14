@@ -680,6 +680,12 @@ Drop stuff you don't need.
 Transform things into containers so that your result has nice types.  Look at
 how the [example](#example) works.
 
+Understand the format you a parsing.  What motivated the person who designed
+the format?  Compare the [GML](src/gml/GML.jl) and [DOT](src/dot/DOT.jl)
+parsers - they return different results because the format authors cared about
+different things.  GML is an elegant, general data format, while DOT is a
+sequential description - a program, almost - that encodes graph layouts.
+
 #### Adding Matchers
 
 First, are you sure you need to add a matcher?  You can do a *lot* with
@@ -1076,7 +1082,7 @@ For further details, please read [GML.jl](src/gml/GML.jl).
 
 DOT describes a graph using a complex format that resembles a program (with
 mutable state) more than a specification (see comments in
-[source](src/dot/DOT.jl).
+[source](src/dot/DOT.jl)).
 
 * `parse_dot` returns a structured AST (see the types in
   [DOT.jl](src/dot/DOT.jl)).  It has one keyword argument, `debug`, which
@@ -1124,8 +1130,8 @@ canonical (sorted) form.
 
 ## Design
 
-For a longer discussion of the design, please see 
-[this blog post](http://www.acooke.org/cute/DetailedDi0.html), also available 
+For a longer discussion of the design of ParserCombinator.jl, please see
+[this blog post](http://www.acooke.org/cute/DetailedDi0.html), also available
 [here](design.txt).
 
 ### Overview
