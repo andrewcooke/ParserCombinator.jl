@@ -680,11 +680,12 @@ Drop stuff you don't need.
 Transform things into containers so that your result has nice types.  Look at
 how the [example](#example) works.
 
-Understand the format you a parsing.  What motivated the person who designed
-the format?  Compare the [GML](src/gml/GML.jl) and [DOT](src/dot/DOT.jl)
-parsers - they return different results because the format authors cared about
-different things.  GML is an elegant, general data format, while DOT is a
-sequential description - a program, almost - that encodes graph layouts.
+Understand the format you are parsing.  What motivated the person who
+designed the format?  Compare the [GML](src/gml/GML.jl) and
+[DOT](src/dot/DOT.jl) parsers - they return different results because
+the format authors cared about different things.  GML is an elegant,
+general data format, while DOT is a sequential description - a
+program, almost - that encodes graph layouts.
 
 #### Adding Matchers
 
