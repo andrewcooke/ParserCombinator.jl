@@ -1084,9 +1084,10 @@ DOT describes a graph using a complex format that resembles a program (with
 mutable state) more than a specification (see comments in
 [source](src/dot/DOT.jl)).
 
-* `parse_dot` returns a structured AST (see the types in
-  [DOT.jl](src/dot/DOT.jl)).  It has one keyword argument, `debug`, which
-  takes a `Bool` and enables the usual debugging output.
+* `parse_dot` returns a list of structured AST (see the types in
+  [DOT.jl](src/dot/DOT.jl)), one per graph in the file.  It has one keyword
+  argument, `debug`, which takes a `Bool` and enables the usual debugging
+  output.
 
 * `nodes(g::Graph)` extracts a set of node names from the structured AST.
 
