@@ -1,0 +1,17 @@
+graph { 
+  a -- b;
+  b -- c; 
+  a -- c; 
+  d -- c; 
+  e -- c; 
+  e -- a; 
+}
+
+graph two { 
+  a -- b;
+  b -- c; 
+  a -- c; 
+  d -- c; 
+  e -- c; 
+  e -- a; 
+}

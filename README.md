@@ -680,12 +680,11 @@ Drop stuff you don't need.
 Transform things into containers so that your result has nice types.  Look at
 how the [example](#example) works.
 
-Understand the format you are parsing.  What motivated the person who
-designed the format?  Compare the [GML](src/gml/GML.jl) and
-[DOT](src/dot/DOT.jl) parsers - they return different results because
-the format authors cared about different things.  GML is an elegant,
-general data format, while DOT is a sequential description - a
-program, almost - that encodes graph layouts.
+Understand the format you a parsing.  What motivated the person who designed
+the format?  Compare the [GML](src/gml/GML.jl) and [DOT](src/dot/DOT.jl)
+parsers - they return different results because the format authors cared about
+different things.  GML is an elegant, general data format, while DOT is a
+sequential description - a program, almost - that encodes graph layouts.
 
 #### Adding Matchers
 
@@ -1085,9 +1084,10 @@ DOT describes a graph using a complex format that resembles a program (with
 mutable state) more than a specification (see comments in
 [source](src/dot/DOT.jl)).
 
-* `parse_dot` returns a structured AST (see the types in
-  [DOT.jl](src/dot/DOT.jl)).  It has one keyword argument, `debug`, which
-  takes a `Bool` and enables the usual debugging output.
+* `parse_dot` returns a list of structured AST (see the types in
+  [DOT.jl](src/dot/DOT.jl)), one per graph in the file.  It has one keyword
+  argument, `debug`, which takes a `Bool` and enables the usual debugging
+  output.
 
 * `nodes(g::Graph)` extracts a set of node names from the structured AST.
 

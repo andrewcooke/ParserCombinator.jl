@@ -202,18 +202,18 @@ end
                   Seq!(~NoCase("graph"), Insert(false)))
     graph = Seq!(strict, spc_star, direct, spc_star, Opt!(id), spc_star, stmt_brak) > Graph
 
-    dot = Seq!(spc_init, graph, spc_star, Eos())
+    dot = Seq!(spc_init, Plus!(Seq!(graph, spc_star)), Eos())
 
 end
 
 
-# the file structured using the types above.
+# the file structured using the types above (returns an array of graphs)
 function parse_dot(s; debug=false)
     try
         if debug
-            parse_one_dbg(s, Trace(dot); debug=true)[1]
+            parse_one_dbg(s, Trace(dot); debug=true)
         else
-            parse_one(s, dot)[1]
+            parse_one(s, dot)
         end
     catch x
         if debug

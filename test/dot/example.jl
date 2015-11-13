@@ -8,7 +8,7 @@ my_graph = "graph {
 }
 "
 
-root = parse_dot(my_graph)
+root = parse_dot(my_graph)[1]
 
 for node in nodes(root)
     println("node $(node)")
