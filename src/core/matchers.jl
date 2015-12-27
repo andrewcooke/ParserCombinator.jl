@@ -723,9 +723,9 @@ failure(k::Config, m::Not, s::NotState) = Success(s, s.iter, EMPTY)
     text::AbstractString
     regex::Regex
     groups::Tuple
-    Pattern(r::Regex, group::Int...) = new(:Pattern, r.pattern, Regex("^" * r.pattern * "(.??)"), group)
-    Pattern(s::AbstractString, group::Int...) = new(:Pattern, s, Regex("^" * s * "(.??)"), group)
-    Pattern(s::AbstractString, flags::AbstractString, group::Int...) = new(:Pattern. s, Regex("^" * s * "(.??)", flags), group)
+    Pattern(r::Regex, group::Int...) = new(:Pattern, r.pattern, Regex("^(?:" * r.pattern * ")(.??)"), group)
+    Pattern(s::AbstractString, group::Int...) = new(:Pattern, s, Regex("^(?:" * s * ")(.??)"), group)
+    Pattern(s::AbstractString, flags::AbstractString, group::Int...) = new(:Pattern. s, Regex("^(?:" * s * ")(.??)", flags), group)
 end
 
 print_field(m::Pattern, ::Type{Val{:text}}) = "text=\"$(m.text)\""

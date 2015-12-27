@@ -17,6 +17,8 @@
 @test parse_one("ab", Series(Pattern(r"a"), Dot(); flatten=false)) == Any[["a"], ['b']]
 @test parse_one("ab", Series(Pattern(r"a"), Dot())) == Any["a", 'b']
 @test parse_one("ab", Seq(Pattern(r"a"), Dot())) == ["a", 'b']
+@test parse_one("abc", Pattern("(.)(.)(.)", 1, 3)+Eos()) == ["a", "c"]
+@test parse_one("true", p"([Tt][Rr][Uu][Ee])|([Ff][Aa][Ll][Ss][Ee])"+Eos()) == ["true"]
 @test parse_one("abc", Seq(Equal("a"))) == ["a"]
 @test parse_one("abc", Seq(Equal("a"), Equal("b"))) == ["a", "b"]
 @test parse_one("abc", Seq(p"."[1:2], Equal("c"))) == ["a", "b", "c"]
