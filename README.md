@@ -284,7 +284,7 @@ julia> parse_one("abc", E"a" + e"b")
  "b"
 ```
 
-Note the `~` (tilde / home directory) and capital `S` in the last two
+Note the `~` (tilde / home directory) and capital `E` in the last two
 examples, respectively.
 
 #### Alternates
