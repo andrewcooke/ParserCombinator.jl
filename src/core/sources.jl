@@ -53,15 +53,10 @@ end
 # given a source and iterator, return following text for regexp
 forwards(s::AbstractString, i) = SubString(s, i)
 
-discard(::ASCIIString, i, n) = i + n
-
-# UTF strings are not directly indexable
-function discard(s::AbstractString, i, n)
-    for j in 1:n
-        c, i = next(s, i)
-    end
-    i
-end
+# originally i thought that UTF8 would require code to move forwards
+# the given number of characters.  but discard() is called only from
+# regex and that returns the number of *bytes*.
+discard(::AbstractString, i, n) = i + n
 
 # io instance, from which lines are read.  the lines are stored so that we
 # have backtracking.  this is pretty pointless, because you might as well just
