@@ -369,7 +369,7 @@ type DepthSlurp!{I}<:RepeatState
     result::Vector{Value}
     iters::Vector{I}
 end
-hash(::DepthSlurp!) = throw(CacheException())
+hash(::DepthSlurp!, h::UInt) = throw(CacheException())
 
 arbitrary(s::DepthSlurp!) = s.iters[1]
 
@@ -755,7 +755,7 @@ end
 
 # support loops
 
-@auto_hash_equals type Delayed<:Matcher
+type Delayed<:Matcher
     name::Symbol
     matcher::Nullable{Matcher}
     Delayed() = new(:Delayed, Nullable{Matcher}())
