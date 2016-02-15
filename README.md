@@ -1,7 +1,9 @@
-[![Build
-Status](https://travis-ci.org/andrewcooke/ParserCombinator.jl.png)](https://travis-ci.org/andrewcooke/ParserCombinator.jl)
+[![Build Status](https://travis-ci.org/andrewcooke/ParserCombinator.jl.png)](https://travis-ci.org/andrewcooke/ParserCombinator.jl)
 [![Coverage Status](https://coveralls.io/repos/andrewcooke/ParserCombinator.jl/badge.svg)](https://coveralls.io/r/andrewcooke/ParserCombinator.jl)
-[![ParserCombinator](http://pkg.julialang.org/badges/ParserCombinator_release.svg)](http://pkg.julialang.org/?pkg=ParserCombinator&ver=release)
+
+[![ParserCombinator](http://pkg.julialang.org/badges/ParserCombinator_0.3.svg)](http://pkg.julialang.org/?pkg=ParserCombinator&ver=0.3)
+[![ParserCombinator](http://pkg.julialang.org/badges/ParserCombinator_0.4.svg)](http://pkg.julialang.org/?pkg=ParserCombinator&ver=0.4)
+[![ParserCombinator](http://pkg.julialang.org/badges/ParserCombinator_0.5.svg)](http://pkg.julialang.org/?pkg=ParserCombinator&ver=0.5)
 
 
 # ParserCombinator
@@ -17,11 +19,11 @@ A parser combinator library for Julia, similar to those in other languages,
 like Haskell's Parsec or Python's pyparsing.  It can parse any iterable type
 (not just strings) (except for regexp matchers, of course).
 
-ParserCombinator's main advantage may be its flexible [design](#design), 
-which separates the matchers from the evaluation strategy.  That may 
-sound odd, but makes it [easy](#evaluation) to "plug in" memoization, or
-debug traces, or to restrict backtracking in a similar way to Parsec -
-all while using the same grammar.
+ParserCombinator's main advantage is its flexible [design](#design),
+which separates the matchers from the evaluation strategy.  This makes
+it [easy](#evaluation) to "plug in" memoization, or debug traces, or
+to restrict backtracking in a similar way to Parsec - all while using
+the same grammar.
 
 It also contains pre-built parsers for
 [Graph Modelling Language](#graph-modelling-language) and [DOT](#dot).
@@ -680,11 +682,12 @@ Drop stuff you don't need.
 Transform things into containers so that your result has nice types.  Look at
 how the [example](#example) works.
 
-Understand the format you a parsing.  What motivated the person who designed
-the format?  Compare the [GML](src/gml/GML.jl) and [DOT](src/dot/DOT.jl)
-parsers - they return different results because the format authors cared about
-different things.  GML is an elegant, general data format, while DOT is a
-sequential description - a program, almost - that encodes graph layouts.
+Understand the format you are parsing.  What motivated the person who
+designed the format?  Compare the [GML](src/gml/GML.jl) and
+[DOT](src/dot/DOT.jl) parsers - they return different results because
+the format authors cared about different things.  GML is an elegant,
+general data format, while DOT is a sequential description - a
+program, almost - that encodes graph layouts.
 
 #### Adding Matchers
 
