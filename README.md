@@ -1226,7 +1226,7 @@ processing should continue:
   `execute` method (as above).
 
 The `FAILURE` and `Success` messages are processed by the trampoline
-and (typically, although a trampoline implementation may also use to
+and (typically, although a trampoline implementation may also use
 cached values) result in calls to
 
 ```julia
