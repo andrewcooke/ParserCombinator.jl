@@ -1188,7 +1188,7 @@ The main disadvantages are:
 * Although the "feel" and "end result" of the library are similar to
   other parser combinator libraries (the grammar types handled are as
   expected, for example), one could argue that the matchers are not
-  "real" combinators (what is written be the user is a graph of types,
+  "real" combinators (what is written by the user is a graph of types,
   not a set of recursive functions, even if the final execution logic
   is equivalent).
 
