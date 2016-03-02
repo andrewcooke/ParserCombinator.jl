@@ -36,7 +36,7 @@ for parse in (parse_try, parse_try_cache, parse_try_dbg, parse_try_cache_dbg)
         @test result == Any["abcdefghijklmnopqrstuvwxyz\n012345"]
     end
 
-    @test_throws ParserError parse("?", Alt!(p"[a-z]", p"\d", Error("not letter or number")))
+    @test_throws ParserError{LineIter} parse("?", Alt!(p"[a-z]", p"\d", Error("not letter or number")))
 
 end
 

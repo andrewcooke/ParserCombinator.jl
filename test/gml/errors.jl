@@ -14,12 +14,20 @@ for (text, msg) in [("a 1 ]", "Expected key"),
         end
     end
 
-    @test_throws ParserError parse_raw(text)
+    if VERSION < v"0.5-"
+        @test_throws ParserError parse_raw(text)
+    else
+        @test_throws ParserError{Int64} parse_raw(text)
+    end
 
 end
 
 
-s = open(readall, "gml/error.gml")
+if VERSION < v"0.5-"
+    readstring = readall
+end
+
+s = open(readstring, "gml/error.gml")
 try
     parse_raw(s)
     @test false
