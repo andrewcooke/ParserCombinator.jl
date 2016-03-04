@@ -36,4 +36,3 @@ StarList(m::Matcher, s::Matcher) = Alt(Seq(m, Star(Seq(s, m))), Epsilon())
 StarList!(m::Matcher, s::Matcher) = Alt!(Seq!(m, Star!(Seq!(s, m))), Epsilon())
 PlusList(m::Matcher, s::Matcher) = Seq(m, Star(Seq(s, m)))
 PlusList!(m::Matcher, s::Matcher) = Seq!(m, Star!(Seq!(s, m)))
-

@@ -686,13 +686,12 @@ success(k::Config, m::Lookahead, s, t, i, r::Value) = Success(LookaheadState(t, 
 
 
 # if the child matches, fail; if the child fails return EMPTY
-# no backtracking of the child is supported (i don't understand how it would
-# work, but feel free to correct mfie....)
+# repeated calls fail (the internal matcher is not backtracked).
 
 @auto_hash_equals type Not<:Matcher
     name::Symbol
     matcher::Matcher
-    Not(matcher) = new(:Not ,matcher)
+    Not(matcher) = new(:Not, matcher)
 end
 
 @auto_hash_equals immutable NotState<:State
@@ -700,6 +699,8 @@ end
 end
 
 execute(k::Config, m::Not, s::Clean, i) = Execute(m, NotState(i), m.matcher, CLEAN, i)
+
+execute(k::Config, m::Not, s::NotState, i) = FAILURE
 
 success(k::Config, m::Not, s::NotState, t, i, r::Value) = FAILURE
 

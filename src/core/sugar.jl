@@ -30,6 +30,8 @@ Opt!(m::Matcher) = Alt!(m, Epsilon())
 # match and discard
 ~(m::Matcher) = Drop(m)
 
+# refuse
+!(m::Matcher) = Not(Lookahead(m))
 
 # match in sequence, result in array
 
