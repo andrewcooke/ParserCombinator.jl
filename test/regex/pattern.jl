@@ -14,7 +14,13 @@ for (s, r) in [("abc",
                ("(?:a|b)", 
                 [R.Choice([R.Literal('a'), R.Literal('b')])]),
                ("a|b(?:c|d)", 
-                [R.Choice([R.Literal('a'), R.Sequence([R.Literal('b'), R.Choice([R.Literal("c"), R.Literal("d")])])])])
+                [R.Choice([R.Literal('a'), R.Sequence([R.Literal('b'), R.Choice([R.Literal("c"), R.Literal("d")])])])]),
+               ("a*",
+                [R.Repeat(0, typemax(Int), R.Literal('a'))]),
+               ("a+",
+                [R.Repeat(1, typemax(Int), R.Literal('a'))]),
+               ("ab+",
+                [R.Sequence([R.Literal('a'), R.Repeat(1, typemax(Int), R.Literal('b'))])])
                ]
     print("$s...")
     pattern = R.make_pattern()
