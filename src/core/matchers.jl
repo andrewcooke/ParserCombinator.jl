@@ -1,7 +1,5 @@
 
 
-# TODO - why aren't State instances immutable?
-
 # some basic definitions for generic matches
 
 execute(k::Config, m, s, i) = error("$m did not expect to be called with state $s")

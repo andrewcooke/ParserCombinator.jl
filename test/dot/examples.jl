@@ -1,10 +1,6 @@
 
 using ParserCombinator.Parsers.DOT; D = ParserCombinator.Parsers.DOT
 
-if VERSION < v"0.5-"
-    readstring = readall
-end
-
 # from http://graphs.grevian.org/example
 
 d = parse_dot(open(readstring, "dot/simple.dot"))[1]

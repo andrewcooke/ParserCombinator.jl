@@ -21,9 +21,27 @@ always_print(::Transform) = false
 success(k::Config, m::Transform, s, t, i, r::Value) = Success(TransformState(t), i, m.f(r))
 
 
+# as above, but function also takes iterator
 
-# simplified version for transforming Success (remove and re-add the Success
-# wrapper).
+@auto_hash_equals type ITransform<:Delegate
+    name::Symbol
+    matcher::Matcher
+    f::Function
+    ITransform(matcher, f) = new(:ITransform, matcher, f)
+end
+
+@auto_hash_equals immutable ITransformState<:DelegateState
+    state::State
+end
+
+always_print(::ITransform) = false
+
+success(k::Config, m::ITransform, s, t, i, r::Value) = Success(ITransformState(t), i, m.f(i, r))
+
+
+
+# simplified versions for transforming Success (remove and re-add the
+# Success wrapper).
 
 Appl(m::Matcher, f::Applicable) = Transform(m, x -> Any[f(x)])
 
@@ -33,4 +51,10 @@ function App(m::Matcher, f::Applicable)
     else
         Transform(m, x -> Any[f(x...)])
     end
+end
+
+IAppl(m::Matcher, f::Applicable) = ITransform(m, (i, x) -> Any[f(i, x)])
+
+function IApp(m::Matcher, f::Applicable)
+    ITransform(m, (i, x) -> Any[f(i, x...)])
 end

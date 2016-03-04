@@ -23,10 +23,6 @@ for (text, msg) in [("a 1 ]", "Expected key"),
 end
 
 
-if VERSION < v"0.5-"
-    readstring = readall
-end
-
 s = open(readstring, "gml/error.gml")
 try
     parse_raw(s)
