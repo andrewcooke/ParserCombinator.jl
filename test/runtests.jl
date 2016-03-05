@@ -8,8 +8,8 @@ module RegexTest
 using ParserCombinator
 using Base.Test
 using Compat
-include("regex/pattern.jl")
-exit(0)
+#include("regex/pattern.jl")
+#exit(0)
 end
 
 module CoreTest
