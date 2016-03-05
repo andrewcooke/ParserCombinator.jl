@@ -4,14 +4,6 @@
 
 # modules prevent namespace pollution
 
-module RegexTest
-using ParserCombinator
-using Base.Test
-using Compat
-#include("regex/pattern.jl")
-#exit(0)
-end
-
 module CoreTest
 using ParserCombinator
 using Base.Test
