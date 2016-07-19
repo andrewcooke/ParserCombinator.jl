@@ -7,7 +7,7 @@ using AutoHashEquals
 import Base: ==
 
 export Statement, Statements, ID, StringID, NumericID, HtmlID, Attribute,
-       Attributes, Graph, Port, NodeID, Node, EdgeNode, Edge, GraphAttributes, 
+       Attributes, Graph, Port, NodeID, Node, EdgeNode, Edge, GraphAttributes,
        NodeAttributes, EdgeAttributes, SubGraph, parse_dot, nodes, edges
 
 # i've gone with a very literal parsing, which returns a structure that is
@@ -41,7 +41,7 @@ end
 
 @auto_hash_equals immutable HtmlID <: ID
     id::AbstractString
-end 
+end
 
 @auto_hash_equals immutable Attribute <: Statement
     name::ID
@@ -79,7 +79,7 @@ end
     port::Nullable{Port}
     NodeID(id::ID, p::Port) = new(id, Nullable{Port}(p))
     NodeID(id::ID) = new(id, Nullable{Port}())
-end    
+end
 
 @auto_hash_equals immutable Node <: Statement
     id::NodeID
@@ -119,9 +119,9 @@ end
     spc = mkspc("")
     spc_init = ~Pattern(string("(#.*)?", spc))
     spc_star = ~Pattern(spc)
-    
+
     wrd = p"[a-zA-Z\200-\377_][a-zA-Z\200-\377_0-9]*"
-    
+
     # valid strings include:
     # 1 - "..."
     # 2 - "...\
@@ -170,10 +170,10 @@ end
 
     # not a list because we can have a trailing ;
     # this eats trailing spaces, but i don't think it matters
-    # the comma (",") below is not in the grammar at graphviz.org but is 
+    # the comma (",") below is not in the grammar at graphviz.org but is
     # needed to parse the examples in test/examples.jl
     # related, note that using a comma in this way seems to trigger bugs
-    # in dot itself - see 
+    # in dot itself - see
     # https://github.com/JuliaGraphs/LightGraphs.jl/issues/107#issuecomment-131401430
     spc_stmt = ~Pattern(mkspc("|;|,"))
     # |> Statements but for 0.3
@@ -241,8 +241,8 @@ edges_(s::SubGraph) = vcat(map(edges_, s.stmts)...)
 pair(n1::NodeID, n2::NodeID) = [(n1.id.id, n2.id.id)]
 pair(n::NodeID, s::SubGraph) = vcat([(n.id.id, x) for x in nodes(s)], edges_(s))
 pair(s::SubGraph, n::NodeID) = vcat([(x, n.id.id) for x in nodes(s)], edges_(s))
-pair(s1::SubGraph, s2::SubGraph) = 
-vcat(vec([(x, y) for x in nodes(s1), y in nodes(s2)]), edges_(s1), edges_(s2))
-edges_(e::Edge) = vcat([pair(a, b) for (a, b) in zip(e.nodes, e.nodes[2:end])]...)
+pair(s1::SubGraph, s2::SubGraph) =
+    vcat(vec([(x, y) for x in nodes(s1), y in nodes(s2)]), edges_(s1), edges_(s2))
+edges_(e::Edge) = vcat([pair(a, b) for (a, b) in zip(e.nodes[1:end-1], e.nodes[2:end])]...)
 
 end
