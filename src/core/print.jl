@@ -19,19 +19,19 @@ function print_matcher(m::Matcher, known::Set{Matcher})
             end
             names = filter(n -> n != :name, fieldnames(m))
             for name in names
-                if isa(m.(name), Matcher)
-                    for (i, line) = enumerate(print_matcher(m.(name), known))
+                if isa(getfield(m, name), Matcher)
+                    for (i, line) = enumerate(print_matcher(getfield(m, name), known))
                         if name == names[end]
                             produce(i == 1 ? "`-$(line)" : "  $(line)")
                         else
                             produce(i == 1 ? "+-$(line)" : "| $(line)")
                         end
                     end
-                elseif isa(m.(name), Array{Matcher,1})
-                    for (j, x) in enumerate(m.(name))
+                elseif isa(getfield(m, name), Array{Matcher,1})
+                    for (j, x) in enumerate(getfield(m, name))
                         tag = name == :matchers ? "[$j]" : "$(name)[$j]"
-                        for (i, line) = enumerate(print_matcher(m.(name)[j], known))
-                            if name == names[end] && j == length(m.(name))
+                        for (i, line) = enumerate(print_matcher(getfield(m, name)[j], known))
+                            if name == names[end] && j == length(getfield(m, name))
                                 produce(i == 1 ? "`-$(tag):$(line)" : "  $(line)")
                             else
                                 produce(i == 1 ? "+-$(tag):$(line)" : "| $(line)")
