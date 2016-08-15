@@ -1,5 +1,5 @@
 
-# set this to force tetsing for malmaud branch
+# set this to force testing for malmaud branch
 #FAST_REGEX=true
 
 # modules prevent namespace pollution

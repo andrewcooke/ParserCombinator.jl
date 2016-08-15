@@ -7,6 +7,9 @@ using Compat
 export parse_raw, parse_dict, GMLError
 
 
+Symbol_ = VERSION >= v"0.4-" ? Symbol : symbol
+
+
 function mk_parser(string_input)
 
     # this is such a simple grammar that we don't need backtracking, so we can
@@ -38,7 +41,7 @@ function mk_parser(string_input)
             open     = ~Pattern(wstar("\\["))
             close    = ~Pattern(wstar("]"))
 
-            key      = Pattern(wplus("([a-zA-Z][a-zA-Z0-9]*)"), 1)    > symbol
+            key      = Pattern(wplus("([a-zA-Z][a-zA-Z0-9]*)"), 1)    > Symbol_
             int      = Pattern(wstar("((\\+|-)?\\d+)"), 1)            > pint
             real     = Pattern(wstar("((\\+|-)?\\d+.\\d+((E|e)(\\+|-)?\\d+)?)"), 1) > pflt
             str      = Pattern(wstar("\"([^\"]*)\""), 1)
@@ -52,7 +55,7 @@ function mk_parser(string_input)
             open     = Seq!(E"[", spc)
             close    = Seq!(E"]", spc)
 
-            key      = Seq!(p"[a-zA-Z][a-zA-Z0-9]*", space)           > symbol
+            key      = Seq!(p"[a-zA-Z][a-zA-Z0-9]*", space)           > Symbol_
             int      = Seq!(p"(\+|-)?\d+", spc)                       > pint
             real     = Seq!(p"(\+|-)?\d+.\d+((E|e)(\+|-)?\d+)?", spc) > pflt
             str      = Seq!(Pattern("\"([^\"]*)\"", 1), spc)

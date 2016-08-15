@@ -1,19 +1,5 @@
 
-# https://github.com/JuliaLang/julia/issues/11618
-signed_prod(lst) = length(lst) == 1 ? lst[1] : Base.prod(lst)
-signed_sum(lst) = length(lst) == 1 ? lst[1] : Base.sum(lst)
-
-abstract Node
-==(n1::Node, n2::Node) = isequal(n1.val, n2.val)
-calc(n::Float64) = n
-type Inv<:Node val end
-calc(i::Inv) = 1.0/calc(i.val)
-type Prd<:Node val end
-calc(p::Prd) = signed_prod(map(calc, p.val))
-type Neg<:Node val end
-calc(n::Neg) = -calc(n.val)
-type Sum<:Node val end
-calc(s::Sum) = signed_sum(map(calc, s.val))
+# using prev defs from fix.jl
 
 @with_names begin
 
