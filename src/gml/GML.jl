@@ -7,7 +7,10 @@ using Compat
 export parse_raw, parse_dict, GMLError
 
 
-Symbol_ = VERSION >= v"0.4-" ? Symbol : symbol
+# symbol required in 0.3
+# both work in 0.4
+# symbol gives deprecation warning in 0.5
+Symbol_ = VERSION >= v"0.5-" ? Symbol : symbol
 
 
 function mk_parser(string_input)
