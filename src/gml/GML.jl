@@ -26,7 +26,7 @@ function mk_parser(string_input)
         comment = P"(#.*)?"
 
         # we need string input as we match multiple lines
-        if string_input && ParserCombinator.FAST_REGEX
+        if string_input
 
             wspace   = "([\t ]+|[\r\n]+(#.*)?)"
             wstar(x) = string(x, wspace, "*")
@@ -76,11 +76,7 @@ end
 function parse_raw(s; debug=false)
     parser = mk_parser(isa(s, AbstractString))
     try
-        if ParserCombinator.FAST_REGEX
-            (debug ? parse_one_dbg : parse_one)(s, Trace(parser); debug=debug)
-        else
-            (debug ? parse_lines_dbg : parse_lines)(s, Trace(parser); debug=debug)
-        end
+        (debug ? parse_one_dbg : parse_one)(s, Trace(parser); debug=debug)
     catch x
         if (debug)
             Base.show_backtrace(STDOUT, catch_backtrace())
