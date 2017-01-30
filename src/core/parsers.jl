@@ -14,8 +14,8 @@ parent(k::Config) = k.stack[end][1]
 
 type NoCache{S,I}<:Config{S,I}
     source::S
-    @compat stack::Vector{Tuple{Matcher, State}}
-    @compat NoCache(source; kargs...) = new(source, Vector{Tuple{Matcher,State}}())
+    stack::Vector{Tuple{Matcher, State}}
+    NoCache(source; kargs...) = new(source, Vector{Tuple{Matcher,State}}())
 end
 
 function dispatch(k::NoCache, e::Execute)
@@ -48,13 +48,13 @@ end
 
 # evaluation with a complete cache (all intermediate results memoized)
 
-@compat typealias Key{I} Tuple{Matcher,State,I}
+typealias Key{I} Tuple{Matcher,State,I}
 
 type Cache{S,I}<:Config{S,I}
     source::S
-    @compat stack::Vector{Tuple{Matcher,State,Key{I}}}
+    stack::Vector{Tuple{Matcher,State,Key{I}}}
     cache::Dict{Key{I},Message}
-    @compat Cache(source; kargs...) = new(source, Vector{Tuple{Matcher,State,Key{I}}}(), Dict{Key{I},Message}())
+    Cache(source; kargs...) = new(source, Vector{Tuple{Matcher,State,Key{I}}}(), Dict{Key{I},Message}())
 end
 
 function dispatch(k::Cache, e::Execute)
@@ -107,7 +107,7 @@ end
 
 # a dummy matcher used by the parser
 
-type Root<:Delegate 
+type Root<:Delegate
     name::Symbol
     Root() = new(:Root)
 end
@@ -146,7 +146,7 @@ function producer(k::Config, m::Matcher; debug=false)
                 end
             end
         end
-        
+
     catch x
         if (debug)
             println("debug was set, so showing error from inside task")
@@ -162,7 +162,7 @@ end
 
 # helper functions to generate the parsers from the above
 
-# these assume that any config construct takes a single source argument 
+# these assume that any config construct takes a single source argument
 # plus optional keyword args
 
 function make{S}(config, source::S, matcher; debug=false, kargs...)

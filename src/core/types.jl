@@ -135,8 +135,4 @@ immutable CacheException<:Exception end
 # information is not available.
 abstract FailureException<:Exception
 
-if VERSION >= v"0.4.0-"
-    typealias Applicable Union{Function, DataType}
-else
-    typealias Applicable Union(Function, DataType)
-end
+typealias Applicable Union{Function, DataType}

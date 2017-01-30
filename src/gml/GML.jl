@@ -1,16 +1,9 @@
-
+__precompile__()
 module GML
 
 using ...ParserCombinator
-using Compat
 
 export parse_raw, parse_dict, GMLError
-
-
-# symbol required in 0.3
-# both work in 0.4
-# symbol gives deprecation warning in 0.5
-Symbol_ = VERSION >= v"0.5-" ? Symbol : symbol
 
 
 function mk_parser(string_input)
@@ -44,7 +37,7 @@ function mk_parser(string_input)
             open     = ~Pattern(wstar("\\["))
             close    = ~Pattern(wstar("]"))
 
-            key      = Pattern(wplus("([a-zA-Z][a-zA-Z0-9]*)"), 1)    > Symbol_
+            key      = Pattern(wplus("([a-zA-Z][a-zA-Z0-9]*)"), 1)    > Symbol
             int      = Pattern(wstar("((\\+|-)?\\d+)"), 1)            > pint
             real     = Pattern(wstar("((\\+|-)?\\d+.\\d+((E|e)(\\+|-)?\\d+)?)"), 1) > pflt
             str      = Pattern(wstar("\"([^\"]*)\""), 1)
@@ -58,7 +51,7 @@ function mk_parser(string_input)
             open     = Seq!(E"[", spc)
             close    = Seq!(E"]", spc)
 
-            key      = Seq!(p"[a-zA-Z][a-zA-Z0-9]*", space)           > Symbol_
+            key      = Seq!(p"[a-zA-Z][a-zA-Z0-9]*", space)           > Symbol
             int      = Seq!(p"(\+|-)?\d+", spc)                       > pint
             real     = Seq!(p"(\+|-)?\d+.\d+((E|e)(\+|-)?\d+)?", spc) > pflt
             str      = Seq!(Pattern("\"([^\"]*)\"", 1), spc)
@@ -69,9 +62,9 @@ function mk_parser(string_input)
         sublist = Seq!(open, list, Alt!(close, expect("]")))
         value   = Alt!(real, int, str, sublist, expect("value"))
         element = Seq!(key, value)                            > tuple
-        
+
         list.matcher = Nullable{Matcher}(element[0:end,:!]    > vcat)
-        
+
         # first line comment must be explicit (no previous linefeed)
         Seq!(comment, spc, list, Alt!(Seq!(spc, Eos()), expect("key")))
 
@@ -89,7 +82,7 @@ function parse_raw(s; debug=false)
             (debug ? parse_lines_dbg : parse_lines)(s, Trace(parser); debug=debug)
         end
     catch x
-        if (debug) 
+        if (debug)
             Base.show_backtrace(STDOUT, catch_backtrace())
         end
         rethrow()

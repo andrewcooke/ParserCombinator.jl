@@ -19,7 +19,7 @@ type Debug{S,I}<:Config{S,I}
     n_calls::Int
     function Debug(source::S; delegate=NoCache, kargs...)
         k = delegate{S,I}(source; kargs...)
-        @compat new(k.source, k.stack, k, Vector{Int}(), 0, 0, start(k.source), 0)
+        new(k.source, k.stack, k, Vector{Int}(), 0, 0, start(k.source), 0)
     end
 end
 # i don't get why this is necessary, but it seems to work
@@ -73,13 +73,9 @@ MAX_RES = 50
 MAX_SRC = 10
 MAX_IND = 10
 
-if VERSION < v"0.4-"
-    shorten(s) = s
-else
 #   shorten(s) = replace(s, r"(?:[a-zA-Z]+\.)+([a-zA-Z]+)", s"\1")
-    shorten(s) = replace(s, r"(?:[a-zA-Z]+\.)+([a-zA-Z]+)", 
-                         Base.SubstitutionString("\1"))
-end
+shorten(s) = replace(s, r"(?:[a-zA-Z]+\.)+([a-zA-Z]+)",
+                     Base.SubstitutionString("\1"))
 
 function truncate(s::AbstractString, n=10)
     if length(s) <= n
@@ -137,7 +133,7 @@ function src(s::LineAt, i::LineIter; max=MAX_SRC)
         end
     end
 end
-   
+
 function debug{S<:LineAt}(k::Debug{S}, e::Execute)
     @printf("%3d,%-3d:%s %02d %s%s->%s\n",
             e.iter.line, e.iter.column, src(k.source, e.iter), k.depth[end], indent(k), e.parent.name, e.child.name)

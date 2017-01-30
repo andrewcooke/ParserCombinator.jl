@@ -1,8 +1,7 @@
-
+__precompile__()
 module DOT
 
 using ...ParserCombinator
-using Compat
 using AutoHashEquals
 import Base: ==
 
@@ -88,7 +87,7 @@ end
     Node(id::NodeID) = new(id, Attribute[])
 end
 
-@compat typealias EdgeNode Union{NodeID, SubGraph}
+typealias EdgeNode Union{NodeID, SubGraph}
 typealias EdgeNodes Vector{EdgeNode}
 
 @auto_hash_equals immutable Edge <: Statement
