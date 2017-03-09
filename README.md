@@ -36,7 +36,7 @@ using ParserCombinator
 
 # the AST nodes we will construct, with evaluation via calc()
 
-abstract Node
+abstract type Node node
 ==(n1::Node, n2::Node) = n1.val == n2.val
 calc(n::Float64) = n
 type Inv<:Node val end

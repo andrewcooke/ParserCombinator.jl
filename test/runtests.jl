@@ -1,4 +1,4 @@
-
+include("../src/ParserCombinator.jl")
 # set this to force testing for malmaud branch
 #FAST_REGEX=true
 

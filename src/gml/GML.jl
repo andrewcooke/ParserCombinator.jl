@@ -1,6 +1,6 @@
 __precompile__()
 module GML
-
+using Compat
 using ...ParserCombinator
 
 export parse_raw, parse_dict, GMLError
@@ -74,7 +74,7 @@ end
 
 # this returns the "natural" representation as nested arrays and tuples
 function parse_raw(s; debug=false)
-    parser = mk_parser(isa(s, AbstractString))
+    parser = mk_parser(isa(s, String))
     try
         (debug ? parse_one_dbg : parse_one)(s, Trace(parser); debug=debug)
     catch x
@@ -117,12 +117,12 @@ end
 # their own object models.
 
 type GMLError<:Exception
-    msg::AbstractString
+    msg::String
 end
 
 LISTS = [:graph,:node,:edge]
 
-typealias GMLDict Dict{Symbol, Any}
+@compat const GMLDict = Dict{Symbol, Any}
 
 function build_dict(raw; lists=LISTS, unsafe=false)
     root = GMLDict()

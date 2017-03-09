@@ -7,17 +7,17 @@
 #  name::Symbol
 # which is set automatically to the matcher type by the constructor.
 # (re-set to a more useful type inside with_names() - see names.jl)
-abstract Matcher
+@compat abstract type Matcher end
 
-abstract Message   # data sent between trampoline and methods
-abstract State     # state associated with Matchers during evaluation
+@compat abstract type Message end   # data sent between trampoline and methods
+@compat abstract type State end     # state associated with Matchers during evaluation
 
 # used to configure the parser.  all Config subtypes must have associated
 # dispatch functions (see parser.jl), a parent() function, and have a
 # constructor that takes the source as first argument and additional arguments
 # as keywords.  the type of the source is exposed and if it's a subclass of
 # string then the iterator is assumed to be a simple integer index.
-abstract Config{S,I}
+@compat abstract type Config{S,I} end
 
 
 # important notes on mutability / hash / equality
@@ -65,7 +65,7 @@ abstract Config{S,I}
 
 # use an array to handle empty values in a natural way
 
-typealias Value Vector{Any}
+@compat const Value = Vector{Any}
 
 EMPTY = Any[]
 
@@ -133,6 +133,6 @@ immutable CacheException<:Exception end
 
 # this is equivalent to a matcher returning Failure.  used when source
 # information is not available.
-abstract FailureException<:Exception
+@compat abstract type FailureException<:Exception end
 
-typealias Applicable Union{Function, DataType}
+@compat Applicable = Union{Function, DataType}

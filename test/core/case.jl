@@ -33,7 +33,7 @@ function success(k::Config, m::Case, s, t, i, r::Value)
     new_s = CaseState(t)
     # get the string contents from the child matcher
     # (nicer code would check this was a list containing a single string)
-    contents::AbstractString = r[1]
+    contents::String = r[1]
     new_contents = uppercase(contents[1:1]) * contents[2:end]
     # and build the response from this matcher (see types.jl)
     Success(new_s, i, Any[new_contents])

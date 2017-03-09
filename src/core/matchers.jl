@@ -16,10 +16,10 @@ execute(k::Config, m::Matcher, s::Dirty, i) = FAILURE
 # response) and (2) anything unusual (ie what the matcher actually does)
 
 # assume this has a matcher field
-abstract Delegate<:Matcher
+@compat abstract type Delegate<:Matcher end
 
 # assume this has a state field
-abstract DelegateState<:State
+@compat abstract type DelegateState<:State end
 
 execute(k::Config, m::Delegate, s::Clean, i) = Execute(m, s, m.matcher, CLEAN, i)
 
@@ -98,7 +98,7 @@ end
 
 always_print(::Equal) = true
 function print_field(m::Equal, ::Type{Val{:string}})
-    if isa(m.string, AbstractString)
+    if isa(m.string, String)
         "\"$(m.string)\""
     else
         :string
@@ -126,11 +126,11 @@ end
 # of all possible states (limited by the maximum number of matches),
 # yielding when we have a result within the lo/hi range.
 
-abstract Repeat_<:Matcher   # _ to avoid conflict with function in 0.3
+@compat abstract type Repeat_<:Matcher  end # _ to avoid conflict with function in 0.3
 
 ALL = typemax(Int)
 
-abstract RepeatState<:State
+@compat abstract type RepeatState<:State end
 
 function Repeat(m::Matcher, lo, hi; flatten=true, greedy=true, backtrack=true)
     if greedy
@@ -176,7 +176,7 @@ end
 # DFS, but also post-order.  which means there's some extra messing around
 # so that the node ordering is correct.
 
-abstract DepthState<:RepeatState
+@compat abstract type DepthState<:RepeatState end
 
 # an arbitrary iter to pass to a state where it's not needed (typically from
 # failure)
@@ -298,7 +298,7 @@ end
     results::Vector{Value}
 end
 
-abstract BreadthState<:RepeatState
+@compat abstract type BreadthState<:RepeatState  end
 
 arbitrary(s::BreadthState) = s.start
 
@@ -466,7 +466,7 @@ function Series(m::Matcher...; flatten=true, backtrack=true)
     end
 end
 
-abstract Series_<:Matcher
+@compat abstract type Series_<:Matcher  end
 
 
 # first, the backtracking version
@@ -542,7 +542,7 @@ end
 
 # next, the non-backtracking version
 
-abstract Series!<:Matcher
+@compat abstract type Series!<:Matcher end
 
 @auto_hash_equals type Seq!<:Series!
     name::Symbol
@@ -588,7 +588,7 @@ function Alternatives(m::Matcher...; backtrack=true)
     backtrack ? Alt(m...) : Alt!(m...)
 end
 
-abstract Alternatives_<:Matcher
+@compat abstract type Alternatives_<:Matcher end
 
 
 # first, the backtracking version
@@ -719,12 +719,12 @@ failure(k::Config, m::Not, s::NotState) = Success(s, s.iter, EMPTY)
 
 @auto_hash_equals type Pattern<:Matcher
     name::Symbol
-    text::AbstractString
+    text::String
     regex::Regex
     groups::Tuple
     Pattern(r::Regex, group::Int...) = new(:Pattern, r.pattern, Regex("^(?:" * r.pattern * ")(.??)"), group)
-    Pattern(s::AbstractString, group::Int...) = new(:Pattern, s, Regex("^(?:" * s * ")(.??)"), group)
-    Pattern(s::AbstractString, flags::AbstractString, group::Int...) = new(:Pattern. s, Regex("^(?:" * s * ")(.??)", flags), group)
+    Pattern(s::String, group::Int...) = new(:Pattern, s, Regex("^(?:" * s * ")(.??)"), group)
+    Pattern(s::String, flags::String, group::Int...) = new(:Pattern. s, Regex("^(?:" * s * ")(.??)", flags), group)
 end
 
 print_field(m::Pattern, ::Type{Val{:text}}) = "text=\"$(m.text)\""
@@ -760,23 +760,22 @@ type Delayed<:Matcher
     Delayed() = new(:Delayed, Nullable{Matcher}())
 end
 
-function print_matcher(m::Delayed, known::Set{Matcher})
-    function producer()
-        tag = "$(m.name)"
-        if (isnull(m.matcher))
-            produce("$(tag) OPEN")
-        elseif m in known
-            produce("$(tag)...")
-        else
-            produce("$(tag)")
-            push!(known, m)
-            for (i, line) in enumerate(print_matcher(get(m.matcher), known))
-                produce(i == 1 ? "`-$(line)" : "  $(line)")
-            end
+function delprintmatch_producer(c::Channel, m::Delayed, known::Set{Matcher})
+    tag = "$(m.name)"
+    if (isnull(m.matcher))
+        put!(c, "$(tag) OPEN")
+    elseif m in known
+        put!(c, "$(tag)...")
+    else
+        put!(c, "$(tag)")
+        push!(known, m)
+        for (i, line) in enumerate(print_matcher(get(m.matcher), known))
+            put!(c, i == 1 ? "`-$(line)" : "  $(line)")
         end
     end
-    Task(producer)
 end
+
+print_matcher(m::Delayed, known::Set{Matcher}) = Channel(c -> delprintmatch_producer(c, m, known))
 
 function execute(k::Config, m::Delayed, s::Dirty, i)
     Response(DIRTY, i, FAILURE)
@@ -811,14 +810,14 @@ end
 # this is general, but usually not much use with backtracking
 
 type ParserError{I}<:Exception
-    msg::AbstractString
+    msg::String
     iter::I
 end
 
 @auto_hash_equals type Error<:Matcher
     name::Symbol
-    msg::AbstractString
-    Error(msg::AbstractString) = new(:Error, msg)
+    msg::String
+    Error(msg::String) = new(:Error, msg)
 end
 
 function execute{I}(k::Config, m::Error, s::Clean, i::I)

@@ -1,6 +1,6 @@
 __precompile__()
 module DOT
-
+using Compat
 using ...ParserCombinator
 using AutoHashEquals
 import Base: ==
@@ -24,22 +24,22 @@ export Statement, Statements, ID, StringID, NumericID, HtmlID, Attribute,
 
 # see test/dot/examples.jl for examples accessing fields in this structure
 
-abstract Statement
+@compat abstract type Statement end
 
-typealias Statements Vector{Statement}
+@compat const Statements = Vector{Statement}
 
-abstract ID
+@compat abstract type ID end
 
 @auto_hash_equals immutable StringID <: ID
-    id::AbstractString
+    id::String
 end
 
 @auto_hash_equals immutable NumericID <: ID
-    id::AbstractString
+    id::String
 end
 
 @auto_hash_equals immutable HtmlID <: ID
-    id::AbstractString
+    id::String
 end
 
 @auto_hash_equals immutable Attribute <: Statement
@@ -47,7 +47,7 @@ end
     value::ID
 end
 
-typealias Attributes Vector{Attribute}
+@compat const Attributes = Vector{Attribute}
 
 @auto_hash_equals immutable Graph
     strict::Bool
@@ -67,10 +67,10 @@ end
 
 @auto_hash_equals immutable Port
     id::Nullable{ID}
-    point::Nullable{AbstractString}
-    Port(id::ID, p::AbstractString) = new(Nullable{ID}(id), Nullable{AbstractString}(p))
-    Port(id::ID) = new(Nullable{ID}(id), Nullable{AbstractString}())
-    Port(p::AbstractString) = new(Nullable{ID}(), Nullable{AbstractString}(p))
+    point::Nullable{String}
+    Port(id::ID, p::String) = new(Nullable{ID}(id), Nullable{String}(p))
+    Port(id::ID) = new(Nullable{ID}(id), Nullable{String}())
+    Port(p::String) = new(Nullable{ID}(), Nullable{String}(p))
 end
 
 @auto_hash_equals immutable NodeID
@@ -87,8 +87,8 @@ end
     Node(id::NodeID) = new(id, Attribute[])
 end
 
-typealias EdgeNode Union{NodeID, SubGraph}
-typealias EdgeNodes Vector{EdgeNode}
+@compat const EdgeNode = Union{NodeID, SubGraph}
+@compat const EdgeNodes = Vector{EdgeNode}
 
 @auto_hash_equals immutable Edge <: Statement
     nodes::EdgeNodes

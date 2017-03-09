@@ -19,15 +19,15 @@ type TrySource{S}<:LineAt
     zero::Int      # offset to lines (lines[x] contains line x+zero)
     right::Int     # rightmost expired column
     lines::Vector{S}
-    TrySource(io::IO, line::S) = new(io, 0, 0, 0, S[line])
+    (::TrySource{S}){S}(io::IO, line::S) = new{S}(io, 0, 0, 0, S[line])
 end
 
 function TrySource(io::IO)
-    line = readline(io)
+    @compat line = readline(io, chomp=false)
     TrySource{typeof(line)}(io, line)
 end
 
-TrySource{S<:AbstractString}(s::S) = TrySource(IOBuffer(s))
+TrySource{S<:String}(s::S) = TrySource(IOBuffer(s))
 
 
 function expire(s::TrySource, i::LineIter)
@@ -51,7 +51,7 @@ function line_at(f::TrySource, s::LineIter; check::Bool=true)
     end
     n = s.line - f.zero
     while length(f.lines) < n
-        push!(f.lines, readline(f.io))
+        @compat push!(f.lines, readline(f.io, chomp=false))
     end
     f.lines[n]
 end

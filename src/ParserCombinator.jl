@@ -1,6 +1,6 @@
 __precompile__()
 module ParserCombinator
-
+using Compat
 using AutoHashEquals
 import Base: start, next, done, endof, getindex, colon, isless, size, hash
 import Base: ==, ~, +, &, |, >=, >, |>, !
