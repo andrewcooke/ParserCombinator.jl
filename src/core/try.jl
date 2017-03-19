@@ -23,7 +23,7 @@ type TrySource{S}<:LineAt
 end
 
 function TrySource(io::IO)
-    @compat line = readline(io, chomp=false)
+    line = Compat.readline(io, chomp=false)
     TrySource{typeof(line)}(io, line)
 end
 
@@ -51,7 +51,7 @@ function line_at(f::TrySource, s::LineIter; check::Bool=true)
     end
     n = s.line - f.zero
     while length(f.lines) < n
-        @compat push!(f.lines, readline(f.io, chomp=false))
+        push!(f.lines, Compat.readline(f.io, chomp=false))
     end
     f.lines[n]
 end

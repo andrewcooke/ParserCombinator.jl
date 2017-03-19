@@ -79,7 +79,7 @@ type LineSource{S}<:LineAt
 end
 
 function LineSource(io::IO; limit=-1)
-    @compat line = readline(io, chomp=false)
+    line = Compat.readline(io, chomp=false)
     LineSource{typeof(line)}(io, line; limit=limit)
 end
 
@@ -106,7 +106,7 @@ function line_at(s::LineSource, i::LineIter; check::Bool=true)
     else
         n = i.line - s.zero
         while length(s.lines) < n
-            @compat push!(s.lines, readline(s.io, chomp=false))
+            push!(s.lines, Compat.readline(s.io, chomp=false))
         end
         while s.limit > 0 && length(s.lines) > s.limit
             s.zero += 1
