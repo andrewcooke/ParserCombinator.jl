@@ -67,10 +67,11 @@ end
 
 @auto_hash_equals immutable Port
     id::Nullable{ID}
-    point::Nullable{String}
-    Port(id::ID, p::String) = new(Nullable{ID}(id), Nullable{String}(p))
-    Port(id::ID) = new(Nullable{ID}(id), Nullable{String}())
-    Port(p::String) = new(Nullable{ID}(), Nullable{String}(p))
+    point::Nullable{AbstractString}
+
+    Port(id::ID, p::AbstractString) = new(Nullable{ID}(id), Nullable{AbstractString}(p))
+    Port(id::ID) = new(Nullable{ID}(id), Nullable{AbstractString}())
+    Port(p::AbstractString) = new(Nullable{ID}(), Nullable{AbstractString}(p))
 end
 
 @auto_hash_equals immutable NodeID

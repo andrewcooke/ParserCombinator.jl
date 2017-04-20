@@ -1,4 +1,3 @@
-include("../src/ParserCombinator.jl")
 # set this to force testing for malmaud branch
 #FAST_REGEX=true
 
@@ -28,7 +27,7 @@ include("gml/ok.jl")
 include("gml/errors.jl")
 include("gml/example1.jl")
 include("gml/example2.jl")
-# need zip files unpacking
+# #need zip files unpacking
 #include("gml/celegansneural.jl")
 #include("gml/polblogs.jl")
 #include("gml/10k-49963.jl")
