@@ -12,14 +12,14 @@ execute(k::Config, m::Matcher, s::Dirty, i) = FAILURE
 
 # many matchers delegate to a child, making only slight modifications.
 # we can describe the default behaviour just once, here.
-# child matchers then need to implement (1) state creation (typically on 
+# child matchers then need to implement (1) state creation (typically on
 # response) and (2) anything unusual (ie what the matcher actually does)
 
 # assume this has a matcher field
-abstract Delegate<:Matcher
+@compat abstract type Delegate<:Matcher end
 
 # assume this has a state field
-abstract DelegateState<:State
+@compat abstract type DelegateState<:State end
 
 execute(k::Config, m::Delegate, s::Clean, i) = Execute(m, s, m.matcher, CLEAN, i)
 
@@ -48,7 +48,7 @@ end
 execute(k::Config, m::Insert, s::Clean, i) = Success(DIRTY, i, Any[m.text])
 
 
-@auto_hash_equals type Dot<:Matcher 
+@auto_hash_equals type Dot<:Matcher
     name::Symbol
     Dot() = new(:Dot)
 end
@@ -98,7 +98,7 @@ end
 
 always_print(::Equal) = true
 function print_field(m::Equal, ::Type{Val{:string}})
-    if isa(m.string, AbstractString)
+    if isa(m.string, String)
         "\"$(m.string)\""
     else
         :string
@@ -126,11 +126,11 @@ end
 # of all possible states (limited by the maximum number of matches),
 # yielding when we have a result within the lo/hi range.
 
-abstract Repeat_<:Matcher   # _ to avoid conflict with function in 0.3
+@compat abstract type Repeat_<:Matcher  end # _ to avoid conflict with function in 0.3
 
 ALL = typemax(Int)
 
-abstract RepeatState<:State
+@compat abstract type RepeatState<:State end
 
 function Repeat(m::Matcher, lo, hi; flatten=true, greedy=true, backtrack=true)
     if greedy
@@ -166,17 +166,17 @@ end
 end
 
 # greedy matching is effectively depth first traversal of a tree where:
-# * performing an additional match is moving down to a new level 
+# * performing an additional match is moving down to a new level
 # * performaing an alternate match (backtrack+match) moves across
 # the traversal requires a stack.  the DepthState instances below all
-# store that stack - actually three of them.  the results stack is 
+# store that stack - actually three of them.  the results stack is
 # unusual / neat in that it is also what we need to return.
 
 # unfortunately, things are a little more complex, because it's not just
 # DFS, but also post-order.  which means there's some extra messing around
 # so that the node ordering is correct.
 
-abstract DepthState<:RepeatState
+@compat abstract type DepthState<:RepeatState end
 
 # an arbitrary iter to pass to a state where it's not needed (typically from
 # failure)
@@ -205,7 +205,7 @@ end
 
 # when first called, create base state and make internal transition
 
-@compat execute{S,I}(k::Config{S,I}, m::Depth, s::Clean, i::I) = execute(k, m, DepthSlurp{I}(Vector{Value}(), I[i], State[DIRTY]), i)
+execute{S,I}(k::Config{S,I}, m::Depth, s::Clean, i::I) = execute(k, m, DepthSlurp{I}(Vector{Value}(), I[i], State[DIRTY]), i)
 
 # repeat matching until at bottom of this branch (or maximum depth)
 
@@ -283,13 +283,13 @@ end
 end
 
 # minimal matching is effectively breadth first traversal of a tree where:
-# * performing an additional match is moving down to a new level 
+# * performing an additional match is moving down to a new level
 # * performaing an alternate match (backtrack+match) moves across
 # the traversal requires a queue.  unfortunately, unlike with greedy,
 # that means we need to store the entire result for each node.
 
 # on the other hand, because the results are pre-order, the logic is simpler
-# than for the greedy match (wikipedia calls this "level order" so my 
+# than for the greedy match (wikipedia calls this "level order" so my
 # terminology may be wrong).
 
 @auto_hash_equals immutable Entry{I}
@@ -298,7 +298,7 @@ end
     results::Vector{Value}
 end
 
-abstract BreadthState<:RepeatState
+@compat abstract type BreadthState<:RepeatState  end
 
 arbitrary(s::BreadthState) = s.start
 
@@ -450,10 +450,10 @@ failure(k::Config, m::Breadth!, s::BreadthState!) = FAILURE
 
 # match all in a sequence with backtracking
 
-# there are two nearly identical matchers here - the only difference is 
+# there are two nearly identical matchers here - the only difference is
 # whether results are merged (Seq/+) or not (And/&).
 
-# we need two different types so that we can define + and & appropriately.  
+# we need two different types so that we can define + and & appropriately.
 # to make the user API more conssistent we also define Series (similar to
 # Repeat) that takes a flatten argument.  finally, both are so similar
 # that they can share the same state.
@@ -466,7 +466,7 @@ function Series(m::Matcher...; flatten=true, backtrack=true)
     end
 end
 
-abstract Series_<:Matcher
+@compat abstract type Series_<:Matcher  end
 
 
 # first, the backtracking version
@@ -498,7 +498,7 @@ end
 
 # when first called, call first matcher
 
-function execute(k::Config, m::Series_, s::Clean, i) 
+function execute(k::Config, m::Series_, s::Clean, i)
     if length(m.matchers) == 0
         Success(DIRTY, i, EMPTY)
     else
@@ -542,7 +542,7 @@ end
 
 # next, the non-backtracking version
 
-abstract Series!<:Matcher
+@compat abstract type Series!<:Matcher end
 
 @auto_hash_equals type Seq!<:Series!
     name::Symbol
@@ -588,7 +588,7 @@ function Alternatives(m::Matcher...; backtrack=true)
     backtrack ? Alt(m...) : Alt!(m...)
 end
 
-abstract Alternatives_<:Matcher
+@compat abstract type Alternatives_<:Matcher end
 
 
 # first, the backtracking version
@@ -597,7 +597,7 @@ abstract Alternatives_<:Matcher
     name::Symbol
     matchers::Vector{Matcher}
     Alt(matchers::Matcher...) = new(:Alt, Matcher[matchers...])
-    Alt(matchers::Vector{Matcher}) = new(:Alt, matchers)    
+    Alt(matchers::Vector{Matcher}) = new(:Alt, matchers)
 end
 
 @auto_hash_equals immutable AltState{I}<:State
@@ -639,7 +639,7 @@ end
     name::Symbol
     matchers::Vector{Matcher}
     Alt!(matchers::Matcher...) = new(:Alt!, Matcher[matchers...])
-    Alt!(matchers::Vector{Matcher}) = new(:Alt!, matchers)    
+    Alt!(matchers::Vector{Matcher}) = new(:Alt!, matchers)
 end
 
 @auto_hash_equals immutable AltState!{I}<:State
@@ -708,7 +708,7 @@ failure(k::Config, m::Not, s::NotState) = Success(s, s.iter, EMPTY)
 
 # match a regular expression.
 
-# because Regex match against strings, this matcher works only against 
+# because Regex match against strings, this matcher works only against
 # string sources.
 
 # for efficiency, we need to know the offset where the match finishes.
@@ -719,12 +719,12 @@ failure(k::Config, m::Not, s::NotState) = Success(s, s.iter, EMPTY)
 
 @auto_hash_equals type Pattern<:Matcher
     name::Symbol
-    text::AbstractString
+    text::String
     regex::Regex
     groups::Tuple
     Pattern(r::Regex, group::Int...) = new(:Pattern, r.pattern, Regex("^(?:" * r.pattern * ")(.??)"), group)
-    Pattern(s::AbstractString, group::Int...) = new(:Pattern, s, Regex("^(?:" * s * ")(.??)"), group)
-    Pattern(s::AbstractString, flags::AbstractString, group::Int...) = new(:Pattern. s, Regex("^(?:" * s * ")(.??)", flags), group)
+    Pattern(s::String, group::Int...) = new(:Pattern, s, Regex("^(?:" * s * ")(.??)"), group)
+    Pattern(s::String, flags::String, group::Int...) = new(:Pattern. s, Regex("^(?:" * s * ")(.??)", flags), group)
 end
 
 print_field(m::Pattern, ::Type{Val{:text}}) = "text=\"$(m.text)\""
@@ -760,23 +760,22 @@ type Delayed<:Matcher
     Delayed() = new(:Delayed, Nullable{Matcher}())
 end
 
-function print_matcher(m::Delayed, known::Set{Matcher})
-    function producer()
-        tag = "$(m.name)"
-        if (isnull(m.matcher))
-            produce("$(tag) OPEN")
-        elseif m in known
-            produce("$(tag)...")
-        else
-            produce("$(tag)")
-            push!(known, m)
-            for (i, line) in enumerate(print_matcher(get(m.matcher), known))
-                produce(i == 1 ? "`-$(line)" : "  $(line)")
-            end
+function delprintmatch_producer(c::Channel, m::Delayed, known::Set{Matcher})
+    tag = "$(m.name)"
+    if (isnull(m.matcher))
+        put!(c, "$(tag) OPEN")
+    elseif m in known
+        put!(c, "$(tag)...")
+    else
+        put!(c, "$(tag)")
+        push!(known, m)
+        for (i, line) in enumerate(print_matcher(get(m.matcher), known))
+            put!(c, i == 1 ? "`-$(line)" : "  $(line)")
         end
     end
-    Task(producer)
 end
+
+print_matcher(m::Delayed, known::Set{Matcher}) = Channel(c -> delprintmatch_producer(c, m, known))
 
 function execute(k::Config, m::Delayed, s::Dirty, i)
     Response(DIRTY, i, FAILURE)
@@ -794,7 +793,7 @@ end
 
 # end of stream / string
 
-@auto_hash_equals type Eos<:Matcher 
+@auto_hash_equals type Eos<:Matcher
     name::Symbol
     Eos() = new(:Eos)
 end
@@ -811,14 +810,14 @@ end
 # this is general, but usually not much use with backtracking
 
 type ParserError{I}<:Exception
-    msg::AbstractString
+    msg::String
     iter::I
 end
 
 @auto_hash_equals type Error<:Matcher
     name::Symbol
-    msg::AbstractString
-    Error(msg::AbstractString) = new(:Error, msg)
+    msg::String
+    Error(msg::String) = new(:Error, msg)
 end
 
 function execute{I}(k::Config, m::Error, s::Clean, i::I)
