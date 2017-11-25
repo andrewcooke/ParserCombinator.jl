@@ -163,7 +163,7 @@ end
     Trace(matcher) = new(:Trace, matcher)
 end
 
-@auto_hash_equals immutable TraceState<:DelegateState
+@auto_hash_equals struct TraceState<:DelegateState
     state::State
 end
 

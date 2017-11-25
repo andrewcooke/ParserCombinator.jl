@@ -85,9 +85,9 @@ end
 
 LineSource{S<:AbstractString}(s::S; limit=-1) = LineSource(IOBuffer(s); limit=limit)
 
-immutable LineException<:FailureException end
+struct LineException<:FailureException end
 
-@auto_hash_equals immutable LineIter
+@auto_hash_equals struct LineIter
     line::Int
     column::Int
 end

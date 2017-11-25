@@ -80,7 +80,7 @@ execute(k::Config, m::Fail, s::Clean, i) = FAILURE
     Drop(matcher) = new(:Drop, matcher)
 end
 
-@auto_hash_equals immutable DropState<:DelegateState
+@auto_hash_equals struct DropState<:DelegateState
     state::State
 end
 
@@ -182,7 +182,7 @@ abstract DepthState<:RepeatState
 # failure)
 arbitrary(s::DepthState) = s.iters[1]
 
-@auto_hash_equals immutable DepthSlurp{I}<:DepthState
+@auto_hash_equals struct DepthSlurp{I}<:DepthState
     # there's a mismatch in lengths here because the empty results is
     # associated with an iter and state
     results::Vector{Value} # accumulated.  starts []
@@ -191,13 +191,13 @@ arbitrary(s::DepthState) = s.iters[1]
                            # since [] at i is returned last.
 end
 
-@auto_hash_equals immutable DepthYield{I}<:DepthState
+@auto_hash_equals struct DepthYield{I}<:DepthState
     results::Vector{Value}
     iters::Vector{I}
     states::Vector{State}
 end
 
-@auto_hash_equals immutable DepthBacktrack{I}<:DepthState
+@auto_hash_equals struct DepthBacktrack{I}<:DepthState
     results::Vector{Value}
     iters::Vector{I}
     states::Vector{State}
@@ -292,7 +292,7 @@ end
 # than for the greedy match (wikipedia calls this "level order" so my 
 # terminology may be wrong).
 
-@auto_hash_equals immutable Entry{I}
+@auto_hash_equals struct Entry{I}
     iter::I
     state::State
     results::Vector{Value}
@@ -302,14 +302,14 @@ abstract BreadthState<:RepeatState
 
 arbitrary(s::BreadthState) = s.start
 
-@auto_hash_equals immutable BreadthGrow{I}<:BreadthState
+@auto_hash_equals struct BreadthGrow{I}<:BreadthState
     start::I  # initial iter
-    queue::Vector{Entry{I}}  # this has to be immutable for caching
+    queue::Vector{Entry{I}}  # this has to be struct for caching
 end
 
-@auto_hash_equals immutable BreadthYield{I}<:BreadthState
+@auto_hash_equals struct BreadthYield{I}<:BreadthState
     start::I  # initial iter
-    queue::Vector{Entry{I}}  # this has to be immutable for caching
+    queue::Vector{Entry{I}}  # this has to be struct for caching
 end
 
 # when first called, create base state and make internal transition
@@ -371,7 +371,7 @@ hash(::DepthSlurp!, h::UInt) = throw(CacheException())
 
 arbitrary(s::DepthSlurp!) = s.iters[1]
 
-@auto_hash_equals immutable DepthYield!{I}<:RepeatState
+@auto_hash_equals struct DepthYield!{I}<:RepeatState
     result::Vector{Value}
     iters::Vector{I}
 end
@@ -415,7 +415,7 @@ end
     Breadth!(m, lo, hi; flatten=true) = new(:Breadth!, m, lo, hi, flatten)
 end
 
-@auto_hash_equals immutable BreadthState!{I}<:RepeatState
+@auto_hash_equals struct BreadthState!{I}<:RepeatState
     result::Vector{Value}
     iter::I
 end
@@ -490,7 +490,7 @@ end
 # copy to get type right (Array{Value,1} -> Array{Any,1})
 serial_success(m::And, results::Vector{Value}) = Any[results...]
 
-@auto_hash_equals immutable SeriesState{I}<:State
+@auto_hash_equals struct SeriesState{I}<:State
     results::Vector{Value}
     iters::Vector{I}
     states::Vector{State}
@@ -562,7 +562,7 @@ end
 
 serial_success(m::And!, results::Vector{Value}) = Any[results...]
 
-@auto_hash_equals immutable SeriesState!<:State
+@auto_hash_equals struct SeriesState!<:State
     results::Vector{Value}
     i  # index into current alternative
 end
@@ -600,7 +600,7 @@ abstract Alternatives_<:Matcher
     Alt(matchers::Vector{Matcher}) = new(:Alt, matchers)    
 end
 
-@auto_hash_equals immutable AltState{I}<:State
+@auto_hash_equals struct AltState{I}<:State
     state::State
     iter::I
     i::Int  # index into current alternative
@@ -642,7 +642,7 @@ end
     Alt!(matchers::Vector{Matcher}) = new(:Alt!, matchers)    
 end
 
-@auto_hash_equals immutable AltState!{I}<:State
+@auto_hash_equals struct AltState!{I}<:State
     iter::I
     i::Int  # index into current alternative
 end
@@ -672,7 +672,7 @@ end
 
 always_print(::Delegate) = true
 
-@auto_hash_equals immutable LookaheadState<:DelegateState
+@auto_hash_equals struct LookaheadState<:DelegateState
     state::State
     iter
 end
@@ -692,7 +692,7 @@ success(k::Config, m::Lookahead, s, t, i, r::Value) = Success(LookaheadState(t, 
     Not(matcher) = new(:Not, matcher)
 end
 
-@auto_hash_equals immutable NotState<:State
+@auto_hash_equals struct NotState<:State
     iter
 end
 

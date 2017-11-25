@@ -112,7 +112,7 @@ type Root<:Delegate
     Root() = new(:Root)
 end
 
-immutable RootState<:DelegateState
+struct RootState<:DelegateState
     state::State
 end
 

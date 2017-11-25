@@ -31,26 +31,26 @@ typealias Statements Vector{Statement}
 
 abstract ID
 
-@auto_hash_equals immutable StringID <: ID
+@auto_hash_equals struct StringID <: ID
     id::AbstractString
 end
 
-@auto_hash_equals immutable NumericID <: ID
+@auto_hash_equals struct NumericID <: ID
     id::AbstractString
 end
 
-@auto_hash_equals immutable HtmlID <: ID
+@auto_hash_equals struct HtmlID <: ID
     id::AbstractString
 end
 
-@auto_hash_equals immutable Attribute <: Statement
+@auto_hash_equals struct Attribute <: Statement
     name::ID
     value::ID
 end
 
 typealias Attributes Vector{Attribute}
 
-@auto_hash_equals immutable Graph
+@auto_hash_equals struct Graph
     strict::Bool
     directed::Bool
     id::Nullable{ID}
@@ -59,14 +59,14 @@ typealias Attributes Vector{Attribute}
     Graph(s::Bool, d::Bool, st::Statements) = new(s, d, Nullable{ID}(), st)
 end
 
-@auto_hash_equals immutable SubGraph <: Statement
+@auto_hash_equals struct SubGraph <: Statement
     id::Nullable{ID}
     stmts::Statements
     SubGraph(id::ID, s::Statements) = new(Nullable{ID}(id), s)
     SubGraph(s::Statements) = new(Nullable{ID}(), s)
 end
 
-@auto_hash_equals immutable Port
+@auto_hash_equals struct Port
     id::Nullable{ID}
     point::Nullable{AbstractString}
     Port(id::ID, p::AbstractString) = new(Nullable{ID}(id), Nullable{AbstractString}(p))
@@ -74,14 +74,14 @@ end
     Port(p::AbstractString) = new(Nullable{ID}(), Nullable{AbstractString}(p))
 end
 
-@auto_hash_equals immutable NodeID
+@auto_hash_equals struct NodeID
     id::ID
     port::Nullable{Port}
     NodeID(id::ID, p::Port) = new(id, Nullable{Port}(p))
     NodeID(id::ID) = new(id, Nullable{Port}())
 end
 
-@auto_hash_equals immutable Node <: Statement
+@auto_hash_equals struct Node <: Statement
     id::NodeID
     attrs::Attributes
     Node(id::NodeID, a::Attributes) = new(id, a)
@@ -91,22 +91,22 @@ end
 @compat typealias EdgeNode Union{NodeID, SubGraph}
 typealias EdgeNodes Vector{EdgeNode}
 
-@auto_hash_equals immutable Edge <: Statement
+@auto_hash_equals struct Edge <: Statement
     nodes::EdgeNodes
     attrs::Attributes
     Edge(n::EdgeNodes, a::Attributes) = new(n, a)
     Edge(n::EdgeNodes) = new(n, Attribute[])
 end
 
-@auto_hash_equals immutable GraphAttributes <: Statement
+@auto_hash_equals struct GraphAttributes <: Statement
     attrs::Attributes
 end
 
-@auto_hash_equals immutable NodeAttributes <: Statement
+@auto_hash_equals struct NodeAttributes <: Statement
     attrs::Attributes
 end
 
-@auto_hash_equals immutable EdgeAttributes <: Statement
+@auto_hash_equals struct EdgeAttributes <: Statement
     attrs::Attributes
 end
 

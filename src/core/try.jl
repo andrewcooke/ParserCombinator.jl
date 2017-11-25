@@ -85,7 +85,7 @@ end
     Try(matcher) = new(:Try, matcher)
 end
 
-@auto_hash_equals immutable TryState<:DelegateState
+@auto_hash_equals struct TryState<:DelegateState
     state::State
 end
 
