@@ -75,15 +75,16 @@ mutable struct LineSource{S}<:LineAt
     zero::Int      # offset to lines (lines[x] contains line x+zero)
     limit::Int     # maximum number of lines
     lines::Vector{S}
-    LineSource(io::IO, line::S; limit=-1) where {S} = new{S}(io, 0, limit, S[line])
 end
+
+LineSource(io::IO, line::S; limit=-1) where {S} = LineSource(io, 0, limit, S[line])
 
 function LineSource(io::IO; limit=-1)
     line = readline(io)
-    LineSource{typeof(line)}(io, line; limit=limit)
+    LineSource(io, line; limit=limit)
 end
 
-LineSource{S<:AbstractString}(s::S; limit=-1) = LineSource(IOBuffer(s); limit=limit)
+LineSource(s::AbstractString; limit=-1) = LineSource(IOBuffer(s); limit=limit)
 
 struct LineException<:FailureException end
 
@@ -139,7 +140,7 @@ end
 # other api
 
 function diagnostic(s::LineAt, i::LineIter, msg)
-    line = "[Not available]"
+    line = "[Line not available]"
     try
         line = line_at(s, i)
         if nl(line[end])
@@ -147,7 +148,7 @@ function diagnostic(s::LineAt, i::LineIter, msg)
         end
     catch x
         if !isa(x, FailureException)
-            throw(x)
+            rethrow(x)
         end
     end
     fmt_error(i.line, i.column, line, msg)
