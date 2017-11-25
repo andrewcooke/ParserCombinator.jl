@@ -2,15 +2,8 @@
 module GML
 
 using ...ParserCombinator
-using Compat
 
 export parse_raw, parse_dict, GMLError
-
-
-# symbol required in 0.3
-# both work in 0.4
-# symbol gives deprecation warning in 0.5
-Symbol_ = VERSION >= v"0.5-" ? Symbol : symbol
 
 
 function mk_parser(string_input)
@@ -44,7 +37,7 @@ function mk_parser(string_input)
             open     = ~Pattern(wstar("\\["))
             close    = ~Pattern(wstar("]"))
 
-            key      = Pattern(wplus("([a-zA-Z][a-zA-Z0-9]*)"), 1)    > Symbol_
+            key      = Pattern(wplus("([a-zA-Z][a-zA-Z0-9]*)"), 1)    > Symbol
             int      = Pattern(wstar("((\\+|-)?\\d+)"), 1)            > pint
             real     = Pattern(wstar("((\\+|-)?\\d+.\\d+((E|e)(\\+|-)?\\d+)?)"), 1) > pflt
             str      = Pattern(wstar("\"([^\"]*)\""), 1)
@@ -58,7 +51,7 @@ function mk_parser(string_input)
             open     = Seq!(E"[", spc)
             close    = Seq!(E"]", spc)
 
-            key      = Seq!(p"[a-zA-Z][a-zA-Z0-9]*", space)           > Symbol_
+            key      = Seq!(p"[a-zA-Z][a-zA-Z0-9]*", space)           > Symbol
             int      = Seq!(p"(\+|-)?\d+", spc)                       > pint
             real     = Seq!(p"(\+|-)?\d+.\d+((E|e)(\+|-)?\d+)?", spc) > pflt
             str      = Seq!(Pattern("\"([^\"]*)\"", 1), spc)
