@@ -17,13 +17,13 @@ mutable struct Debug{S,I}<:Config{S,I}
     max_depth::Int
     max_iter
     n_calls::Int
-    function Debug(source::S; delegate=NoCache, kargs...)
+    function Debug(source::S; delegate=NoCache, kargs...) where S
         k = delegate{S,I}(source; kargs...)
-        @compat new(k.source, k.stack, k, Vector{Int}(), 0, 0, start(k.source), 0)
+        new{S,I}(k.source, k.stack, k, Vector{Int}(), 0, 0, start(k.source), 0)
     end
 end
 # i don't get why this is necessary, but it seems to work
-Debug(source; kargs...) = Debug{typeof(source),typeof(start(source))}(source; kargs...)
+#Debug(source; kargs...) = Debug{typeof(source),typeof(start(source))}(source; kargs...)
 
 parent(k::Debug) = parent(k.delegate)
 
@@ -76,7 +76,6 @@ MAX_IND = 10
 if VERSION < v"0.4-"
     shorten(s) = s
 else
-#   shorten(s) = replace(s, r"(?:[a-zA-Z]+\.)+([a-zA-Z]+)", s"\1")
     shorten(s) = replace(s, r"(?:[a-zA-Z]+\.)+([a-zA-Z]+)", 
                          Base.SubstitutionString("\1"))
 end
@@ -103,7 +102,7 @@ indent(k::Debug; max=MAX_IND) = repeat(" ", k.depth[end] % max)
 src(::Any, ::Any; max=MAX_SRC) = pad(truncate("...", max), max)
 src(s::AbstractString, i::Int; max=MAX_SRC) = pad(truncate(escape_string(s[i:end]), max), max)
 
-function debug{S<:AbstractString}(k::Debug{S}, e::Execute)
+function debug(k::Debug{<:AbstractString}, e::Execute)
     @printf("%3d:%s %02d %s%s->%s\n",
             e.iter, src(k.source, e.iter), k.depth[end], indent(k), e.parent.name, e.child.name)
 end
@@ -116,12 +115,12 @@ function short(s::Value)
     truncate(result, MAX_RES)
 end
 
-function debug{S<:AbstractString}(k::Debug{S}, s::Success)
+function debug(k::Debug{<:AbstractString}, s::Success)
     @printf("%3d:%s %02d %s%s<-%s\n",
             s.iter, src(k.source, s.iter), k.depth[end], indent(k), parent(k).name, short(s.result))
 end
 
-function debug{S<:AbstractString}(k::Debug{S}, f::Failure)
+function debug(k::Debug{<:AbstractString}, f::Failure)
     @printf("   :%s %02d %s%s<-!!!\n",
             pad(" ", MAX_SRC), k.depth[end], indent(k), parent(k).name)
 end
@@ -138,17 +137,17 @@ function src(s::LineAt, i::LineIter; max=MAX_SRC)
     end
 end
    
-function debug{S<:LineAt}(k::Debug{S}, e::Execute)
+function debug(k::Debug{<:LineAt}, e::Execute)
     @printf("%3d,%-3d:%s %02d %s%s->%s\n",
             e.iter.line, e.iter.column, src(k.source, e.iter), k.depth[end], indent(k), e.parent.name, e.child.name)
 end
 
-function debug{S<:LineAt}(k::Debug{S}, s::Success)
+function debug(k::Debug{<:LineAt}, s::Success)
     @printf("%3d,%-3d:%s %02d %s%s<-%s\n",
             s.iter.line, s.iter.column, src(k.source, s.iter), k.depth[end], indent(k), parent(k).name, short(s.result))
 end
 
-function debug{S<:LineAt}(k::Debug{S}, f::Failure)
+function debug(k::Debug{<:LineAt}, f::Failure)
     @printf("       :%s %02d %s%s<-!!!\n",
             pad(" ", MAX_SRC), k.depth[end], indent(k), parent(k).name)
 end

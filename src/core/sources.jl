@@ -68,14 +68,14 @@ discard(::AbstractString, i, n) = i + n
 # somewhere.
 
 # all the below is based on line_at()
-abstract LineAt
+abstract type LineAt end
 
 mutable struct LineSource{S}<:LineAt
     io::IO
     zero::Int      # offset to lines (lines[x] contains line x+zero)
     limit::Int     # maximum number of lines
     lines::Vector{S}
-    LineSource(io::IO, line::S; limit=-1) = new(io, 0, limit, S[line])
+    LineSource(io::IO, line::S; limit=-1) where {S} = new{S}(io, 0, limit, S[line])
 end
 
 function LineSource(io::IO; limit=-1)

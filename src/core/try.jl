@@ -19,7 +19,7 @@ mutable struct TrySource{S}<:LineAt
     zero::Int      # offset to lines (lines[x] contains line x+zero)
     right::Int     # rightmost expired column
     lines::Vector{S}
-    TrySource(io::IO, line::S) = new(io, 0, 0, 0, S[line])
+    TrySource(io::IO, line::S) where {S} = new{S}(io, 0, 0, 0, S[line])
 end
 
 function TrySource(io::IO)
@@ -27,7 +27,7 @@ function TrySource(io::IO)
     TrySource{typeof(line)}(io, line)
 end
 
-TrySource{S<:AbstractString}(s::S) = TrySource(IOBuffer(s))
+TrySource(s::AbstractString) = TrySource(IOBuffer(s))
 
 
 function expire(s::TrySource, i::LineIter)

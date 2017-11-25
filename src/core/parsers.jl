@@ -15,8 +15,8 @@ parent(k::Config) = k.stack[end][1]
 mutable struct NoCache{S,I}<:Config{S,I}
     source::S
     stack::Vector{Tuple{Matcher, State}}
-    NoCache(source; kargs...) = new(source, Vector{Tuple{Matcher,State}}())
 end
+NoCache(source; kargs...) = NoCache(source, Vector{Tuple{Matcher,State}}())
 
 function dispatch(k::NoCache, e::Execute)
     push!(k.stack, (e.parent, e.parent_state))
@@ -52,10 +52,10 @@ const Key{I} = Tuple{Matcher,State,I}
 
 mutable struct Cache{S,I}<:Config{S,I}
     source::S
-    @compat stack::Vector{Tuple{Matcher,State,Key{I}}}
+    stack::Vector{Tuple{Matcher,State,Key{I}}}
     cache::Dict{Key{I},Message}
-    @compat Cache(source; kargs...) = new(source, Vector{Tuple{Matcher,State,Key{I}}}(), Dict{Key{I},Message}())
 end
+Cache(source; kargs...) = Cache(source, Vector{Tuple{Matcher,State,Key{I}}}(), Dict{Key{I},Message}())
 
 function dispatch(k::Cache, e::Execute)
     key = (e.child, e.child_state, e.iter)
