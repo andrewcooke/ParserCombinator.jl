@@ -13,7 +13,7 @@
 # already available in memory).  but strings can also be wrapped.
 
 
-type TrySource{S}<:LineAt
+mutable struct TrySource{S}<:LineAt
     io::IO
     frozen::Int    # non-zero is frozen; count allows nested Try()
     zero::Int      # offset to lines (lines[x] contains line x+zero)

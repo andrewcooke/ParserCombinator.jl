@@ -363,7 +363,7 @@ end
     Depth!(m, lo, hi; flatten=true) = new(:Depth!, m, lo, hi, flatten)
 end
 
-type DepthSlurp!{I}<:RepeatState
+mutable struct DepthSlurp!{I}<:RepeatState
     result::Vector{Value}
     iters::Vector{I}
 end
@@ -754,7 +754,7 @@ end
 
 # support loops
 
-type Delayed<:Matcher
+mutable struct Delayed<:Matcher
     name::Symbol
     matcher::Nullable{Matcher}
     Delayed() = new(:Delayed, Nullable{Matcher}())
@@ -810,7 +810,7 @@ end
 
 # this is general, but usually not much use with backtracking
 
-type ParserError{I}<:Exception
+mutable struct ParserError{I}<:Exception
     msg::AbstractString
     iter::I
 end

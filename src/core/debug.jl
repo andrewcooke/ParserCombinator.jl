@@ -8,7 +8,7 @@
 # construct your own with any type by using the delegate=... keyword.  see
 # test/calc.j for an example.
 
-type Debug{S,I}<:Config{S,I}
+mutable struct Debug{S,I}<:Config{S,I}
     source::S
     stack::Vector
     delegate::Config{S,I}

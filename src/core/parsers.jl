@@ -12,10 +12,10 @@ parent(k::Config) = k.stack[end][1]
 
 # evaluation without a cache (memoization)
 
-type NoCache{S,I}<:Config{S,I}
+mutable struct NoCache{S,I}<:Config{S,I}
     source::S
-    @compat stack::Vector{Tuple{Matcher, State}}
-    @compat NoCache(source; kargs...) = new(source, Vector{Tuple{Matcher,State}}())
+    stack::Vector{Tuple{Matcher, State}}
+    NoCache(source; kargs...) = new(source, Vector{Tuple{Matcher,State}}())
 end
 
 function dispatch(k::NoCache, e::Execute)
@@ -48,9 +48,9 @@ end
 
 # evaluation with a complete cache (all intermediate results memoized)
 
-@compat typealias Key{I} Tuple{Matcher,State,I}
+const Key{I} = Tuple{Matcher,State,I}
 
-type Cache{S,I}<:Config{S,I}
+mutable struct Cache{S,I}<:Config{S,I}
     source::S
     @compat stack::Vector{Tuple{Matcher,State,Key{I}}}
     cache::Dict{Key{I},Message}
@@ -107,7 +107,7 @@ end
 
 # a dummy matcher used by the parser
 
-type Root<:Delegate 
+mutable struct Root<:Delegate 
     name::Symbol
     Root() = new(:Root)
 end

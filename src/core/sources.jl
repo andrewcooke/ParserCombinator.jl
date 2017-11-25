@@ -70,7 +70,7 @@ discard(::AbstractString, i, n) = i + n
 # all the below is based on line_at()
 abstract LineAt
 
-type LineSource{S}<:LineAt
+mutable struct LineSource{S}<:LineAt
     io::IO
     zero::Int      # offset to lines (lines[x] contains line x+zero)
     limit::Int     # maximum number of lines

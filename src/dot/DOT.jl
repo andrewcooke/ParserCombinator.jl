@@ -2,7 +2,6 @@
 module DOT
 
 using ...ParserCombinator
-using Compat
 using AutoHashEquals
 import Base: ==
 
@@ -25,11 +24,11 @@ export Statement, Statements, ID, StringID, NumericID, HtmlID, Attribute,
 
 # see test/dot/examples.jl for examples accessing fields in this structure
 
-abstract Statement
+abstract type Statement end
 
-typealias Statements Vector{Statement}
+const Statements = Vector{Statement}
 
-abstract ID
+abstract type ID end
 
 @auto_hash_equals struct StringID <: ID
     id::AbstractString
@@ -48,7 +47,7 @@ end
     value::ID
 end
 
-typealias Attributes Vector{Attribute}
+const Attributes = Vector{Attribute}
 
 @auto_hash_equals struct Graph
     strict::Bool
@@ -88,8 +87,8 @@ end
     Node(id::NodeID) = new(id, Attribute[])
 end
 
-@compat typealias EdgeNode Union{NodeID, SubGraph}
-typealias EdgeNodes Vector{EdgeNode}
+const EdgeNode =  Union{NodeID, SubGraph}
+const EdgeNodes = Vector{EdgeNode}
 
 @auto_hash_equals struct Edge <: Statement
     nodes::EdgeNodes

@@ -127,13 +127,13 @@ end
 # users with different requirements are free to take the "raw" parse and build
 # their own object models.
 
-type GMLError<:Exception
+mutable struct GMLError<:Exception
     msg::AbstractString
 end
 
 LISTS = [:graph,:node,:edge]
 
-typealias GMLDict Dict{Symbol, Any}
+const GMLDict = Dict{Symbol, Any}
 
 function build_dict(raw; lists=LISTS, unsafe=false)
     root = GMLDict()
