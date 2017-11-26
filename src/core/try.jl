@@ -23,7 +23,7 @@ mutable struct TrySource{S}<:LineAt
 end
 
 function TrySource(io::IO)
-    line = readline(io)
+    line = Compat.readline(io, chomp=false)
     TrySource{typeof(line)}(io, line)
 end
 
@@ -51,7 +51,7 @@ function line_at(f::TrySource, s::LineIter; check::Bool=true)
     end
     n = s.line - f.zero
     while length(f.lines) < n
-        push!(f.lines, readline(f.io))
+        push!(f.lines, Compat.readline(f.io, chomp=false))
     end
     f.lines[n]
 end

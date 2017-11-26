@@ -35,7 +35,7 @@ function round_down(s, i)
     nl(s[i]) ? i-1 : i
 end
 
-function diagnostic(s::AbstractString, i, msg)
+function diagnostic(s::String, i, msg)
     if i < 1
         l, c, t = 0, 0, "[Before start]"
     elseif i > length(s)
@@ -51,12 +51,12 @@ function diagnostic(s::AbstractString, i, msg)
 end
 
 # given a source and iterator, return following text for regexp
-forwards(s::AbstractString, i) = SubString(s, i)
+forwards(s::String, i) = SubString(s, i)
 
 # originally i thought that UTF8 would require code to move forwards
 # the given number of characters.  but discard() is called only from
 # regex and that returns the number of *bytes*.
-discard(::AbstractString, i, n) = i + n
+discard(::String, i, n) = i + n
 
 # io instance, from which lines are read.  the lines are stored so that we
 # have backtracking.  this is pretty pointless, because you might as well just
@@ -80,7 +80,7 @@ end
 LineSource(io::IO, line::S; limit=-1) where {S} = LineSource(io, 0, limit, S[line])
 
 function LineSource(io::IO; limit=-1)
-    line = readline(io)
+    line = readline(io; chomp=false)
     LineSource(io, line; limit=limit)
 end
 
@@ -107,7 +107,7 @@ function line_at(s::LineSource, i::LineIter; check::Bool=true)
     else
         n = i.line - s.zero
         while length(s.lines) < n
-            push!(s.lines, readline(s.io))
+            push!(s.lines, Compat.readline(s.io, chomp=false))
         end
         while s.limit > 0 && length(s.lines) > s.limit
             s.zero += 1
@@ -173,5 +173,3 @@ function discard(s::LineAt, i::LineIter, n)
     end
     i
 end
-
-

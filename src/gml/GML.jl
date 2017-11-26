@@ -1,4 +1,4 @@
-
+__precompile__()
 module GML
 
 using ...ParserCombinator
@@ -26,7 +26,7 @@ function mk_parser(string_input)
         comment = P"(#.*)?"
 
         # we need string input as we match multiple lines
-        if string_input && ParserCombinator.FAST_REGEX
+        if string_input
 
             wspace   = "([\t ]+|[\r\n]+(#.*)?)"
             wstar(x) = string(x, wspace, "*")
@@ -62,9 +62,9 @@ function mk_parser(string_input)
         sublist = Seq!(open, list, Alt!(close, expect("]")))
         value   = Alt!(real, int, str, sublist, expect("value"))
         element = Seq!(key, value)                            > tuple
-        
+
         list.matcher = Nullable{Matcher}(element[0:end,:!]    > vcat)
-        
+
         # first line comment must be explicit (no previous linefeed)
         Seq!(comment, spc, list, Alt!(Seq!(spc, Eos()), expect("key")))
 
@@ -74,15 +74,11 @@ end
 
 # this returns the "natural" representation as nested arrays and tuples
 function parse_raw(s; debug=false)
-    parser = mk_parser(isa(s, AbstractString))
+    parser = mk_parser(isa(s, String))
     try
-        if ParserCombinator.FAST_REGEX
-            (debug ? parse_one_dbg : parse_one)(s, Trace(parser); debug=debug)
-        else
-            (debug ? parse_lines_dbg : parse_lines)(s, Trace(parser); debug=debug)
-        end
+        (debug ? parse_one_dbg : parse_one)(s, Trace(parser); debug=debug)
     catch x
-        if (debug) 
+        if (debug)
             Base.show_backtrace(STDOUT, catch_backtrace())
         end
         rethrow()

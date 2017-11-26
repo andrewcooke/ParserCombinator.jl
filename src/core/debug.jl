@@ -73,14 +73,11 @@ MAX_RES = 50
 MAX_SRC = 10
 MAX_IND = 10
 
-if VERSION < v"0.4-"
-    shorten(s) = s
-else
-    shorten(s) = replace(s, r"(?:[a-zA-Z]+\.)+([a-zA-Z]+)", 
-                         Base.SubstitutionString("\1"))
-end
+#   shorten(s) = replace(s, r"(?:[a-zA-Z]+\.)+([a-zA-Z]+)", s"\1")
+shorten(s) = replace(s, r"(?:[a-zA-Z]+\.)+([a-zA-Z]+)",
+                     Base.SubstitutionString("\1"))
 
-function truncate(s::AbstractString, n=10)
+function truncate(s::String, n=10)
     if length(s) <= n
         return s
     end
@@ -96,11 +93,11 @@ function truncate(s::AbstractString, n=10)
     end
 end
 
-pad(s::AbstractString, n::Int) = s * repeat(" ", n - length(s))
+pad(s::String, n::Int) = s * repeat(" ", n - length(s))
 indent(k::Debug; max=MAX_IND) = repeat(" ", k.depth[end] % max)
 
 src(::Any, ::Any; max=MAX_SRC) = pad(truncate("...", max), max)
-src(s::AbstractString, i::Int; max=MAX_SRC) = pad(truncate(escape_string(s[i:end]), max), max)
+src(s::String, i::Int; max=MAX_SRC) = pad(truncate(escape_string(s[i:end]), max), max)
 
 function debug(k::Debug{<:AbstractString}, e::Execute)
     @printf("%3d:%s %02d %s%s->%s\n",

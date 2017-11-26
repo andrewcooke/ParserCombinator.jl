@@ -36,7 +36,7 @@ using ParserCombinator
 
 # the AST nodes we will construct, with evaluation via calc()
 
-abstract Node
+abstract type Node node
 ==(n1::Node, n2::Node) = n1.val == n2.val
 calc(n::Float64) = n
 type Inv<:Node val end
@@ -68,7 +68,7 @@ sum.matcher = prd + (add | sub)[0:end] |> Sum
 all = sum + Eos()
 
 
-# and test 
+# and test
 
 # this prints 2.5
 calc(parse_one("1+2*3/4", all)[1])
@@ -110,11 +110,6 @@ avoid repeating matches).
 Still, for large parsing tasks (eg parsing source code for a compiler) it
 would probably be better to use a wrapper around an external parser generator,
 like Anltr.
-
-**Note:** There's an [issue](https://github.com/JuliaLang/Compat.jl/issues/94)
-  with the Compat library which means the code above (the assignment to
-  `Delayed.matcher`) doesn't work with 0.3.  See [calc.jl](test/calc.jl) for
-  the uglier, hopefully temporary, 0.3 version.
 
 ## Install
 
@@ -596,7 +591,7 @@ character of the first line.
 
 Finally, note that this is implemented at the source level, by restricting
 what text is visible to the matchers.  Matchers that *could* backtrack will
-still make the attempt.  So you should also [disable backtracking in the 
+still make the attempt.  So you should also [disable backtracking in the
 matchers](#backtracking), where you do not need it, for an efficient grammar.
 
 #### Spaces - Pre And Post-Fixes
@@ -727,15 +722,15 @@ matchers you care about):
 
     neg = Delayed()             # allow multiple negations (eg ---3)
     neg.matcher = val | (E"-" + neg > Neg)
-    
+
     mul = E"*" + neg
     div = E"/" + neg > Inv
     prd = neg + (mul | div)[0:end] |> Prd
-    
+
     add = E"+" + prd
     sub = E"-" + prd > Neg
     sum.matcher = prd + (add | sub)[0:end] |> Sum
-    
+
     all = sum + Eos()
 end
 
@@ -1272,4 +1267,3 @@ patch.
 1.1.0 - 2015-06-07 - Fixed calc example; debug mode; much rewriting.
 
 1.0.0 - ~2015-06-03 - More or less feature complete.
-

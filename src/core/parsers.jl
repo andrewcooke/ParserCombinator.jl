@@ -125,7 +125,7 @@ failure(k::Config, m::Root, s::State) = FAILURE
 # to modify the behaviour you can create a new Config subtype and then
 # add your own dispatch functions.
 
-function producer(k::Config, m::Matcher; debug=false)
+function producer(c::Channel, k::Config, m::Matcher; debug=false)
 
     root = Root()
     msg::Message = Execute(root, CLEAN, m, CLEAN, start(k.source))
@@ -138,7 +138,7 @@ function producer(k::Config, m::Matcher; debug=false)
                 if isa(msg, Execute)
                     error("Unexpected execute message")
                 elseif isa(msg, Success)
-                    produce(msg.result)
+                    put!(c, msg.result)
                     # my head hurts
                     msg = Execute(root, CLEAN, m, msg.child_state.state, start(k.source))
                 else
@@ -146,7 +146,7 @@ function producer(k::Config, m::Matcher; debug=false)
                 end
             end
         end
-        
+
     catch x
         if (debug)
             println("debug was set, so showing error from inside task")
@@ -162,13 +162,13 @@ end
 
 # helper functions to generate the parsers from the above
 
-# these assume that any config construct takes a single source argument 
+# these assume that any config construct takes a single source argument
 # plus optional keyword args
 
 function make{S}(config, source::S, matcher; debug=false, kargs...)
     I = typeof(start(source))
     k = config{S,I}(source; debug=debug, kargs...)
-    (k, Task(() -> producer(k, matcher; debug=debug)))
+    (k, Channel(c -> producer(c, k, matcher; debug=debug)))
 end
 
 function make_all(config; kargs_make...)
@@ -178,9 +178,9 @@ function make_all(config; kargs_make...)
     end
 end
 
-function once(task)
-    result = consume(task)
-    if task.state == :done
+function once(c::Channel)
+    result = take!(c)
+    if !isopen(c)
         throw(ParserException("cannot parse"))
     else
         return result

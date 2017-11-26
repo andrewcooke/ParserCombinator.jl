@@ -1,4 +1,4 @@
-
+__precompile__()
 module DOT
 
 using ...ParserCombinator
@@ -68,6 +68,7 @@ end
 @auto_hash_equals struct Port
     id::Nullable{ID}
     point::Nullable{AbstractString}
+
     Port(id::ID, p::AbstractString) = new(Nullable{ID}(id), Nullable{AbstractString}(p))
     Port(id::ID) = new(Nullable{ID}(id), Nullable{AbstractString}())
     Port(p::AbstractString) = new(Nullable{ID}(), Nullable{AbstractString}(p))

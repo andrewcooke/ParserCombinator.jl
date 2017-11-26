@@ -1,4 +1,4 @@
-
+__precompile__()
 module Parsers
 
 export GML
