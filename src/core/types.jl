@@ -17,7 +17,7 @@ abstract type State end     # state associated with Matchers during evaluation
 # constructor that takes the source as first argument and additional arguments
 # as keywords.  the type of the source is exposed and if it's a subclass of
 # string then the iterator is assumed to be a simple integer index.
-abstract type Config{S,I} end
+abstract type Config{S} end
 
 
 

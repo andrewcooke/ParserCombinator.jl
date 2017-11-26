@@ -205,7 +205,7 @@ end
 
 # when first called, create base state and make internal transition
 
-execute(k::Config{S,I}, m::Depth, s::Clean, i::I) where {S,I} = execute(k, m, DepthSlurp{I}(Vector{Value}(), I[i], State[DIRTY]), i)
+execute(k::Config{S}, m::Depth, s::Clean, i::I) where {S,I} = execute(k, m, DepthSlurp{I}(Vector{Value}(), I[i], State[DIRTY]), i)
 
 # repeat matching until at bottom of this branch (or maximum depth)
 
@@ -314,7 +314,7 @@ end
 
 # when first called, create base state and make internal transition
 
-execute{S,I}(k::Config{S,I}, m::Breadth, s::Clean, i::I) = execute(k, m, BreadthYield{I}(i, Entry{I}[Entry{I}(i, CLEAN, Any[])]), i)
+execute(k::Config, m::Breadth, s::Clean, i::I) where I = execute(k, m, BreadthYield{I}(i, Entry{I}[Entry{I}(i, CLEAN, Any[])]), i)
 
 # yield the top state
 
@@ -376,7 +376,7 @@ arbitrary(s::DepthSlurp!) = s.iters[1]
     iters::Vector{I}
 end
 
-execute(k::Config{S,I}, m::Depth!, s::Clean, i::I) where {S,I} = execute(k, m, DepthSlurp!{I}(Value[], I[i]), i)
+execute(k::Config{S}, m::Depth!, s::Clean, i::I) where {S,I} = execute(k, m, DepthSlurp!{I}(Value[], I[i]), i)
 
 function execute(k::Config, m::Depth!, s::DepthSlurp!, i)
     if length(s.result) < m.hi

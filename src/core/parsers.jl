@@ -12,7 +12,7 @@ parent(k::Config) = k.stack[end][1]
 
 # evaluation without a cache (memoization)
 
-mutable struct NoCache{S,I}<:Config{S,I}
+mutable struct NoCache{S}<:Config{S}
     source::S
     stack::Vector{Tuple{Matcher, State}}
 end
@@ -50,7 +50,7 @@ end
 
 const Key{I} = Tuple{Matcher,State,I}
 
-mutable struct Cache{S,I}<:Config{S,I}
+mutable struct Cache{S,I}<:Config{S}
     source::S
     stack::Vector{Tuple{Matcher,State,Key{I}}}
     cache::Dict{Key{I},Message}
@@ -165,9 +165,8 @@ end
 # these assume that any config construct takes a single source argument
 # plus optional keyword args
 
-function make{S}(config, source::S, matcher; debug=false, kargs...)
-    I = typeof(start(source))
-    k = config{S,I}(source; debug=debug, kargs...)
+function make(config, source::S, matcher; debug=false, kargs...) where S
+    k = config(source; debug=debug, kargs...)
     (k, Channel(c -> producer(c, k, matcher; debug=debug)))
 end
 

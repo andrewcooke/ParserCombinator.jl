@@ -8,22 +8,20 @@
 # construct your own with any type by using the delegate=... keyword.  see
 # test/calc.j for an example.
 
-mutable struct Debug{S,I}<:Config{S,I}
+mutable struct Debug{S}<:Config{S}
     source::S
     stack::Vector
-    delegate::Config{S,I}
+    delegate::Config{S}
     depth::Vector{Int}
     abs_depth::Int
     max_depth::Int
     max_iter
     n_calls::Int
     function Debug(source::S; delegate=NoCache, kargs...) where S
-        k = delegate{S,I}(source; kargs...)
-        new{S,I}(k.source, k.stack, k, Vector{Int}(), 0, 0, start(k.source), 0)
+        k = delegate{S}(source; kargs...)
+        new{S}(k.source, k.stack, k, Vector{Int}(), 0, 0, start(k.source), 0)
     end
 end
-# i don't get why this is necessary, but it seems to work
-#Debug(source; kargs...) = Debug{typeof(source),typeof(start(source))}(source; kargs...)
 
 parent(k::Debug) = parent(k.delegate)
 
@@ -103,6 +101,7 @@ function debug(k::Debug{<:AbstractString}, e::Execute)
     @printf("%3d:%s %02d %s%s->%s\n",
             e.iter, src(k.source, e.iter), k.depth[end], indent(k), e.parent.name, e.child.name)
 end
+
 
 function short(s::Value)
     result = string(s)
