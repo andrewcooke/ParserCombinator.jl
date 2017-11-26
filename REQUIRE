@@ -1,4 +1,2 @@
-julia 0.3
-Compat 0.7.12
+julia 0.6
 AutoHashEquals 0.0.8
-

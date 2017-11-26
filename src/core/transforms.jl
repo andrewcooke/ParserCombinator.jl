@@ -10,7 +10,7 @@
     Transform(matcher, f) = new(:Transform, matcher, f)
 end
 
-@auto_hash_equals immutable TransformState<:DelegateState
+@auto_hash_equals struct TransformState<:DelegateState
     state::State
 end
 
@@ -30,7 +30,7 @@ success(k::Config, m::Transform, s, t, i, r::Value) = Success(TransformState(t),
     ITransform(matcher, f) = new(:ITransform, matcher, f)
 end
 
-@auto_hash_equals immutable ITransformState<:DelegateState
+@auto_hash_equals struct ITransformState<:DelegateState
     state::State
 end
 

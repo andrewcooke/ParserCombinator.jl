@@ -13,21 +13,21 @@
 # already available in memory).  but strings can also be wrapped.
 
 
-type TrySource{S}<:LineAt
+mutable struct TrySource{S}<:LineAt
     io::IO
     frozen::Int    # non-zero is frozen; count allows nested Try()
     zero::Int      # offset to lines (lines[x] contains line x+zero)
     right::Int     # rightmost expired column
     lines::Vector{S}
-    TrySource(io::IO, line::S) = new(io, 0, 0, 0, S[line])
+    TrySource(io::IO, line::S) where {S} = new{S}(io, 0, 0, 0, S[line])
 end
 
 function TrySource(io::IO)
-    line = readline(io)
+    line = Compat.readline(io, chomp=false)
     TrySource{typeof(line)}(io, line)
 end
 
-TrySource{S<:AbstractString}(s::S) = TrySource(IOBuffer(s))
+TrySource(s::AbstractString) = TrySource(IOBuffer(s))
 
 
 function expire(s::TrySource, i::LineIter)
@@ -51,7 +51,7 @@ function line_at(f::TrySource, s::LineIter; check::Bool=true)
     end
     n = s.line - f.zero
     while length(f.lines) < n
-        push!(f.lines, readline(f.io))
+        push!(f.lines, Compat.readline(f.io, chomp=false))
     end
     f.lines[n]
 end
@@ -85,7 +85,7 @@ end
     Try(matcher) = new(:Try, matcher)
 end
 
-@auto_hash_equals immutable TryState<:DelegateState
+@auto_hash_equals struct TryState<:DelegateState
     state::State
 end
 
