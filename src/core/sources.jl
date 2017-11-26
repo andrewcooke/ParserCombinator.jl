@@ -103,11 +103,12 @@ start(f::LineAt) = LineIter(1, 1)
 
 function line_at(s::LineSource, i::LineIter; check::Bool=true)
     if check && i.line <= s.zero || i.column < 1
+        #@show i.line, s.zero, i.column
         throw(LineException())
     else
         n = i.line - s.zero
         while length(s.lines) < n
-            push!(s.lines, Compat.readline(s.io, chomp=false))
+            push!(s.lines, readline(s.io, chomp=false))
         end
         while s.limit > 0 && length(s.lines) > s.limit
             s.zero += 1
@@ -115,6 +116,7 @@ function line_at(s::LineSource, i::LineIter; check::Bool=true)
         end
         line = s.lines[i.line - s.zero]
         if check && i.column > length(line)
+            #@show i.column, length(line)
             throw(LineException())
         end
     end
@@ -140,7 +142,7 @@ end
 # other api
 
 function diagnostic(s::LineAt, i::LineIter, msg)
-    line = "[Line not available]"
+    line = "[Not available]"
     try
         line = line_at(s, i)
         if nl(line[end])
