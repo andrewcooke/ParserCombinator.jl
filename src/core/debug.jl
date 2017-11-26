@@ -18,7 +18,7 @@ mutable struct Debug{S}<:Config{S}
     max_iter
     n_calls::Int
     function Debug(source::S; delegate=NoCache, kargs...) where S
-        k = delegate{S}(source; kargs...)
+        k = delegate(source; kargs...)
         new{S}(k.source, k.stack, k, Vector{Int}(), 0, 0, start(k.source), 0)
     end
 end

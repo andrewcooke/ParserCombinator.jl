@@ -55,7 +55,11 @@ mutable struct Cache{S,I}<:Config{S}
     stack::Vector{Tuple{Matcher,State,Key{I}}}
     cache::Dict{Key{I},Message}
 end
-Cache(source; kargs...) = Cache(source, Vector{Tuple{Matcher,State,Key{I}}}(), Dict{Key{I},Message}())
+
+function Cache(source; kargs...)
+    I = typeof(start(source))
+    Cache(source, Vector{Tuple{Matcher,State,Key{I}}}(), Dict{Key{I},Message}())
+end
 
 function dispatch(k::Cache, e::Execute)
     key = (e.child, e.child_state, e.iter)
@@ -164,7 +168,6 @@ end
 
 # these assume that any config construct takes a single source argument
 # plus optional keyword args
-
 function make(config, source::S, matcher; debug=false, kargs...) where S
     k = config(source; debug=debug, kargs...)
     (k, Channel(c -> producer(c, k, matcher; debug=debug)))
@@ -178,11 +181,14 @@ function make_all(config; kargs_make...)
 end
 
 function once(c::Channel)
-    result = take!(c)
-    if !isopen(c)
-        throw(ParserException("cannot parse"))
-    else
-        return result
+    try
+        take!(c)
+    catch err
+        if err isa InvalidStateException
+            throw(ParserException("cannot parse"))
+        else
+            rethrow(err)
+        end
     end
 end
 

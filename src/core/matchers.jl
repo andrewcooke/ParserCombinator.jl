@@ -593,7 +593,7 @@ abstract type Alternatives_<:Matcher end
 
 # first, the backtracking version
 
-@auto_hash_equals struct Alt<:Alternatives_
+@auto_hash_equals mutable struct Alt<:Alternatives_
     name::Symbol
     matchers::Vector{Matcher}
     Alt(matchers::Matcher...) = new(:Alt, Matcher[matchers...])
