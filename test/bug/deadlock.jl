@@ -1,7 +1,7 @@
 
 using AutoHashEquals
 
-@compat abstract type Graph end
+abstract type Graph end
 
 @auto_hash_equals type Node<:Graph
     label::String

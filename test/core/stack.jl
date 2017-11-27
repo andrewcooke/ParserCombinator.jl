@@ -16,7 +16,7 @@ stack(0, 10)
 @time println(stack(0, 100_000))
 # stack limit is somewhere around 100,000 (certainly less than 200,000)
 
-@compat abstract type Msg end
+abstract type Msg end
 
 type Call<:Msg
     before::Function

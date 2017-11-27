@@ -5,7 +5,7 @@ import Base: ==
 signed_prod(lst) = length(lst) == 1 ? lst[1] : Base.prod(lst)
 signed_sum(lst) = length(lst) == 1 ? lst[1] : Base.sum(lst)
 
-@compat abstract type Node end
+abstract type Node end
 ==(n1::Node, n2::Node) = isequal(n1.val, n2.val)
 calc(n::Float64) = n
 type Inv<:Node val end
