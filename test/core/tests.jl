@@ -2,14 +2,14 @@
 @test parse_one("", Epsilon()) == []
 @test parse_one("", Insert("foo")) == ["foo"]
 @test parse_one("", Drop(Insert("foo"))) == []
-#TODO @test_throws ParserException parse_one("x", Equal("a"))
+@test_throws ParserException parse_one("x", Equal("a"))
 @test parse_one("a", Equal("a")) == ["a"]
 @test parse_one("aa", Equal("a")) == ["a"]
-#TODO @test_throws ParserException parse_one("a", Repeat(Equal("a"), 2, 2))
+@test_throws ParserException parse_one("a", Repeat(Equal("a"), 2, 2))
 @test parse_one("aa", Repeat(Equal("a"), 2, 2)) == ["a", "a"]
 @test parse_one("aa", Repeat(Equal("a"), 1, 2)) == ["a", "a"]
 @test parse_one("", Repeat(Equal("a"), 0, 0)) == []
-#TODO @test_throws ParserException parse_one("a", Repeat(Equal("a"), 2, 2; greedy=false); debug=true)
+@test_throws ParserException parse_one("a", Repeat(Equal("a"), 2, 2; greedy=false); debug=true)
 @test parse_one("aa", Repeat(Equal("a"), 2, 2; greedy=false)) == ["a", "a"]
 @test parse_one("aa", Repeat(Equal("a"), 1, 2; greedy=false)) == ["a"]
 @test parse_one("", Repeat(Equal("a"), 0, 0; greedy=false)) == []
@@ -24,11 +24,11 @@
 @test parse_one("abc", Seq(p"."[1:2], Equal("c"))) == ["a", "b", "c"]
 @test parse_one("abc", Seq(p"."[1:2], Equal("b"))) == ["a", "b"]
 @test parse_one("abc", Seq!(p"."[1:2], Equal("c"))) == ["a", "b", "c"]
-#TODO @test_throws ParserException  parse_one("abc", Seq!(p"."[1:2], Equal("b"))) == ["a", "b"]
+@test_throws ParserException  parse_one("abc", Seq!(p"."[1:2], Equal("b"))) == ["a", "b"]
 @test parse_one("abc", Seq(p"."[1:2], p"."[1:2])) == ["a", "b", "c"]
 @test parse_one("abc", Seq(p"."[1:2,:&], p"."[1:2])) == Any[["a"], ["b"], "c"]
 @test parse_one("abc", Seq(p"."[1:2,:&,:?], p"."[1:2])) == Any[["a"], "b", "c"]
-#TODO @test_throws ErrorException parse_one("abc", Seq(p"."[1:2,:&,:?,:x], p"."[1:2]))
+@test_throws ErrorException parse_one("abc", Seq(p"."[1:2,:&,:?,:x], p"."[1:2]))
 @test parse_one("abc", Seq(p"."[1:2], p"."[1:2], Equal("c"))) == ["a", "b", "c"]
 @test parse_one("ab", p"." + e"b") == ["a", "b"]
 @test parse_one("abc", p"." + e"b" + e"c") == ["a", "b", "c"]
@@ -42,7 +42,7 @@
 @test length(collect(parse_all("abc", p"."[1:2]))) == 2
 @test parse_one("abc", p"."[3] > tuple) == [("a", "b", "c")]
 @test parse_one("abc", p"."[3] > vcat) == Any[Any["a", "b", "c"]]
-#TODO @test_throws ParserException parse_one("abc", And(Equal("a"), Lookahead(Equal("c")), Equal("b")))
+@test_throws ParserException parse_one("abc", And(Equal("a"), Lookahead(Equal("c")), Equal("b")))
 @test parse_one("abc", And(Equal("a"), Not(Lookahead(Equal("c"))), Equal("b"))) == Any[["a"], [], ["b"]]
 @test parse_one("1.2", PFloat64()) == [1.2]
 m1 = Delayed()
@@ -52,7 +52,7 @@ m1.matcher = Nullable{ParserCombinator.Matcher}(Seq(Dot(), Opt(m1)))
 @test collect(parse_all("abc", Repeat(Fail(); flatten=false, greedy=false))) == Any[[]]
 @test parse_one("12c", Lookahead(p"\d") + PInt()) == [12]
 @test parse_one("12c", Lookahead(p"\d") + PInt() + Dot()) == [12, 'c']
-#TODO @test_throws ParserException parse_one("12c", Not(Lookahead(p"\d")) + PInt() + Dot())
+@test_throws ParserException parse_one("12c", Not(Lookahead(p"\d")) + PInt() + Dot())
 @test collect(parse_all("123abc", Seq!(p"\d"[0:end], p"[a-z]"[0:end]))) == Any[Any["1", "2", "3", "a", "b", "c"]]
 @test parse_one("€", p"."; debug=true) == ["€"]
 
@@ -68,7 +68,7 @@ for i in 1:10
         m = match(r, s)
         println("$lo $hi $s $r")
         if m == nothing
-            #TODO @test_throws ParserException parse_one(s, Repeat(Equal("a"), lo, hi; greedy=greedy))
+            @test_throws ParserException parse_one(s, Repeat(Equal("a"), lo, hi; greedy=greedy))
         else
             @test length(m.match) == length(parse_one(s, Repeat(Equal("a"), lo, hi; greedy=greedy)))
         end
