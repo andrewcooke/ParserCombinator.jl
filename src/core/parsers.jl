@@ -12,11 +12,11 @@ parent(k::Config) = k.stack[end][1]
 
 # evaluation without a cache (memoization)
 
-type NoCache{S,I}<:Config{S,I}
+mutable struct NoCache{S}<:Config{S}
     source::S
-    @compat stack::Vector{Tuple{Matcher, State}}
-    @compat NoCache(source; kargs...) = new(source, Vector{Tuple{Matcher,State}}())
+    stack::Vector{Tuple{Matcher, State}}
 end
+NoCache(source; kargs...) = NoCache(source, Vector{Tuple{Matcher,State}}())
 
 function dispatch(k::NoCache, e::Execute)
     push!(k.stack, (e.parent, e.parent_state))
@@ -48,13 +48,17 @@ end
 
 # evaluation with a complete cache (all intermediate results memoized)
 
-@compat typealias Key{I} Tuple{Matcher,State,I}
+const Key{I} = Tuple{Matcher,State,I}
 
-type Cache{S,I}<:Config{S,I}
+mutable struct Cache{S,I}<:Config{S}
     source::S
-    @compat stack::Vector{Tuple{Matcher,State,Key{I}}}
+    stack::Vector{Tuple{Matcher,State,Key{I}}}
     cache::Dict{Key{I},Message}
-    @compat Cache(source; kargs...) = new(source, Vector{Tuple{Matcher,State,Key{I}}}(), Dict{Key{I},Message}())
+end
+
+function Cache(source; kargs...)
+    I = typeof(start(source))
+    Cache(source, Vector{Tuple{Matcher,State,Key{I}}}(), Dict{Key{I},Message}())
 end
 
 function dispatch(k::Cache, e::Execute)
@@ -107,12 +111,12 @@ end
 
 # a dummy matcher used by the parser
 
-type Root<:Delegate 
+mutable struct Root<:Delegate 
     name::Symbol
     Root() = new(:Root)
 end
 
-immutable RootState<:DelegateState
+struct RootState<:DelegateState
     state::State
 end
 
@@ -125,7 +129,7 @@ failure(k::Config, m::Root, s::State) = FAILURE
 # to modify the behaviour you can create a new Config subtype and then
 # add your own dispatch functions.
 
-function producer(k::Config, m::Matcher; debug=false)
+function producer(c::Channel, k::Config, m::Matcher; debug=false)
 
     root = Root()
     msg::Message = Execute(root, CLEAN, m, CLEAN, start(k.source))
@@ -138,7 +142,7 @@ function producer(k::Config, m::Matcher; debug=false)
                 if isa(msg, Execute)
                     error("Unexpected execute message")
                 elseif isa(msg, Success)
-                    produce(msg.result)
+                    put!(c, msg.result)
                     # my head hurts
                     msg = Execute(root, CLEAN, m, msg.child_state.state, start(k.source))
                 else
@@ -146,7 +150,7 @@ function producer(k::Config, m::Matcher; debug=false)
                 end
             end
         end
-        
+
     catch x
         if (debug)
             println("debug was set, so showing error from inside task")
@@ -162,13 +166,11 @@ end
 
 # helper functions to generate the parsers from the above
 
-# these assume that any config construct takes a single source argument 
+# these assume that any config construct takes a single source argument
 # plus optional keyword args
-
-function make{S}(config, source::S, matcher; debug=false, kargs...)
-    I = typeof(start(source))
-    k = config{S,I}(source; debug=debug, kargs...)
-    (k, Task(() -> producer(k, matcher; debug=debug)))
+function make(config, source::S, matcher; debug=false, kargs...) where S
+    k = config(source; debug=debug, kargs...)
+    (k, Channel(c -> producer(c, k, matcher; debug=debug)))
 end
 
 function make_all(config; kargs_make...)
@@ -178,12 +180,15 @@ function make_all(config; kargs_make...)
     end
 end
 
-function once(task)
-    result = consume(task)
-    if task.state == :done
-        throw(ParserException("cannot parse"))
-    else
-        return result
+function once(c::Channel)
+    try
+        take!(c)
+    catch err
+        if err isa InvalidStateException
+            throw(ParserException("cannot parse"))
+        else
+            rethrow(err)
+        end
     end
 end
 

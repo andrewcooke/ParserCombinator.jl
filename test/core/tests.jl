@@ -2,7 +2,7 @@
 @test parse_one("", Epsilon()) == []
 @test parse_one("", Insert("foo")) == ["foo"]
 @test parse_one("", Drop(Insert("foo"))) == []
-@test_throws ParserException parse_one("x", Equal("a")) 
+@test_throws ParserException parse_one("x", Equal("a"))
 @test parse_one("a", Equal("a")) == ["a"]
 @test parse_one("aa", Equal("a")) == ["a"]
 @test_throws ParserException parse_one("a", Repeat(Equal("a"), 2, 2))
@@ -84,18 +84,18 @@ end
 for backtrack in (true, false)
 
     @test map(x -> [length(x[1]), length(x[2])],
-              collect(parse_all("aaa", 
+              collect(parse_all("aaa",
                                 Seq((Repeat(Equal("a"), 0, 3; backtrack=backtrack) > tuple),
-                                    (Repeat(Equal("a"), 0, 3; backtrack=backtrack) > tuple))))) == 
+                                    (Repeat(Equal("a"), 0, 3; backtrack=backtrack) > tuple))))) ==
     Array[[3,0],
           [2,1],[2,0],
           [1,2],[1,1],[1,0],
           [0,3],[0,2],[0,1],[0,0]]
 
     @test map(x -> [length(x[1]), length(x[2])],
-              collect(parse_all("aaa", 
+              collect(parse_all("aaa",
                                 Seq((Repeat(Equal("a"), 0, 3; backtrack=backtrack, greedy=false) > tuple),
-                                    (Repeat(Equal("a"), 0, 3; backtrack=backtrack, greedy=false) > tuple))))) == 
+                                    (Repeat(Equal("a"), 0, 3; backtrack=backtrack, greedy=false) > tuple))))) ==
     Array[[0,0],[0,1],[0,2],[0,3],
           [1,0],[1,1],[1,2],
           [2,0],[2,1],

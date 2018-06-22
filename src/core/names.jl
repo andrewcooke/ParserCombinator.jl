@@ -4,7 +4,7 @@
 
 
 set_name(x::Any, s::Symbol) = x
-set_name(m::Matcher, s::Symbol) = (m.name = s; m)    
+set_name(m::Matcher, s::Symbol) = (m.name = s; m) 
 
 set_names(x) = x
 function set_names(node::Expr)

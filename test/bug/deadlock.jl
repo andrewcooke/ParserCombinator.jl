@@ -1,10 +1,10 @@
 
 using AutoHashEquals
 
-abstract Graph
+abstract type Graph end
 
 @auto_hash_equals type Node<:Graph
-    label::AbstractString
+    label::String
     children::Vector{Graph}
     Node(label, children...) = new(label, Graph[children...])
 end
@@ -14,31 +14,30 @@ type Cycle<:Graph
     Cycle() = new(Nullable{Graph}())
 end
 
-function gprint(known::Set{Graph}, n::Node)
-    function producer()
-        if n in known
-            produce(string(n.label, "..."))
-        else
-            push!(known, n)
-            produce(n.label)
-            for child in n.children
-                prefix = child == n.children[end] ? "`-" : "+-"
-                for line in gprint(known, child)
-                    produce(string(prefix, line))
-                    prefix = child == n.children[end] ? "  " : "| y"
-                end
+function gprint_producer(c::Channel)
+    if n in known
+        put!(c, string(n.label, "..."))
+    else
+        push!(known, n)
+        put!(c, n.label)
+        for child in n.children
+            prefix = child == n.children[end] ? "`-" : "+-"
+            for line in gprint(known, child)
+                put!(c, string(prefix, line))
+                prefix = child == n.children[end] ? "  " : "| y"
             end
-            delete!(known, n)
         end
+        delete!(known, n)
     end
-    Task(producer)
 end
+
+gprint(known::Set{Graph}, n::Node) = Channel(gprint_producer)
 
 function gprint(known::Set{Graph}, c::Cycle)
     if isnull(c.node)
-        Task(() -> produce("?"))
+        Channel(c -> put!(c, "?"))
     elseif c in known
-        Task(() -> produce("..."))
+        Channel(c -> put!(c, "..."))
     else
         push!(known, c)
         t = gprint(known, get(c.node))
@@ -54,7 +53,7 @@ function Base.print(io::Base.IO, g::Graph)
 end
 
 x = Cycle()
-g = Node("a", 
+g = Node("a",
          Node("b"),
          Node("c",
               x,
