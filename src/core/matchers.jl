@@ -760,7 +760,7 @@ mutable struct Delayed<:Matcher
     Delayed() = new(:Delayed, Nullable{Matcher}())
 end
 
-function delprintmatch_producer(c::Channel, m::Delayed, known::Set{Matcher})
+print_matcher(m::Delayed, known::Set{Matcher}) = Channel() do c
     tag = "$(m.name)"
     if (isnull(m.matcher))
         put!(c, "$(tag) OPEN")
@@ -775,7 +775,6 @@ function delprintmatch_producer(c::Channel, m::Delayed, known::Set{Matcher})
     end
 end
 
-print_matcher(m::Delayed, known::Set{Matcher}) = Channel(c -> delprintmatch_producer(c, m, known))
 
 function execute(k::Config, m::Delayed, s::Dirty, i)
     Response(DIRTY, i, FAILURE)
