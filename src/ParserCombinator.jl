@@ -33,7 +33,6 @@ Star, Plus, Star!, Plus!, StarList, StarList!, PlusList, PlusList!,
 TrySource, Try, parse_try, parse_try_dbg, parse_try_cache, parse_try_cache_dbg,
 Parsers
 
-FAST_REGEX = true
 
 include("core/types.jl")
 include("core/sources.jl")
