@@ -57,8 +57,10 @@ Opt!(m::Matcher) = Alt!(m, Epsilon())
 
 
 # repeat via [lo:hi] or [n]
-endof{M<:Matcher}(m::M) = typemax(Int)
-size{M<:Matcher}(m::M, n) = endof(m)
+lastindex(m::Matcher) = typemax(Int)
+size(m::Matcher, n) = endof(m)
+axes(m::Matcher, n) = (n == 1) ? Base.OneTo(lastindex(m)) : 1
+lastindex(m::Matcher, n) = last(axes(m, n))
 getindex(m::Matcher, r::Int, s::Symbol...) = getindex(m, r:r; s...)
 function getindex(m::Matcher, r::UnitRange, s::Symbol...)
     greedy = true

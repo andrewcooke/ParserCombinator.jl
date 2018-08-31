@@ -14,15 +14,16 @@ using AutoHashEquals
 
 # every matcher has a name field, which by default is the name of the matcher
 # (using @with_names changes this to the variable name - see calc.jl)
-@auto_hash_equals type Case<:Delegate
+@auto_hash_equals mutable struct Case<:Delegate
     name::Symbol
     matcher::Matcher
     Case(matcher) = new(:Case, matcher)
 end
 
-immutable CaseState<:DelegateState
+struct CaseState<:DelegateState
     state::State
 end
+
 
 # the Delegate code handles the initial call (with CLEAN), and failure.  all
 # we need to do is add handling for success
@@ -39,6 +40,7 @@ function success(k::Config, m::Case, s, t, i, r::Value)
     Success(new_s, i, Any[new_contents])
 end
 
+@testset "case" begin
 
 # now let's test that
 @test parse_one("foo", Case(p".*")) == ["Foo"]
@@ -54,3 +56,5 @@ end
 # returns foo; and that Case transforms that to Foo.
 
 println("case ok")
+
+end

@@ -1,4 +1,6 @@
 
+@testset "calc" begin
+
 # using prev defs from fix.jl
 
 @with_names begin
@@ -51,7 +53,7 @@ for (src, val) in [
                    ("-1-1", -2)
                    ]
 #    @test_approx_eq calc(parse_dbg(src, Trace(all))[1]) val
-    @test_approx_eq calc(parse_one(src, Trace(all))[1]) val
+    @test calc(parse_one(src, Trace(all))[1]) ≈ val
     println("$src = $val")
 end
 
@@ -66,24 +68,24 @@ for (src, ast, val) in
     if ast != nothing
         @test parse_one(src, all)[1] == ast
     end
-    @test_approx_eq calc(parse_one(src, all)[1]) val
+    @test calc(parse_one(src, all)[1]) ≈ val
     println("$src = $val")
 end
 
 
 # some regression tests
-@test_approx_eq calc(parse_one("-5.0/7.0+5.0-5.0", all)[1]) -0.7142857142857144
-@test_approx_eq eval(parse("-5.0/7.0+5.0-5.0")) -0.7142857142857144
-@test_approx_eq calc(parse_one("(0.0-9.0)", all)[1]) -9.0
-@test_approx_eq calc(parse_one("((0.0-9.0))", all)[1]) -9.0
-@test_approx_eq calc(parse_one("-((0.0-9.0))", all)[1]) 9.0
-@test_approx_eq calc(parse_one("(-6.0/5.0)", all)[1]) -1.2
-@test_approx_eq calc(parse_one("3.0*-((0.0-9.0))", all)[1]) 27
-@test_approx_eq calc(parse_one("-9.0*3.0*-((0.0-9.0))*9.0", all)[1]) -2187.0
-@test_approx_eq calc(parse_one("5.0/3.0*(-6.0/5.0)", all)[1]) -2.0
-@test_approx_eq calc(parse_one("3*6-9*1", all)[1]) 9
-@test_approx_eq calc(parse_one("4.0-5.0-0.0/8.0/5.0/3.0*(-6.0/5.0)-9.0*3.0*-((0.0-9.0))*9.0", all)[1]) -2188.0
-@test_approx_eq calc(parse_one("((-6.0/6.0+7.0))*((-1.0-3.0/5.0))+-(9.0)", all)[1]) -18.6
+@test calc(parse_one("-5.0/7.0+5.0-5.0", all)[1]) ≈ -0.7142857142857144
+@test eval(Meta.parse("-5.0/7.0+5.0-5.0")) ≈ -0.7142857142857144
+@test calc(parse_one("(0.0-9.0)", all)[1]) ≈ -9.0
+@test calc(parse_one("((0.0-9.0))", all)[1]) ≈ -9.0
+@test calc(parse_one("-((0.0-9.0))", all)[1]) ≈ 9.0
+@test calc(parse_one("(-6.0/5.0)", all)[1]) ≈ -1.2
+@test calc(parse_one("3.0*-((0.0-9.0))", all)[1]) ≈ 27
+@test calc(parse_one("-9.0*3.0*-((0.0-9.0))*9.0", all)[1]) ≈ -2187.0
+@test calc(parse_one("5.0/3.0*(-6.0/5.0)", all)[1]) ≈ -2.0
+@test calc(parse_one("3*6-9*1", all)[1]) ≈ 9
+@test calc(parse_one("4.0-5.0-0.0/8.0/5.0/3.0*(-6.0/5.0)-9.0*3.0*-((0.0-9.0))*9.0", all)[1]) ≈ -2188.0
+@test calc(parse_one("((-6.0/6.0+7.0))*((-1.0-3.0/5.0))+-(9.0)", all)[1]) ≈ -18.6
 # this has a large numerical error (~1e-15) and i don't understand why
 @test abs(calc(parse_one("7.0/3.0*9.0-5.0-0.0+-(-9.0/7.0)*9.0*-0.0-7.0+-4.0-5.0", all)[1]) - 0.0) < 1e-10
 
@@ -121,7 +123,7 @@ p = Sum(Any[Prd(Any[-9.0]),
             Prd(Any[5.0]),
             Neg(Prd(Any[7.0]))]) 
 
-a = eval(parse("-9.0-7.0/0.0/2.0/(-(0.0))*3.0-7.0/-(9.0+5.0)+5.0-7.0"))
+a = eval(Meta.parse("-9.0-7.0/0.0/2.0/(-(0.0))*3.0-7.0/-(9.0+5.0)+5.0-7.0"))
 b = parse_one("-9.0-7.0/0.0/2.0/(-(0.0))*3.0-7.0/-(9.0+5.0)+5.0-7.0", all)[1]
 c = calc(b)
 println("$a $b $c")
@@ -151,14 +153,14 @@ for i in 1:20
         expr = expr * string("+-*/"[rand(1:4)]) * subexpr()
     end
     # julia desn't like repeated -
-    expr = replace(expr, r"-+", "-")
+    expr = replace(expr, r"-+" => "-")
     println("expr $(expr)")
     try
-        a = eval(parse(expr)) 
+        a = eval(Meta.parse(expr))
         b = calc(parse_one(expr, all)[1])
         println("$a $b")
         if ! isequal(a, b)   # allow for Inf etc
-            @test_approx_eq a b
+            @test a ≈ b
         end
     catch
         @test_throws Exception parse(expr)
@@ -167,3 +169,5 @@ for i in 1:20
 end
 
 println("calc ok")
+
+end

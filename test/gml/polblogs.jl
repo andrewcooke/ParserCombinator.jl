@@ -1,6 +1,5 @@
 
-using ParserCombinator.Parsers.GML
-using ZipFile
+@testset "polblogs" begin
 
 #io = ZipFile.Reader("gml/polblogs.zip").files[1]
 #println("polblogs")
@@ -16,10 +15,12 @@ using ZipFile
 #@time parse_id_dict(io; debug=false)
 
 println("polblogs")
-s = open(readall, "gml/polblogs.gml")
+s = open(s -> read(s, String), "gml/polblogs.gml")
 x = parse_dict(s; debug=false)
 @test length(x[:graph][1][:edge]) == 19090
 @time parse_raw(s; debug=false)
+
+end
 
 
 

@@ -2,15 +2,9 @@
 module GML
 
 using ...ParserCombinator
-using Compat
+using Nullables
 
 export parse_raw, parse_dict, GMLError
-
-
-# symbol required in 0.3
-# both work in 0.4
-# symbol gives deprecation warning in 0.5
-Symbol_ = VERSION >= v"0.5-" ? Symbol : symbol
 
 
 function mk_parser(string_input)
@@ -33,7 +27,7 @@ function mk_parser(string_input)
         comment = P"(#.*)?"
 
         # we need string input as we match multiple lines
-        if string_input && ParserCombinator.FAST_REGEX
+        if string_input
 
             wspace   = "([\t ]+|[\r\n]+(#.*)?)"
             wstar(x) = string(x, wspace, "*")
@@ -44,7 +38,7 @@ function mk_parser(string_input)
             open     = ~Pattern(wstar("\\["))
             close    = ~Pattern(wstar("]"))
 
-            key      = Pattern(wplus("([a-zA-Z][a-zA-Z0-9]*)"), 1)    > Symbol_
+            key      = Pattern(wplus("([a-zA-Z][a-zA-Z0-9]*)"), 1)    > Symbol
             int      = Pattern(wstar("((\\+|-)?\\d+)"), 1)            > pint
             real     = Pattern(wstar("((\\+|-)?\\d+.\\d+((E|e)(\\+|-)?\\d+)?)"), 1) > pflt
             str      = Pattern(wstar("\"([^\"]*)\""), 1)
@@ -58,7 +52,7 @@ function mk_parser(string_input)
             open     = Seq!(E"[", spc)
             close    = Seq!(E"]", spc)
 
-            key      = Seq!(p"[a-zA-Z][a-zA-Z0-9]*", space)           > Symbol_
+            key      = Seq!(p"[a-zA-Z][a-zA-Z0-9]*", space)           > Symbol
             int      = Seq!(p"(\+|-)?\d+", spc)                       > pint
             real     = Seq!(p"(\+|-)?\d+.\d+((E|e)(\+|-)?\d+)?", spc) > pflt
             str      = Seq!(Pattern("\"([^\"]*)\"", 1), spc)
@@ -83,14 +77,10 @@ end
 function parse_raw(s; debug=false)
     parser = mk_parser(isa(s, AbstractString))
     try
-        if ParserCombinator.FAST_REGEX
-            (debug ? parse_one_dbg : parse_one)(s, Trace(parser); debug=debug)
-        else
-            (debug ? parse_lines_dbg : parse_lines)(s, Trace(parser); debug=debug)
-        end
+        (debug ? parse_one_dbg : parse_one)(s, Trace(parser); debug=debug)
     catch x
         if (debug) 
-            Base.show_backtrace(STDOUT, catch_backtrace())
+            Base.show_backtrace(stdout, catch_backtrace())
         end
         rethrow()
     end
@@ -100,8 +90,8 @@ end
 # (semi) structured model of GML graph files
 
 # the GML specs that i have found are really rather frustrating, because they
-# don't seme to acknowledge a fundamental problem with this format, which is
-# that you cannot tell, from the file alone, whether a particuar field is a
+# don't seem to acknowledge a fundamental problem with this format, which is
+# that you cannot tell, from the file alone, whether a particular field is a
 # list or a single value.
 
 # obviously, a name that occurs multiple times in a single scope is a list.
@@ -118,7 +108,7 @@ end
 # lists.  but that means that the idea of "keys" is messed up with additional
 # [1] indexes into singleton lists.
 
-# after some reflection, i've decide to take a list of names of lists, and to
+# after some reflection, I've decide to take a list of names of lists, and to
 # validate against that.  this isn't perfect - it doesn't allow for the same
 # name to have different meanings in different contexts, for example - but it
 # seems to be a good middle ground for "doing the right thing" in general
@@ -127,13 +117,13 @@ end
 # users with different requirements are free to take the "raw" parse and build
 # their own object models.
 
-type GMLError<:Exception
+mutable struct GMLError<:Exception
     msg::AbstractString
 end
 
 LISTS = [:graph,:node,:edge]
 
-typealias GMLDict Dict{Symbol, Any}
+const GMLDict = Dict{Symbol, Any}
 
 function build_dict(raw; lists=LISTS, unsafe=false)
     root = GMLDict()

@@ -1,10 +1,12 @@
 
 module ParserCombinator
 
-using Compat
+using Nullables
 using AutoHashEquals
-import Base: start, next, done, endof, getindex, colon, isless, size, hash
+import Base: iterate, getindex, isless, size, hash,
+axes, lastindex, firstindex
 import Base: ==, ~, +, &, |, >=, >, |>, !
+using Printf: @printf
 
 export Matcher, 
 diagnostic, forwards, LineSource, LineIter,
@@ -32,9 +34,7 @@ Star, Plus, Star!, Plus!, StarList, StarList!, PlusList, PlusList!,
 @with_names, set_name,
 @with_pre, @with_post, set_fix,
 TrySource, Try, parse_try, parse_try_dbg, parse_try_cache, parse_try_cache_dbg,
-Parsers
-
-FAST_REGEX = isdefined(Main, :FAST_REGEX) ? Main.FAST_REGEX : VERSION >= v"0.4.0-dev+6325"
+Parsers, axes, lastindex
 
 include("core/types.jl")
 include("core/sources.jl")

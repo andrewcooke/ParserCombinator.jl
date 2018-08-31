@@ -1,5 +1,5 @@
 
-using ParserCombinator.Parsers.DOT
+@testset "example" begin
 
 my_graph = "graph {
   1 -- 2
@@ -15,4 +15,6 @@ for node in nodes(root)
 end
 for (node1, node2) in edges(root)
     println("edge $(node1) - $(node2)")
+end
+
 end

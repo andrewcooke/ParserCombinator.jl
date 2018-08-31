@@ -1,8 +1,8 @@
 
-using ParserCombinator.Parsers.GML
+@testset "celegansneural" begin
 
 println("celegansneural")
-s = open(readall, "gml/celegansneural.gml")
+s = open(s -> read(s, String), "gml/celegansneural.gml")
 parse_dict(s; debug=false)
 @time x = parse_dict(s; debug=false)
 @test length(x) == 2
@@ -10,4 +10,6 @@ parse_dict(s; debug=false)
 @test length(x[:graph][1]) == 3
 @test length(x[:graph][1][:node]) == 297
 @test length(x[:graph][1][:edge]) == 2359
+
+end
 

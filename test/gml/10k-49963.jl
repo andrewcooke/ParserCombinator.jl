@@ -1,9 +1,8 @@
 
-using ParserCombinator.Parsers.GML
-using ZipFile
+@testset "10k-49963" begin
 
 println("10k-49963")
-s = open(readall, "gml/10k-49963.gml")
+s = open(s -> read(s, String), "gml/10k-49963.gml")
 parse_raw(s; debug=false)
 @time parse_raw(s; debug=false)
 
@@ -31,3 +30,5 @@ parse_raw(s; debug=false)
 #   OOM
 # with fixed string
 #   74.171 seconds      (238 M allocations: 9788 MB, 5.71% gc time)
+
+end

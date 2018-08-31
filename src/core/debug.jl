@@ -1,5 +1,3 @@
-
-
 # a Config instance that delegates to another, printing information about
 # messages as they are sent.  WARNING: makes a pile of assumptions about the
 # source being a string.
@@ -8,7 +6,7 @@
 # construct your own with any type by using the delegate=... keyword.  see
 # test/calc.j for an example.
 
-type Debug{S,I}<:Config{S,I}
+mutable struct Debug{S,I}<:Config{S,I}
     source::S
     stack::Vector
     delegate::Config{S,I}
@@ -17,13 +15,13 @@ type Debug{S,I}<:Config{S,I}
     max_depth::Int
     max_iter
     n_calls::Int
-    function Debug(source::S; delegate=NoCache, kargs...)
+    function Debug{S, I}(source::S; delegate=NoCache, kargs...) where {S,I}
         k = delegate{S,I}(source; kargs...)
-        @compat new(k.source, k.stack, k, Vector{Int}(), 0, 0, start(k.source), 0)
+        new{S, I}(k.source, k.stack, k, Vector{Int}(), 0, 0, firstindex(k.source), 0)
     end
 end
 # i don't get why this is necessary, but it seems to work
-Debug(source; kargs...) = Debug{typeof(source),typeof(start(source))}(source; kargs...)
+Debug(source; kargs...) = Debug{typeof(source),typeof(firstindex(source))}(source; kargs...)
 
 parent(k::Debug) = parent(k.delegate)
 
@@ -77,7 +75,7 @@ if VERSION < v"0.4-"
     shorten(s) = s
 else
 #   shorten(s) = replace(s, r"(?:[a-zA-Z]+\.)+([a-zA-Z]+)", s"\1")
-    shorten(s) = replace(s, r"(?:[a-zA-Z]+\.)+([a-zA-Z]+)", 
+    shorten(s) = replace(s, r"(?:[a-zA-Z]+\.)+([a-zA-Z]+)" =>
                          Base.SubstitutionString("\1"))
 end
 
@@ -103,25 +101,25 @@ indent(k::Debug; max=MAX_IND) = repeat(" ", k.depth[end] % max)
 src(::Any, ::Any; max=MAX_SRC) = pad(truncate("...", max), max)
 src(s::AbstractString, i::Int; max=MAX_SRC) = pad(truncate(escape_string(s[i:end]), max), max)
 
-function debug{S<:AbstractString}(k::Debug{S}, e::Execute)
+function debug(k::Debug{S}, e::Execute) where {S<:AbstractString}
     @printf("%3d:%s %02d %s%s->%s\n",
             e.iter, src(k.source, e.iter), k.depth[end], indent(k), e.parent.name, e.child.name)
 end
 
 function short(s::Value)
     result = string(s)
-    if ismatch(r"^Any", result)
+    if occursin(r"^Any", result)
         result = result[4:end]
     end
     truncate(result, MAX_RES)
 end
 
-function debug{S<:AbstractString}(k::Debug{S}, s::Success)
+function debug(k::Debug{S}, s::Success) where {S<:AbstractString}
     @printf("%3d:%s %02d %s%s<-%s\n",
             s.iter, src(k.source, s.iter), k.depth[end], indent(k), parent(k).name, short(s.result))
 end
 
-function debug{S<:AbstractString}(k::Debug{S}, f::Failure)
+function debug(k::Debug{S}, f::Failure) where {S<:AbstractString}
     @printf("   :%s %02d %s%s<-!!!\n",
             pad(" ", MAX_SRC), k.depth[end], indent(k), parent(k).name)
 end
@@ -138,17 +136,17 @@ function src(s::LineAt, i::LineIter; max=MAX_SRC)
     end
 end
    
-function debug{S<:LineAt}(k::Debug{S}, e::Execute)
+function debug(k::Debug{S}, e::Execute) where {S<:LineAt}
     @printf("%3d,%-3d:%s %02d %s%s->%s\n",
             e.iter.line, e.iter.column, src(k.source, e.iter), k.depth[end], indent(k), e.parent.name, e.child.name)
 end
 
-function debug{S<:LineAt}(k::Debug{S}, s::Success)
+function debug(k::Debug{S}, s::Success) where {S<:LineAt}
     @printf("%3d,%-3d:%s %02d %s%s<-%s\n",
             s.iter.line, s.iter.column, src(k.source, s.iter), k.depth[end], indent(k), parent(k).name, short(s.result))
 end
 
-function debug{S<:LineAt}(k::Debug{S}, f::Failure)
+function debug(k::Debug{S}, f::Failure) where {S<:LineAt}
     @printf("       :%s %02d %s%s<-!!!\n",
             pad(" ", MAX_SRC), k.depth[end], indent(k), parent(k).name)
 end
@@ -157,15 +155,16 @@ end
 # this does nothing except delegate and, by simply "being seen" during
 # disparch above, toggle debug state.
 
-@auto_hash_equals type Trace<:Delegate
+@auto_hash_equals mutable struct Trace<:Delegate
     name::Symbol
     matcher::Matcher
     Trace(matcher) = new(:Trace, matcher)
 end
 
-@auto_hash_equals immutable TraceState<:DelegateState
+@auto_hash_equals struct TraceState<:DelegateState
     state::State
 end
+
 
 # must handle both success and failure so that detection can occur above
 

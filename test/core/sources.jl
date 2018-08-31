@@ -1,3 +1,4 @@
+@testset "sources" begin
 
 @test diagnostic("abc", 0, "bad") == "bad at (0,0)\n[Before start]\n^\n"
 @test diagnostic("abc", 1, "bad") == "bad at (1,1)\nabc\n^\n"
@@ -28,3 +29,5 @@ line = Trace(p"(.|\n)+"[0:end] + Eos())
 @test parse_one(LineSource("abc\n"), line) == ["abc\n"]
 
 println("sources ok")
+
+end

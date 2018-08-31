@@ -1,6 +1,6 @@
 
-using ParserCombinator.Parsers.GML
 
+@testset "ok" begin
 
 @test parse_raw("a 1") == Any[Any[(:a,1)]]
 
@@ -33,3 +33,5 @@ using ParserCombinator.Parsers.GML
 @test parse_raw("a [b [c 1]]") == Any[Any[(:a,Any[(:b,Any[(:c,1)])])]]
 
 @test parse_raw("a [b [c 1 d 2.0 e \"3\"]]") == Any[Any[(:a,Any[(:b,Any[(:c,1),(:d,2.0),(:e,"3")])])]]
+
+end
