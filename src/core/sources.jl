@@ -1,7 +1,7 @@
 
 
-# we provide support for two kinds of source.  the differnece is important
-# mainly because of how the source interacts with the regexp matcher, whiich
+# we provide support for two kinds of source.  the difference is important
+# mainly because of how the source interacts with the regexp matcher, which
 # can be critical when trying to get best performance with large files.
 
 # however, the parser code will interact with "any" source provided it
@@ -16,7 +16,7 @@ function fmt_error(line, col, text, msg)
 end
 
 
-# strings indexed by offset.  in this csae, the type of the source is simply
+# strings indexed by offset.  in this case, the type of the source is simply
 # the string itself, so we do not need to implement the iter protocol, since
 # that already exists.  but we do need some extra functions.
 
@@ -31,7 +31,7 @@ function round_up(s, i)
 end
 
 function round_down(s, i)
-    i = i == 0 ? endof(s) : i
+    i = i == 0 ? lastindex(s) : i
     nl(s[i]) ? i-1 : i
 end
 
@@ -42,8 +42,12 @@ function diagnostic(s::AbstractString, i, msg)
         l, c, t = count(nl, s)+2, 0, "[After end]"
     else
         l = count(nl, SubString(s, 1, max(1, i-1))) + 1
-        p = round_up(s, findprev(nl, s, max(1, i-1)))  # excluding new line
-        q = round_down(s, findnext(nl, s, i))  # end of line, excluding newline
+        # excluding new line
+        prev_index = findprev(nl, s, max(1, i-1))
+        p = round_up(s, something(prev_index, 0))
+        # end of line, excluding newline
+        next_index = findnext(nl, s, i)
+        q = round_down(s, something(next_index, 0))
         t = SubString(s, p, q)
         c = i - p + 1
     end
@@ -68,26 +72,26 @@ discard(::AbstractString, i, n) = i + n
 # somewhere.
 
 # all the below is based on line_at()
-abstract LineAt
+abstract type LineAt end
 
-type LineSource{S}<:LineAt
+mutable struct LineSource{S}<:LineAt
     io::IO
     zero::Int      # offset to lines (lines[x] contains line x+zero)
     limit::Int     # maximum number of lines
     lines::Vector{S}
-    LineSource(io::IO, line::S; limit=-1) = new(io, 0, limit, S[line])
+    LineSource(io::IO, line::S; limit=-1) where {S} = new{S}(io, 0, limit, S[line])
 end
 
 function LineSource(io::IO; limit=-1)
-    line = readline(io)
-    LineSource{typeof(line)}(io, line; limit=limit)
+    line = readline(io, keep=true)
+    LineSource(io, line; limit=limit)
 end
 
-LineSource{S<:AbstractString}(s::S; limit=-1) = LineSource(IOBuffer(s); limit=limit)
+LineSource(s::S; limit=-1) where {S<:AbstractString} = LineSource(IOBuffer(s); limit=limit)
 
-immutable LineException<:FailureException end
+struct LineException<:FailureException end
 
-@auto_hash_equals immutable LineIter
+@auto_hash_equals struct LineIter
     line::Int
     column::Int
 end
@@ -98,43 +102,42 @@ isless(a::LineIter, b::LineIter) = a.line < b.line || (a.line == b.line && a.col
 
 # iter protocol
 
-start(f::LineAt) = LineIter(1, 1)
-
 function line_at(s::LineSource, i::LineIter; check::Bool=true)
     if check && i.line <= s.zero || i.column < 1
         throw(LineException())
-    else
-        n = i.line - s.zero
-        while length(s.lines) < n
-            push!(s.lines, readline(s.io))
-        end
-        while s.limit > 0 && length(s.lines) > s.limit
-            s.zero += 1
-            pop!(s.lines)
-        end
-        line = s.lines[i.line - s.zero]
-        if check && i.column > length(line)
-            throw(LineException())
-        end
     end
-    line
+
+    n = i.line - s.zero
+    while length(s.lines) < n
+        push!(s.lines, readline(s.io, keep=true))
+    end
+    while s.limit > 0 && length(s.lines) > s.limit
+        s.zero += 1
+        pop!(s.lines)
+    end
+    line = s.lines[i.line - s.zero]
+    if check && i.column > length(line)
+        throw(LineException())
+    end
+    return line
 end
 
-function next(s::LineSource, i::LineIter)
+function iterate(s::LineSource, i::LineIter=LineIter(1,1))
     # i.line is always correct for further reading (eg via forwards())
+    line = line_at(s, i, check=false)
+    if iterate(line, i.column) == nothing && eof(s.io)
+        return nothing
+    end
     line = line_at(s, i)
-    c, column = next(line, i.column)
-    if done(line, column)
-        c, LineIter(i.line+1, 1)
+    c, column = iterate(line, i.column)
+    if iterate(line, column) == nothing && eof(s.io)
+        return c, LineIter(i.line+1, 1)
     else
-        c, LineIter(i.line, column)
+        return c, LineIter(i.line, column)
     end
 end
 
-function done(s::LineSource, i::LineIter)
-    line = line_at(s, i; check=false)
-    done(line, i.column) && eof(s.io)
-end
+firstindex(s::LineSource) = LineIter(1,1)
 
 # other api
 
@@ -154,12 +157,16 @@ function diagnostic(s::LineAt, i::LineIter, msg)
 end
 
 # regexp only works within the current line
-forwards(s::LineAt, i::LineIter) = done(s, i) ? "" : SubString(line_at(s, i), i.column)
-# currently (pre-patch) this is faster
-#forwards(s::LineAt, i::LineIter) = done(s, i) ? "" : line_at(s, i, true)[i.column:end]
+function forwards(s::LineAt, i::LineIter)
+    line = line_at(s, i; check=false)
+    if iterate(line, i.column) == nothing && eof(s.io)
+        return ""
+    end
+    return SubString(line_at(s, i), i.column)
+end
 
 function discard(s::LineAt, i::LineIter, n)
-    while n > 0 && !done(s, i)
+    while n > 0 && iterate(s, i) != nothing
         l = line_at(s, i)
         available = length(l) - i.column + 1
         if n < available
@@ -172,5 +179,3 @@ function discard(s::LineAt, i::LineIter, n)
     end
     i
 end
-
-

@@ -3,14 +3,14 @@
 # transform successes (Empty and Value)
 # function must return a Value instance
 
-@auto_hash_equals type Transform<:Delegate
+@auto_hash_equals mutable struct Transform<:Delegate
     name::Symbol
     matcher::Matcher
     f::Function
     Transform(matcher, f) = new(:Transform, matcher, f)
 end
 
-@auto_hash_equals immutable TransformState<:DelegateState
+@auto_hash_equals struct TransformState<:DelegateState
     state::State
 end
 
@@ -23,14 +23,14 @@ success(k::Config, m::Transform, s, t, i, r::Value) = Success(TransformState(t),
 
 # as above, but function also takes iterator
 
-@auto_hash_equals type ITransform<:Delegate
+@auto_hash_equals mutable struct ITransform<:Delegate
     name::Symbol
     matcher::Matcher
     f::Function
     ITransform(matcher, f) = new(:ITransform, matcher, f)
 end
 
-@auto_hash_equals immutable ITransformState<:DelegateState
+@auto_hash_equals struct ITransformState<:DelegateState
     state::State
 end
 

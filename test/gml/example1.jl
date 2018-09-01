@@ -1,5 +1,5 @@
 
-using ParserCombinator.Parsers.GML
+@testset "example1" begin
 
 example1 = "
 graph [
@@ -52,3 +52,4 @@ for graph in root[:graph]
     end
 end
 
+end

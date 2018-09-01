@@ -2,22 +2,22 @@
 
 # fundamental types (expanded below)
 
-# nodes in the AST that describe the grammar.  all Matcher instacnes must be
+# nodes in the AST that describe the grammar.  all Matcher instances must be
 # mutable and have an attribute
 #  name::Symbol
 # which is set automatically to the matcher type by the constructor.
 # (re-set to a more useful type inside with_names() - see names.jl)
-abstract Matcher
+abstract type Matcher end
 
-abstract Message   # data sent between trampoline and methods
-abstract State     # state associated with Matchers during evaluation
+abstract type Message end   # data sent between trampoline and methods
+abstract type State end    # state associated with Matchers during evaluation
 
 # used to configure the parser.  all Config subtypes must have associated
 # dispatch functions (see parser.jl), a parent() function, and have a
 # constructor that takes the source as first argument and additional arguments
 # as keywords.  the type of the source is exposed and if it's a subclass of
 # string then the iterator is assumed to be a simple integer index.
-abstract Config{S,I}
+abstract type Config{S,I} end
 
 
 # important notes on mutability / hash / equality
@@ -33,7 +33,7 @@ abstract Config{S,I}
 # immutable types that contain mutable types, and for mutable types,
 # may not be what is required.
 
-# 3 - caching within the parser REQUIRES that bpth Matcher and State
+# 3 - caching within the parser REQUIRES that both Matcher and State
 # instances have 'useful' equality and hash values.
 
 # 4 - for matchers, which are created when the grammar is defined, and
@@ -51,25 +51,25 @@ abstract Config{S,I}
 # different values.
 
 # 5b - structurally identical states must be equal, and hash equally.
-# this is critical for efficienct caching.  so it it likely that
+# this is critical for efficient caching.  so it it likely that
 # custom hash and equality methods will be needed (see above and
 # auto.jl).
 
 
 # defaults for mismatching types and types with no content
 ==(a::Matcher, b::Matcher) = false
-=={T<:Matcher}(a::T, b::T) = true
+==(a::T, b::T) where {T<:Matcher} = true
 ==(a::State, b::State) = false
-=={T<:State}(a::T, b::T) = true
+==(a::T, b::T) where {T<:State} = true
 
 
 # use an array to handle empty values in a natural way
 
-typealias Value Vector{Any}
+const Value = Vector{Any}
 
-EMPTY = Any[]
+const EMPTY = Any[]
 
-function flatten(x::Array{Value,1})
+function flatten(x::Array{Value,1}) where {Value}
     y::Value = vcat(x...)
     return y
 end
@@ -83,7 +83,7 @@ end
 
 # parent and parent_state are popped from the stack.  a call is made to
 # success(config, parent, parent_state, child_state, iter, result)
-immutable Success{CS<:State,I}<:Message
+struct Success{CS<:State,I}<:Message
     child_state::CS   # parent to store, passed in next call for backtracking
     iter::I           # advanced as appropriate
     result::Value     # possibly empty
@@ -91,12 +91,12 @@ end
 
 # parent and parent_state are popped from the stack.  a call is made to
 # failure(config, parent, parent_state)
-immutable Failure<:Message end
-FAILURE = Failure()
+struct Failure<:Message end
+const FAILURE = Failure()
 
 # parent and parent_state are pushed to the stack.  a call is made to
 # execute(config, child, child_state, iter)
-immutable Execute{I}<:Message
+struct Execute{I}<:Message
     parent::Matcher         # stored by trampoline, added to response
     parent_state::State  # stored by trampoline, added to response
     child::Matcher          # the matcher to evaluate
@@ -111,12 +111,12 @@ end
 # use immutable types because these are simple, magic values
 
 # the state used on first call
-immutable Clean<:State end
-CLEAN = Clean()
+struct Clean<:State end
+const CLEAN = Clean()
 
 # the state used when no further calls should be made
-immutable Dirty<:State end
-DIRTY = Dirty()
+struct Dirty<:State end
+const DIRTY = Dirty()
 
 
 
@@ -124,19 +124,15 @@ DIRTY = Dirty()
 
 # user-generated errors (ie bad input, etc).
 # internal errors in the library (bugs) may raise Error
-immutable ParserException<:Exception
+struct ParserException<:Exception
     msg
 end
 
 # this cannot be cached (thrown by hash())
-immutable CacheException<:Exception end
+struct CacheException<:Exception end
 
 # this is equivalent to a matcher returning Failure.  used when source
 # information is not available.
-abstract FailureException<:Exception
+abstract type FailureException<:Exception end
 
-if VERSION >= v"0.4.0-"
-    typealias Applicable Union{Function, DataType}
-else
-    typealias Applicable Union(Function, DataType)
-end
+const Applicable = Union{Function, DataType}

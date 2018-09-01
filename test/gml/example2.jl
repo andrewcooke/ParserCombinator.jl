@@ -1,5 +1,5 @@
 
-using ParserCombinator.Parsers.GML
+@testset "example2" begin
 
 my_graph = "graph [
   node [id 1]
@@ -19,4 +19,6 @@ for graph in root[:graph]  # there could be multiple graphs
     for edge in graph[:edge]
         println("edge $(edge[:source]) - $(edge[:target])")
     end
+end
+
 end

@@ -1,3 +1,4 @@
+@testset "debug" begin
 
 # not really a test, since it's not verified.  but if you run this you
 # should see appropriate output to stdout.
@@ -22,3 +23,5 @@ debug, task = make(Debug, "123abc", grammar; delegate=NoCache)
 @test debug.max_iter == 4
 
 println("debug ok")
+
+end

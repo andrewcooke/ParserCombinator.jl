@@ -1,3 +1,4 @@
+@testset "tests" begin
 
 @test parse_one("", Epsilon()) == []
 @test parse_one("", Insert("foo")) == ["foo"]
@@ -36,6 +37,7 @@
 @test parse_one("b", Alt(e"a", e"b", e"c")) == ["b"]
 @test parse_one("b", Alt!(e"a", e"b", e"c")) == ["b"]
 @test collect(parse_all("b", Trace(Alt(Epsilon(), Repeat(e"b", 0, 1))))) == Array[[], ["b"], []]
+
 @test collect(parse_all("b", Alt(Epsilon(), Repeat(e"b", 0, 1; greedy=false)))) == Array[[], [], ["b"]]
 @test parse_one("abc", p"." + (e"b" | e"c")) == ["a", "b"]
 @test length(collect(parse_all("abc", p"."[0:3]))) == 4
@@ -103,3 +105,5 @@ for backtrack in (true, false)
 end
 
 println("tests ok")
+
+end

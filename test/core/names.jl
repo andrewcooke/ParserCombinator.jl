@@ -1,3 +1,4 @@
+@testset "names" begin
 
 @with_names begin
     a = Equal("a")
@@ -8,3 +9,5 @@ end
 @test b.name == :b
 
 println("names ok")
+
+end

@@ -1,3 +1,4 @@
+@testset "slow" begin
 
 # is caching useful?  only in extreme cases, apparently
 # (but we may need to define equality on states!)
@@ -31,3 +32,5 @@ slow(3)
 #slow(7)  # not for travis!
 
 println("slow ok")
+
+end

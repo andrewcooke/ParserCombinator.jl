@@ -1,8 +1,8 @@
 
 module DOT
 
-using ...ParserCombinator
-using Compat
+using ParserCombinator
+using Nullables
 using AutoHashEquals
 import Base: ==
 
@@ -25,88 +25,88 @@ export Statement, Statements, ID, StringID, NumericID, HtmlID, Attribute,
 
 # see test/dot/examples.jl for examples accessing fields in this structure
 
-abstract Statement
+abstract type Statement end
 
-typealias Statements Vector{Statement}
+const Statements = Vector{Statement}
 
-abstract ID
+abstract type ID end
 
-@auto_hash_equals immutable StringID <: ID
+@auto_hash_equals struct StringID <: ID
     id::AbstractString
 end
 
-@auto_hash_equals immutable NumericID <: ID
+@auto_hash_equals struct NumericID <: ID
     id::AbstractString
 end
 
-@auto_hash_equals immutable HtmlID <: ID
+@auto_hash_equals struct HtmlID <: ID
     id::AbstractString
 end
 
-@auto_hash_equals immutable Attribute <: Statement
+@auto_hash_equals struct Attribute <: Statement
     name::ID
     value::ID
 end
 
-typealias Attributes Vector{Attribute}
+const Attributes = Vector{Attribute}
 
-@auto_hash_equals immutable Graph
+@auto_hash_equals struct Graph
     strict::Bool
     directed::Bool
     id::Nullable{ID}
     stmts::Statements
-    Graph(s::Bool, d::Bool, id::ID, st::Statements) = new(s, d, Nullable{ID}(id), st)
+    Graph(s::Bool, d::Bool, id::ID, st::Statements) = new(s, d, Nullable(id), st)
     Graph(s::Bool, d::Bool, st::Statements) = new(s, d, Nullable{ID}(), st)
 end
 
-@auto_hash_equals immutable SubGraph <: Statement
+@auto_hash_equals struct SubGraph <: Statement
     id::Nullable{ID}
     stmts::Statements
-    SubGraph(id::ID, s::Statements) = new(Nullable{ID}(id), s)
+    SubGraph(id::ID, s::Statements) = new(Nullable(id), s)
     SubGraph(s::Statements) = new(Nullable{ID}(), s)
 end
 
-@auto_hash_equals immutable Port
+@auto_hash_equals struct Port
     id::Nullable{ID}
     point::Nullable{AbstractString}
-    Port(id::ID, p::AbstractString) = new(Nullable{ID}(id), Nullable{AbstractString}(p))
-    Port(id::ID) = new(Nullable{ID}(id), Nullable{AbstractString}())
-    Port(p::AbstractString) = new(Nullable{ID}(), Nullable{AbstractString}(p))
+    Port(id::ID, p::AbstractString) = new(Nullable(id), Nullable(p))
+    Port(id::ID) = new(id, Nullable{ID}())
+    Port(p::AbstractString) = new(Nullable{ID}(), Nullable(p))
 end
 
-@auto_hash_equals immutable NodeID
+@auto_hash_equals struct NodeID
     id::ID
     port::Nullable{Port}
-    NodeID(id::ID, p::Port) = new(id, Nullable{Port}(p))
+    NodeID(id::ID, p::Port) = new(id, Nullable(p))
     NodeID(id::ID) = new(id, Nullable{Port}())
 end
 
-@auto_hash_equals immutable Node <: Statement
+@auto_hash_equals struct Node <: Statement
     id::NodeID
     attrs::Attributes
     Node(id::NodeID, a::Attributes) = new(id, a)
     Node(id::NodeID) = new(id, Attribute[])
 end
 
-@compat typealias EdgeNode Union{NodeID, SubGraph}
-typealias EdgeNodes Vector{EdgeNode}
+const EdgeNode = Union{NodeID, SubGraph}
+const EdgeNodes = Vector{EdgeNode}
 
-@auto_hash_equals immutable Edge <: Statement
+@auto_hash_equals struct Edge <: Statement
     nodes::EdgeNodes
     attrs::Attributes
     Edge(n::EdgeNodes, a::Attributes) = new(n, a)
     Edge(n::EdgeNodes) = new(n, Attribute[])
 end
 
-@auto_hash_equals immutable GraphAttributes <: Statement
+@auto_hash_equals struct GraphAttributes <: Statement
     attrs::Attributes
 end
 
-@auto_hash_equals immutable NodeAttributes <: Statement
+@auto_hash_equals struct NodeAttributes <: Statement
     attrs::Attributes
 end
 
-@auto_hash_equals immutable EdgeAttributes <: Statement
+@auto_hash_equals struct EdgeAttributes <: Statement
     attrs::Attributes
 end
 
@@ -128,7 +128,7 @@ end
     #      ..."
     # 3 = "..." + "..."
     # and all can contain quoted quotes
-    unesc(s) = replace(s, "\\\"", "\"")
+    unesc(s) = replace(s, "\\\"" => "\"")
     unesc_join(s...) = string(map(unesc, s)...)
     str_cont = Pattern("((?:[^\"\n]|\\\\\")*)\\\\\\\n", 1)
     str_end = p"([^\"\n]|\\\\\")*"
@@ -195,7 +195,7 @@ end
                      Seq!(~NoCase("edge"), spc_star, attr_list) > EdgeAttributes)
 
     # order important here as node_stmt can match almost anything
-    stmt.matcher = Nullable{Matcher}(Alt!(edge_stmt, attr_stmt, attr, sub_graph, node_stmt))
+    stmt.matcher = Alt!(edge_stmt, attr_stmt, attr, sub_graph, node_stmt)
 
     strict = Alt!(Seq!(~NoCase("strict"), Insert(true)), Insert(false))
     direct = Alt!(Seq!(~NoCase("digraph"), Insert(true)),
@@ -205,7 +205,6 @@ end
     dot = Seq!(spc_init, Plus!(Seq!(graph, spc_star)), Eos())
 
 end
-
 
 # the file structured using the types above (returns an array of graphs)
 function parse_dot(s; debug=false)
@@ -217,7 +216,7 @@ function parse_dot(s; debug=false)
         end
     catch x
         if debug
-            Base.show_backtrace(STDOUT, catch_backtrace())
+            Base.show_backtrace(stdout, catch_backtrace())
         end
         rethrow()
     end

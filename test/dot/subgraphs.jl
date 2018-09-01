@@ -1,5 +1,5 @@
 
-using ParserCombinator.Parsers.DOT
+@testset "subgraphs" begin
 
 d = parse_dot("""
 graph {
@@ -45,3 +45,5 @@ graph {
 @test edges(d) == Set([("a","b"),("a","c"),("a","d"),("b","c"),("b","d"),("c","d")])
 
 println("subgraphs ok")
+
+end

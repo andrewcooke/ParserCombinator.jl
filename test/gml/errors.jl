@@ -1,5 +1,5 @@
 
-using ParserCombinator.Parsers.GML
+@testset "errors" begin
 
 for (text, msg) in [("a 1 ]", "Expected key"),
                     ("a [1 2]", "Expected ]"),
@@ -8,7 +8,7 @@ for (text, msg) in [("a 1 ]", "Expected key"),
         println(parse_raw(text))
     catch x
         if isa(x, ParserError)
-            @test contains(x.msg, msg)
+            @test occursin(msg, x.msg)
         else
             println(x)
         end
@@ -23,7 +23,7 @@ for (text, msg) in [("a 1 ]", "Expected key"),
 end
 
 
-s = open(readstring, "gml/error.gml")
+s = open(s -> read(s, String), "gml/error.gml")
 try
     parse_raw(s)
     @test false
@@ -42,6 +42,8 @@ for unsafe in (true, false)
         println(x)
         @test unsafe == false # error when safe
         @test isa(x, GMLError)
-        @test contains("a is a list", x.msg)
+        @test occursin(x.msg, "a is a list")
     end
+end
+
 end

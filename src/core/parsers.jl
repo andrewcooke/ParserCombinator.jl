@@ -12,10 +12,11 @@ parent(k::Config) = k.stack[end][1]
 
 # evaluation without a cache (memoization)
 
-type NoCache{S,I}<:Config{S,I}
+# mutable struct NoCache{S,I}<:Config{S,I}
+mutable struct NoCache{S, I}<:Config{S,I}
     source::S
-    @compat stack::Vector{Tuple{Matcher, State}}
-    @compat NoCache(source; kargs...) = new(source, Vector{Tuple{Matcher,State}}())
+    stack::Vector{Tuple{Matcher, State}}
+    NoCache{S, I}(source::S; kargs...) where {S, I} = new{S, I}(source, Vector{Tuple{Matcher,State}}())
 end
 
 function dispatch(k::NoCache, e::Execute)
@@ -30,7 +31,7 @@ end
 function dispatch(k::NoCache, s::Success)
     (parent, parent_state) = pop!(k.stack)
     try
-        success(k, parent, parent_state, s.child_state, s.iter, s.result)
+        return success(k, parent, parent_state, s.child_state, s.iter, s.result)
     catch x
         isa(x, FailureException) ? FAILURE : rethrow()
     end
@@ -39,7 +40,7 @@ end
 function dispatch(k::NoCache, f::Failure)
     (parent, parent_state) = pop!(k.stack)
     try
-        failure(k, parent, parent_state)
+        return failure(k, parent, parent_state)
     catch x
         isa(x, FailureException) ? FAILURE : rethrow()
     end
@@ -48,13 +49,13 @@ end
 
 # evaluation with a complete cache (all intermediate results memoized)
 
-@compat typealias Key{I} Tuple{Matcher,State,I}
+const Key{I} = Tuple{Matcher,State,I}
 
-type Cache{S,I}<:Config{S,I}
+mutable struct Cache{S,I}<:Config{S,I}
     source::S
-    @compat stack::Vector{Tuple{Matcher,State,Key{I}}}
+    stack::Vector{Tuple{Matcher,State,Key{I}}}
     cache::Dict{Key{I},Message}
-    @compat Cache(source; kargs...) = new(source, Vector{Tuple{Matcher,State,Key{I}}}(), Dict{Key{I},Message}())
+    Cache{S, I}(source::S; kargs...) where {I, S} = new{S, I}(source, Vector{Tuple{Matcher,State,Key{I}}}(), Dict{Key{I},Message}())
 end
 
 function dispatch(k::Cache, e::Execute)
@@ -107,12 +108,12 @@ end
 
 # a dummy matcher used by the parser
 
-type Root<:Delegate 
+mutable struct Root<:Delegate
     name::Symbol
     Root() = new(:Root)
 end
 
-immutable RootState<:DelegateState
+struct RootState<:DelegateState
     state::State
 end
 
@@ -125,22 +126,24 @@ failure(k::Config, m::Root, s::State) = FAILURE
 # to modify the behaviour you can create a new Config subtype and then
 # add your own dispatch functions.
 
-function producer(k::Config, m::Matcher; debug=false)
+function producer(c::Channel, k::Config, m::Matcher; debug=false)
 
     root = Root()
-    msg::Message = Execute(root, CLEAN, m, CLEAN, start(k.source))
+
+    msg::Message = Execute(root, CLEAN, m, CLEAN, firstindex(k.source))
 
     try
-
         while true
             msg = dispatch(k, msg)
             if isempty(k.stack)
                 if isa(msg, Execute)
                     error("Unexpected execute message")
                 elseif isa(msg, Success)
-                    produce(msg.result)
+                    put!(c, msg.result)
                     # my head hurts
-                    msg = Execute(root, CLEAN, m, msg.child_state.state, start(k.source))
+                    msg = Execute(root, CLEAN, m,
+                                  msg.child_state.state,
+                                  firstindex(k.source))
                 else
                     break
                 end
@@ -151,9 +154,9 @@ function producer(k::Config, m::Matcher; debug=false)
         if (debug)
             println("debug was set, so showing error from inside task")
             println(x)
-            Base.show_backtrace(STDOUT, catch_backtrace())
+            Base.show_backtrace(stdout, catch_backtrace())
         end
-        throw(x)
+        rethrow(x)
     end
 
 end
@@ -165,32 +168,28 @@ end
 # these assume that any config construct takes a single source argument 
 # plus optional keyword args
 
-function make{S}(config, source::S, matcher; debug=false, kargs...)
-    I = typeof(start(source))
+function make(config, source::S, matcher; debug=false, kargs...) where {S}
+    I = typeof(firstindex(source))
     k = config{S,I}(source; debug=debug, kargs...)
-    (k, Task(() -> producer(k, matcher; debug=debug)))
+    (k, Channel(c -> producer(c, k, matcher; debug=debug)))
 end
 
 function make_all(config; kargs_make...)
     function multiple_results(source, matcher::Matcher; kargs_parse...)
-        kargs = vcat(kargs_make, kargs_parse)
-        make(config, source, matcher; kargs...)[2]
+        make(config, source, matcher; kargs_make..., kargs_parse...)[2]
     end
 end
 
-function once(task)
-    result = consume(task)
-    if task.state == :done
-        throw(ParserException("cannot parse"))
-    else
+function once(channel)
+    for result in channel
         return result
     end
+    throw(ParserException("cannot parse"))
 end
 
 function make_one(config; kargs_make...)
     function single_result(source, matcher::Matcher; kargs_parse...)
-        kargs = vcat(kargs_make, kargs_parse)
-        once(make(config, source, matcher; kargs...)[2])
+        once(make(config, source, matcher; kargs_make..., kargs_parse...)[2])
     end
 end
 

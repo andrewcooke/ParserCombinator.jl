@@ -1,5 +1,7 @@
 
-using ParserCombinator.Parsers.DOT; D = ParserCombinator.Parsers.DOT
+@testset "fragments" begin
+
+D = ParserCombinator.Parsers.DOT
 
 for s in ("", " ", "  ", " // ", " /*  */ ", "\n\t")
     parse_one(s, Trace(D.spc_star + Eos()))
@@ -63,3 +65,5 @@ Edge(EdgeNode[NodeID(StringID("a")), NodeID(StringID("b"))],
 GraphAttributes(Attribute[Attribute(StringID("a"), StringID("b"))])
 
 println("fragments ok")
+
+end
