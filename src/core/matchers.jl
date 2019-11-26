@@ -484,8 +484,8 @@ end
     name::Symbol
     matchers::Vector{Matcher}
 
-    Seq(m::Matcher...) = new(:Seq, [m...])
-    Seq(m::Vector{Matcher}) = new(:Seq, m)
+    Seq(matchers::Vector{Matcher}) = new(:Seq, matchers)
+    Seq(matchers::Matcher...) = Seq(Matcher[matchers...])
 end
 
 serial_success(m::Seq, results::Vector{Value}) = flatten(results)
@@ -494,8 +494,8 @@ serial_success(m::Seq, results::Vector{Value}) = flatten(results)
     name::Symbol
     matchers::Vector{Matcher}
 
-    And(m::Matcher...) = new(:And, Matcher[m...])
-    And(m::Vector{Matcher}) = new(:And, m)
+    And(matchers::Vector{Matcher}) = new(:And, matchers)
+    And(matchers::Matcher...) = And(Matcher[matchers...])
 end
 
 # copy to get type right (Array{Value,1} -> Array{Any,1})
@@ -559,8 +559,8 @@ abstract type Series! <: Matcher end
     name::Symbol
     matchers::Vector{Matcher}
 
-    Seq!(m::Matcher...) = new(:Seq!, Matcher[m...])
-    Seq!(m::Vector{Matcher}) = new(:Seq!, m)
+    Seq!(matchers::Vector{Matcher}) = new(:Seq!, matchers)
+    Seq!(matchers::Matcher...) = Seq!(Matcher[matchers...])
 end
 
 serial_success(m::Seq!, results::Vector{Value}) = flatten(results)
@@ -569,8 +569,8 @@ serial_success(m::Seq!, results::Vector{Value}) = flatten(results)
     name::Symbol
     matchers::Vector{Matcher}
 
-    And!(m::Matcher...) = new(:And!, Matcher[m...])
-    ANd!(m::Vector{Matcher}) = new(:And!, m)
+    And!(matchers::Vector{Matcher}) = new(:And!, matchers)
+    And!(matchers::Matcher...) = And!(Matcher[matchers...])
 end
 
 serial_success(m::And!, results::Vector{Value}) = Any[results...]
@@ -605,8 +605,8 @@ Alternatives(m::Matcher...; backtrack=true) = backtrack ? Alt(m...) : Alt!(m...)
     name::Symbol
     matchers::Vector{Matcher}
 
-    Alt(matchers::Matcher...) = new(:Alt, Matcher[matchers...])
     Alt(matchers::Vector{Matcher}) = new(:Alt, matchers)
+    Alt(matchers::Matcher...) = Alt(Matcher[matchers...])
 end
 
 @auto_hash_equals struct AltState{I} <: State
@@ -648,8 +648,8 @@ end
     name::Symbol
     matchers::Vector{Matcher}
 
-    Alt!(matchers::Matcher...) = new(:Alt!, Matcher[matchers...])
     Alt!(matchers::Vector{Matcher}) = new(:Alt!, matchers)
+    Alt!(matchers::Matcher...) = Alt!(Matcher[matchers...])
 end
 
 @auto_hash_equals struct AltState!{I} <: State
@@ -735,9 +735,9 @@ failure(k::Config, m::Not, s::NotState) = Success(s, s.iter, EMPTY)
     regex::Regex
     groups::Tuple
 
-    Pattern(r::Regex, group::Int...) = new(:Pattern, r.pattern, Regex("^(?:" * r.pattern * ")(.??)"), group)
     Pattern(s::AbstractString, group::Int...) = new(:Pattern, s, Regex("^(?:" * s * ")(.??)"), group)
-    Pattern(s::AbstractString, flags::AbstractString, group::Int...) = new(:Pattern. s, Regex("^(?:" * s * ")(.??)", flags), group)
+    Pattern(s::AbstractString, flags::AbstractString, group::Int...) = new(:Pattern, s, Regex("^(?:" * s * ")(.??)", flags), group)
+    Pattern(r::Regex, group::Int...) = Pattern(r.pattern, group...)
 end
 
 print_field(m::Pattern, ::Type{Val{:text}}) = "text=\"$(m.text)\""
