@@ -33,6 +33,7 @@ failure(k::Config, m::Delegate, s) = FAILURE
 
 @auto_hash_equals mutable struct Epsilon <: Matcher
     name::Symbol
+
     Epsilon() = new(:Epsilon)
 end
 
@@ -42,6 +43,7 @@ execute(k::Config, m::Epsilon, s::Clean, i) = Success(DIRTY, i, EMPTY)
 @auto_hash_equals mutable struct Insert <: Matcher
     name::Symbol
     text
+
     Insert(text) = new(:Insert, text)
 end
 
@@ -50,6 +52,7 @@ execute(k::Config, m::Insert, s::Clean, i) = Success(DIRTY, i, Any[m.text])
 
 @auto_hash_equals mutable struct Dot <: Matcher
     name::Symbol
+
     Dot() = new(:Dot)
 end
 
@@ -65,6 +68,7 @@ end
 
 @auto_hash_equals mutable struct Fail <: Matcher
     name::Symbol
+
     Fail() = new(:Fail)
 end
 
@@ -77,6 +81,7 @@ execute(k::Config, m::Fail, s::Clean, i) = FAILURE
 @auto_hash_equals mutable struct Drop <: Delegate
     name::Symbol
     matcher::Matcher
+
     Drop(matcher) = new(:Drop, matcher)
 end
 
@@ -93,6 +98,7 @@ success(k::Config, m::Drop, s, t, i, r::Value) = Success(DropState(t), i, EMPTY)
 @auto_hash_equals mutable struct Equal <: Matcher
     name::Symbol
     string
+
     Equal(string) = new(:Equal, string)
 end
 
@@ -162,6 +168,7 @@ end
     lo::Integer
     hi::Integer
     flatten::Bool
+
     Depth(m, lo, hi; flatten=true) = new(:Depth, m, lo, hi, flatten)
 end
 
@@ -279,6 +286,7 @@ end
     lo::Integer
     hi::Integer
     flatten::Bool
+
     Breadth(m, lo, hi; flatten=true) = new(:Breadth, m, lo, hi, flatten)
 end
 
@@ -360,6 +368,7 @@ end
     lo::Integer
     hi::Integer
     flatten::Bool
+
     Depth!(m, lo, hi; flatten=true) = new(:Depth!, m, lo, hi, flatten)
 end
 
@@ -412,6 +421,7 @@ end
     lo::Integer
     hi::Integer
     flatten::Bool
+
     Breadth!(m, lo, hi; flatten=true) = new(:Breadth!, m, lo, hi, flatten)
 end
 
@@ -474,6 +484,7 @@ abstract type Series_ <: Matcher end
 @auto_hash_equals mutable struct Seq <: Series_
     name::Symbol
     matchers::Vector{Matcher}
+
     Seq(m::Matcher...) = new(:Seq, [m...])
     Seq(m::Vector{Matcher}) = new(:Seq, m)
 end
@@ -483,6 +494,7 @@ serial_success(m::Seq, results::Vector{Value}) = flatten(results)
 @auto_hash_equals mutable struct And <: Series_
     name::Symbol
     matchers::Vector{Matcher}
+
     And(m::Matcher...) = new(:And, Matcher[m...])
     And(m::Vector{Matcher}) = new(:And, m)
 end
@@ -547,6 +559,7 @@ abstract type Series! <: Matcher end
 @auto_hash_equals mutable struct Seq! <: Series!
     name::Symbol
     matchers::Vector{Matcher}
+
     Seq!(m::Matcher...) = new(:Seq!, Matcher[m...])
     Seq!(m::Vector{Matcher}) = new(:Seq!, m)
 end
@@ -556,6 +569,7 @@ serial_success(m::Seq!, results::Vector{Value}) = flatten(results)
 @auto_hash_equals mutable struct And! <: Series!
     name::Symbol
     matchers::Vector{Matcher}
+
     And!(m::Matcher...) = new(:And!, Matcher[m...])
     ANd!(m::Vector{Matcher}) = new(:And!, m)
 end
@@ -596,6 +610,7 @@ abstract type Alternatives_ <: Matcher end
 @auto_hash_equals mutable struct Alt <: Alternatives_
     name::Symbol
     matchers::Vector{Matcher}
+
     Alt(matchers::Matcher...) = new(:Alt, Matcher[matchers...])
     Alt(matchers::Vector{Matcher}) = new(:Alt, matchers)
 end
@@ -638,6 +653,7 @@ end
 @auto_hash_equals mutable struct Alt! <: Alternatives_
     name::Symbol
     matchers::Vector{Matcher}
+
     Alt!(matchers::Matcher...) = new(:Alt!, Matcher[matchers...])
     Alt!(matchers::Vector{Matcher}) = new(:Alt!, matchers)
 end
@@ -667,6 +683,7 @@ failure(k::Config, m::Alt!, s::AltState!) = execute(k, m, AltState!(s.iter, s.i)
 @auto_hash_equals mutable struct Lookahead <: Delegate
     name::Symbol
     matcher::Matcher
+
     Lookahead(matcher) = new(:Lookahead, matcher)
 end
 
@@ -689,6 +706,7 @@ success(k::Config, m::Lookahead, s, t, i, r::Value) = Success(LookaheadState(t, 
 @auto_hash_equals mutable struct Not <: Matcher
     name::Symbol
     matcher::Matcher
+
     Not(matcher) = new(:Not, matcher)
 end
 
@@ -722,6 +740,7 @@ failure(k::Config, m::Not, s::NotState) = Success(s, s.iter, EMPTY)
     text::AbstractString
     regex::Regex
     groups::Tuple
+
     Pattern(r::Regex, group::Int...) = new(:Pattern, r.pattern, Regex("^(?:" * r.pattern * ")(.??)"), group)
     Pattern(s::AbstractString, group::Int...) = new(:Pattern, s, Regex("^(?:" * s * ")(.??)"), group)
     Pattern(s::AbstractString, flags::AbstractString, group::Int...) = new(:Pattern. s, Regex("^(?:" * s * ")(.??)", flags), group)
@@ -750,6 +769,7 @@ end
 mutable struct Delayed <: Matcher
     name::Symbol
     matcher::Union{Matcher, Nothing}
+
     Delayed() = new(:Delayed, nothing)
 end
 
@@ -811,6 +831,7 @@ end
 @auto_hash_equals mutable struct Error <: Matcher
     name::Symbol
     msg::AbstractString
+
     Error(msg::AbstractString) = new(:Error, msg)
 end
 
