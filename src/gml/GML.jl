@@ -79,7 +79,7 @@ function parse_raw(s; debug=false)
     try
         (debug ? parse_one_dbg : parse_one)(s, Trace(parser); debug=debug)
     catch x
-        if (debug) 
+        if (debug)
             Base.show_backtrace(stdout, catch_backtrace())
         end
         rethrow()

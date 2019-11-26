@@ -12,7 +12,7 @@ execute(k::Config, m::Matcher, s::Dirty, i) = FAILURE
 
 # many matchers delegate to a child, making only slight modifications.
 # we can describe the default behaviour just once, here.
-# child matchers then need to implement (1) state creation (typically on 
+# child matchers then need to implement (1) state creation (typically on
 # response) and (2) anything unusual (ie what the matcher actually does)
 
 # assume this has a matcher field
@@ -166,10 +166,10 @@ end
 end
 
 # greedy matching is effectively depth first traversal of a tree where:
-# * performing an additional match is moving down to a new level 
+# * performing an additional match is moving down to a new level
 # * performaing an alternate match (backtrack+match) moves across
 # the traversal requires a stack.  the DepthState instances below all
-# store that stack - actually three of them.  the results stack is 
+# store that stack - actually three of them.  the results stack is
 # unusual / neat in that it is also what we need to return.
 
 # unfortunately, things are a little more complex, because it's not just
@@ -283,13 +283,13 @@ end
 end
 
 # minimal matching is effectively breadth first traversal of a tree where:
-# * performing an additional match is moving down to a new level 
+# * performing an additional match is moving down to a new level
 # * performaing an alternate match (backtrack+match) moves across
 # the traversal requires a queue.  unfortunately, unlike with greedy,
 # that means we need to store the entire result for each node.
 
 # on the other hand, because the results are pre-order, the logic is simpler
-# than for the greedy match (wikipedia calls this "level order" so my 
+# than for the greedy match (wikipedia calls this "level order" so my
 # terminology may be wrong).
 
 @auto_hash_equals struct Entry{I}
@@ -450,10 +450,10 @@ failure(k::Config, m::Breadth!, s::BreadthState!) = FAILURE
 
 # match all in a sequence with backtracking
 
-# there are two nearly identical matchers here - the only difference is 
+# there are two nearly identical matchers here - the only difference is
 # whether results are merged (Seq/+) or not (And/&).
 
-# we need two different types so that we can define + and & appropriately.  
+# we need two different types so that we can define + and & appropriately.
 # to make the user API more conssistent we also define Series (similar to
 # Repeat) that takes a flatten argument.  finally, both are so similar
 # that they can share the same state.
@@ -498,7 +498,7 @@ end
 
 # when first called, call first matcher
 
-function execute(k::Config, m::Series_, s::Clean, i) 
+function execute(k::Config, m::Series_, s::Clean, i)
     if length(m.matchers) == 0
         Success(DIRTY, i, EMPTY)
     else
@@ -597,7 +597,7 @@ abstract type Alternatives_<:Matcher end
     name::Symbol
     matchers::Vector{Matcher}
     Alt(matchers::Matcher...) = new(:Alt, Matcher[matchers...])
-    Alt(matchers::Vector{Matcher}) = new(:Alt, matchers)    
+    Alt(matchers::Vector{Matcher}) = new(:Alt, matchers)
 end
 
 @auto_hash_equals struct AltState{I}<:State
@@ -639,7 +639,7 @@ end
     name::Symbol
     matchers::Vector{Matcher}
     Alt!(matchers::Matcher...) = new(:Alt!, Matcher[matchers...])
-    Alt!(matchers::Vector{Matcher}) = new(:Alt!, matchers)    
+    Alt!(matchers::Vector{Matcher}) = new(:Alt!, matchers)
 end
 
 @auto_hash_equals struct AltState!{I}<:State
@@ -708,7 +708,7 @@ failure(k::Config, m::Not, s::NotState) = Success(s, s.iter, EMPTY)
 
 # match a regular expression.
 
-# because Regex match against strings, this matcher works only against 
+# because Regex match against strings, this matcher works only against
 # string sources.
 
 # for efficiency, we need to know the offset where the match finishes.

@@ -25,21 +25,22 @@ calc(s::Sum) = signed_sum(map(calc, s.val))
     spc = Drop(Star(Space()))
 
     @with_pre spc begin
-        
+
         sum = Delayed()
         val = E"(" + spc + sum + spc + E")" | PFloat64()
-        
+
         neg = Delayed()             # allow multiple negations (eg ---3)
         neg.matcher = Nullable{Matcher}(val | (E"-" + neg > Neg))
-        
+
         mul = E"*" + neg
         div = E"/" + neg > Inv
         prd = neg + (mul | div)[0:end] |> Prd
-        
+
         add = E"+" + prd
         sub = E"-" + prd > Neg
+
         sum.matcher = Nullable{Matcher}(prd + (add | sub)[0:end] |> Sum)
-        
+
         all = sum + spc + Eos()
 
     end
