@@ -132,7 +132,7 @@ end
 # of all possible states (limited by the maximum number of matches),
 # yielding when we have a result within the lo/hi range.
 
-abstract type Repeat_ <: Matcher end   # _ to avoid conflict with function in 0.3
+abstract type Repeat <: Matcher end
 
 ALL = typemax(Int)
 
@@ -148,11 +148,11 @@ end
 Repeat(m::Matcher, lo; flatten=true, greedy=true, backtrack=true) = Repeat(m, lo, lo; flatten=flatten, greedy=greedy, backtrack=backtrack)
 Repeat(m::Matcher; flatten=true, greedy=true, backtrack=true) = Repeat(m, 0, ALL; flatten=flatten, greedy=greedy, backtrack=backtrack)
 
-print_field(m::Repeat_, ::Type{Val{:lo}}) = "lo=$(m.lo)"
-print_field(m::Repeat_, ::Type{Val{:hi}}) = "hi=$(m.hi)"
-print_field(m::Repeat_, ::Type{Val{:flatten}}) = "flatten=$(m.flatten)"
+print_field(m::Repeat, ::Type{Val{:lo}}) = "lo=$(m.lo)"
+print_field(m::Repeat, ::Type{Val{:hi}}) = "hi=$(m.hi)"
+print_field(m::Repeat, ::Type{Val{:flatten}}) = "flatten=$(m.flatten)"
 
-function repeat_success(m::Repeat_, results::Vector{Value})
+function repeat_success(m::Repeat, results::Vector{Value})
     if m.flatten
         flatten(results)
     else
@@ -162,7 +162,7 @@ end
 
 # depth-first (greedy) state and logic
 
-@auto_hash_equals mutable struct Depth <: Repeat_
+@auto_hash_equals mutable struct Depth <: Repeat
     name::Symbol
     matcher::Matcher
     lo::Integer
@@ -280,7 +280,7 @@ end
 
 # breadth-first specific state and logic
 
-@auto_hash_equals mutable struct Breadth <: Repeat_
+@auto_hash_equals mutable struct Breadth <: Repeat
     name::Symbol
     matcher::Matcher
     lo::Integer
@@ -362,7 +362,7 @@ end
 # largest first (greedy) repetition without backtracking of child
 # matchers
 
-@auto_hash_equals mutable struct Depth! <: Repeat_
+@auto_hash_equals mutable struct Depth! <: Repeat
     name::Symbol
     matcher::Matcher
     lo::Integer
@@ -415,7 +415,7 @@ end
 # smallest first (non-greedy) repetition without backtracking of child
 # matchers
 
-@auto_hash_equals mutable struct Breadth! <: Repeat_
+@auto_hash_equals mutable struct Breadth! <: Repeat
     name::Symbol
     matcher::Matcher
     lo::Integer
@@ -468,6 +468,8 @@ failure(k::Config, m::Breadth!, s::BreadthState!) = FAILURE
 # Repeat) that takes a flatten argument.  finally, both are so similar
 # that they can share the same state.
 
+abstract type Series <: Matcher end
+
 function Series(m::Matcher...; flatten=true, backtrack=true)
     if flatten
         backtrack ? Seq(m...) : Seq!(m...)
@@ -476,12 +478,9 @@ function Series(m::Matcher...; flatten=true, backtrack=true)
     end
 end
 
-abstract type Series_ <: Matcher end
-
-
 # first, the backtracking version
 
-@auto_hash_equals mutable struct Seq <: Series_
+@auto_hash_equals mutable struct Seq <: Series
     name::Symbol
     matchers::Vector{Matcher}
 
@@ -491,7 +490,7 @@ end
 
 serial_success(m::Seq, results::Vector{Value}) = flatten(results)
 
-@auto_hash_equals mutable struct And <: Series_
+@auto_hash_equals mutable struct And <: Series
     name::Symbol
     matchers::Vector{Matcher}
 
@@ -510,7 +509,7 @@ end
 
 # when first called, call first matcher
 
-function execute(k::Config, m::Series_, s::Clean, i)
+function execute(k::Config, m::Series, s::Clean, i)
     if length(m.matchers) == 0
         Success(DIRTY, i, EMPTY)
     else
@@ -521,7 +520,7 @@ end
 # if the final matcher matched then return what we have.  otherwise, evaluate
 # the next.
 
-function success(k::Config, m::Series_, s::SeriesState, t, i, r::Value)
+function success(k::Config, m::Series, s::SeriesState, t, i, r::Value)
     n = length(s.iters)
     results = Value[s.results..., r]
     iters = vcat(s.iters, i)
@@ -535,7 +534,7 @@ end
 
 # if the first matcher failed, fail.  otherwise backtrack
 
-function failure(k::Config, m::Series_, s::SeriesState)
+function failure(k::Config, m::Series, s::SeriesState)
     n = length(s.iters)
     if n == 1
         FAILURE
@@ -546,7 +545,7 @@ end
 
 # try to advance the current match
 
-function execute(k::Config, m::Series_, s::SeriesState, i)
+function execute(k::Config, m::Series, s::SeriesState, i)
     @assert length(s.states) == length(m.matchers)
     Execute(m, SeriesState(s.results[1:end-1], s.iters[1:end-1], s.states[1:end-1]), m.matchers[end], s.states[end], s.iters[end-1])
 end
@@ -597,17 +596,12 @@ failure(k::Config, m::Series!, s::SeriesState!) = FAILURE
 
 
 # alternatives (these need to be separate matchers so that | works ok)
-
-function Alternatives(m::Matcher...; backtrack=true)
-    backtrack ? Alt(m...) : Alt!(m...)
-end
-
-abstract type Alternatives_ <: Matcher end
-
+abstract type Alternatives <: Matcher end
+Alternatives(m::Matcher...; backtrack=true) = backtrack ? Alt(m...) : Alt!(m...)
 
 # first, the backtracking version
 
-@auto_hash_equals mutable struct Alt <: Alternatives_
+@auto_hash_equals mutable struct Alt <: Alternatives
     name::Symbol
     matchers::Vector{Matcher}
 
@@ -650,7 +644,7 @@ end
 # it does not re-match children again, but does try other
 # alternatives)
 
-@auto_hash_equals mutable struct Alt! <: Alternatives_
+@auto_hash_equals mutable struct Alt! <: Alternatives
     name::Symbol
     matchers::Vector{Matcher}
 
