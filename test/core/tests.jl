@@ -69,7 +69,7 @@ for i in 1:10
         s = repeat("a", n)
         m = match(r, s)
         println("$lo $hi $s $r")
-        if m == nothing
+        if m === nothing
             @test_throws ParserException parse_one(s, Repeat(Equal("a"), lo, hi; greedy=greedy))
         else
             @test length(m.match) == length(parse_one(s, Repeat(Equal("a"), lo, hi; greedy=greedy)))
