@@ -24,9 +24,9 @@ d = parse_dot(open(p -> read(p, String), "dot/full-digraph.dot"))[1]
 @test length(d.stmts[1].nodes) == 2
 # id.id are attribues of NodeID and StringID
 @test d.stmts[1].nodes[1].id.id == "a"
-@test isnull(d.stmts[1].nodes[1].port)
+@test d.stmts[1].nodes[1].port === nothing
 @test d.stmts[1].nodes[2].id.id == "b"
-@test isnull(d.stmts[1].nodes[2].port)
+@test d.stmts[1].nodes[2].port === nothing
 @test length(d.stmts[1].attrs) == 2
 @test d.stmts[1].attrs[1].name.id == "label"
 @test d.stmts[1].attrs[1].value.id == "0.2"
@@ -45,8 +45,8 @@ d = parse_dot(open(p -> read(p, String), "dot/simple-subgraph.dot"))[1]
 @test edges(d) == Set([("a","b"),("a","f"),("b","c"),("c","d"),("f","c")])
 @test length(d.stmts) == 2
 @test isa(d.stmts[1], SubGraph)
-@test !isnull(d.stmts[1].id)
-@test get(d.stmts[1].id).id == "cluster_0"
+@test d.stmts[1].id !== nothing
+@test d.stmts[1].id.id == "cluster_0"
 @test d.stmts[1].stmts[1].name.id == "label"
 @test d.stmts[1].stmts[1].value.id == "Subgraph A"
 

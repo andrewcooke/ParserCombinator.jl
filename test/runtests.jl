@@ -5,8 +5,6 @@ module CoreTest
 
 using ParserCombinator
 using Test
-using Compat
-using Nullables
 
 @testset "core" begin
 
@@ -29,8 +27,6 @@ module GmlTest
 using ParserCombinator
 using ParserCombinator.Parsers.GML
 using Test
-using Compat
-using Nullables
 
 @testset "GML" begin
 include("gml/ok.jl")
@@ -50,8 +46,6 @@ module DotTest
 using ParserCombinator
 using ParserCombinator.Parsers.DOT
 using Test
-using Compat
-using Nullables
 
 @testset "DOT" begin
 include("dot/example.jl")

@@ -48,7 +48,7 @@
 @test parse_one("abc", And(Equal("a"), Not(Lookahead(Equal("c"))), Equal("b"))) == Any[["a"], [], ["b"]]
 @test parse_one("1.2", PFloat64()) == [1.2]
 m1 = Delayed()
-m1.matcher = Nullable{ParserCombinator.Matcher}(Seq(Dot(), Opt(m1)))
+m1.matcher = Seq(Dot(), Opt(m1))
 @test parse_one("abc", m1) == ['a', 'b', 'c']
 @test collect(parse_all("abc", Repeat(Fail(); flatten=false))) == Any[[]]
 @test collect(parse_all("abc", Repeat(Fail(); flatten=false, greedy=false))) == Any[[]]

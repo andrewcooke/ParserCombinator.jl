@@ -1,7 +1,6 @@
 
 module ParserCombinator
 
-using Nullables
 using AutoHashEquals
 import Base: iterate, getindex, isless, size, hash,
 axes, lastindex, firstindex

@@ -749,21 +749,21 @@ end
 
 mutable struct Delayed<:Matcher
     name::Symbol
-    matcher::Nullable{Matcher}
-    Delayed() = new(:Delayed, Nullable{Matcher}())
+    matcher::Union{Matcher, Nothing}
+    Delayed() = new(:Delayed, nothing)
 end
 
 function print_matcher(m::Delayed, known::Set{Matcher})
     function producer(c::Channel)
         tag = "$(m.name)"
-        if (isnull(m.matcher))
+        if m.matcher === nothing
             put!(c, "$(tag) OPEN")
         elseif m in known
             put!(c, "$(tag)...")
         else
             put!(c, "$(tag)")
             push!(known, m)
-            for (i, line) in enumerate(print_matcher(get(m.matcher), known))
+            for (i, line) in enumerate(print_matcher(m.matcher, known))
                 put!(c, i == 1 ? "`-$(line)" : "  $(line)")
             end
         end
@@ -776,10 +776,10 @@ function execute(k::Config, m::Delayed, s::Dirty, i)
 end
 
 function execute(k::Config, m::Delayed, s::State, i)
-    if isnull(m.matcher)
+    if m.matcher === nothing
         error("set Delayed matcher")
     else
-        execute(k, get(m.matcher), s, i)
+        execute(k, m.matcher, s, i)
     end
 end
 
