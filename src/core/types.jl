@@ -83,7 +83,7 @@ end
 
 # parent and parent_state are popped from the stack.  a call is made to
 # success(config, parent, parent_state, child_state, iter, result)
-struct Success{CS<:State,I}<:Message
+struct Success{CS<:State,I} <: Message
     child_state::CS   # parent to store, passed in next call for backtracking
     iter::I           # advanced as appropriate
     result::Value     # possibly empty
@@ -91,12 +91,12 @@ end
 
 # parent and parent_state are popped from the stack.  a call is made to
 # failure(config, parent, parent_state)
-struct Failure<:Message end
+struct Failure <: Message end
 const FAILURE = Failure()
 
 # parent and parent_state are pushed to the stack.  a call is made to
 # execute(config, child, child_state, iter)
-struct Execute{I}<:Message
+struct Execute{I} <: Message
     parent::Matcher         # stored by trampoline, added to response
     parent_state::State  # stored by trampoline, added to response
     child::Matcher          # the matcher to evaluate
@@ -111,11 +111,11 @@ end
 # use immutable types because these are simple, magic values
 
 # the state used on first call
-struct Clean<:State end
+struct Clean <: State end
 const CLEAN = Clean()
 
 # the state used when no further calls should be made
-struct Dirty<:State end
+struct Dirty <: State end
 const DIRTY = Dirty()
 
 
@@ -124,15 +124,15 @@ const DIRTY = Dirty()
 
 # user-generated errors (ie bad input, etc).
 # internal errors in the library (bugs) may raise Error
-struct ParserException<:Exception
+struct ParserException <: Exception
     msg
 end
 
 # this cannot be cached (thrown by hash())
-struct CacheException<:Exception end
+struct CacheException <: Exception end
 
 # this is equivalent to a matcher returning Failure.  used when source
 # information is not available.
-abstract type FailureException<:Exception end
+abstract type FailureException <: Exception end
 
 const Applicable = Union{Function, DataType}
