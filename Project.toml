@@ -7,8 +7,8 @@ AutoHashEquals = "15f4f7f2-30c1-5605-9d31-71845cf9641f"
 Printf = "de0858da-6303-5e67-8744-51eddeeeb8d7"
 
 [compat]
-AutoHashEquals = "≥ 0.0.8"
-julia = "≥ 0.7.0"
+AutoHashEquals = "0.2"
+julia = "1"
 
 [extras]
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
