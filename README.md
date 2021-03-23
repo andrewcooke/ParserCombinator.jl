@@ -36,16 +36,16 @@ using ParserCombinator
 
 # the AST nodes we will construct, with evaluation via calc()
 
-abstract Node
-==(n1::Node, n2::Node) = n1.val == n2.val
+abstract type Node end
+Base.:(==)(n1::Node, n2::Node) = n1.val == n2.val
 calc(n::Float64) = n
-type Inv<:Node val end
+struct Inv<:Node val end
 calc(i::Inv) = 1.0/calc(i.val)
-type Prd<:Node val end
+struct Prd<:Node val end
 calc(p::Prd) = Base.prod(map(calc, p.val))
-type Neg<:Node val end
+struct Neg<:Node val end
 calc(n::Neg) = -calc(n.val)
-type Sum<:Node val end
+struct Sum<:Node val end
 calc(s::Sum) = Base.sum(map(calc, s.val))
 
 
@@ -68,13 +68,14 @@ sum.matcher = prd + (add | sub)[0:end] |> Sum
 all = sum + Eos()
 
 
-# and test 
+# and test
 
 # this prints 2.5
 calc(parse_one("1+2*3/4", all)[1])
 
 # this prints [Sum([Prd([1.0]),Prd([2.0])])]
 parse_one("1+2", all)
+
 ```
 
 Some explanation of the above:
