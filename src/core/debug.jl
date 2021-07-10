@@ -129,7 +129,7 @@ function src(s::LineAt, i::LineIter; max=MAX_SRC)
         end
     end
 end
-   
+
 function debug(k::Debug{S}, e::Execute) where {S<:LineAt}
     @printf("%3d,%-3d:%s %02d %s%s->%s\n",
             e.iter.line, e.iter.column, src(k.source, e.iter), k.depth[end], indent(k), e.parent.name, e.child.name)

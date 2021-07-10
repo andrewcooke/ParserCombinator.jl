@@ -27,7 +27,7 @@ end
 struct Return <: Msg
     value::Int
 end
-   
+
 function inc(n, m)
     if n > m
         Return(n)
@@ -55,7 +55,7 @@ function trampoline(n, m)
     end
     n
 end
-    
+
 
 trampoline(0, 10)
 @time println(trampoline(0, 100_000))

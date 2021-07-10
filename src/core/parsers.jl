@@ -149,7 +149,7 @@ function producer(c::Channel, k::Config, m::Matcher; debug=false)
                 end
             end
         end
-        
+
     catch x
         if (debug)
             println("debug was set, so showing error from inside task")
@@ -165,7 +165,7 @@ end
 
 # helper functions to generate the parsers from the above
 
-# these assume that any config construct takes a single source argument 
+# these assume that any config construct takes a single source argument
 # plus optional keyword args
 
 function make(config, source::S, matcher; debug=false, kargs...) where {S}
