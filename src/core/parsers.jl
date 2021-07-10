@@ -181,8 +181,17 @@ function make_all(config; kargs_make...)
 end
 
 function once(channel)
-    for result in channel
-        return result
+    try
+        for result in channel
+            return result
+        end
+    catch ex
+        # unwrap exception
+        if VERSION >= v"1.1"
+            ex isa TaskFailedException ? throw(first(first(Base.catch_stack(ex.task)))) : rethrow()
+        else
+            rethrow()
+        end
     end
     throw(ParserException("cannot parse"))
 end
