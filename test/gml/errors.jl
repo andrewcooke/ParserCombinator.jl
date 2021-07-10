@@ -14,12 +14,7 @@ for (text, msg) in [("a 1 ]", "Expected key"),
         end
     end
 
-    if VERSION < v"0.5-"
-        @test_throws ParserError parse_raw(text)
-    else
-        @test_throws ParserError{Int64} parse_raw(text)
-    end
-
+    @test_throws ParserError{Int} parse_raw(text)
 end
 
 

@@ -71,13 +71,7 @@ MAX_RES = 50
 MAX_SRC = 10
 MAX_IND = 10
 
-if VERSION < v"0.4-"
-    shorten(s) = s
-else
-#   shorten(s) = replace(s, r"(?:[a-zA-Z]+\.)+([a-zA-Z]+)", s"\1")
-    shorten(s) = replace(s, r"(?:[a-zA-Z]+\.)+([a-zA-Z]+)" =>
-                         Base.SubstitutionString("\1"))
-end
+shorten(s) = replace(s, r"(?:[a-zA-Z]+\.)+([a-zA-Z]+)" => s"\1")
 
 function truncate(s::AbstractString, n=10)
     if length(s) <= n
