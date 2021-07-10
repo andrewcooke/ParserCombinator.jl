@@ -4,7 +4,7 @@
 
 
 set_name(x::Any, s::Symbol) = x
-set_name(m::Matcher, s::Symbol) = (m.name = s; m)    
+set_name(m::Matcher, s::Symbol) = (m.name = s; m)
 
 set_names(x) = x
 function set_names(node::Expr)
@@ -20,7 +20,7 @@ end
 # matchers within that block to match the variables they are asigned to.
 
 # so, for example
-#   foo = Dot() 
+#   foo = Dot()
 # will set the name field of Dot() to :foo.
 
 # since this clutters the code with extra calls (to set_name()) it should only

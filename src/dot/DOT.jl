@@ -2,7 +2,6 @@
 module DOT
 
 using ParserCombinator
-using Nullables
 using AutoHashEquals
 import Base: ==
 
@@ -53,32 +52,30 @@ const Attributes = Vector{Attribute}
 @auto_hash_equals struct Graph
     strict::Bool
     directed::Bool
-    id::Nullable{ID}
+    id::Union{ID, Nothing}
     stmts::Statements
-    Graph(s::Bool, d::Bool, id::ID, st::Statements) = new(s, d, Nullable(id), st)
-    Graph(s::Bool, d::Bool, st::Statements) = new(s, d, Nullable{ID}(), st)
+    Graph(s::Bool, d::Bool, id::ID, st::Statements) = new(s, d, id, st)
+    Graph(s::Bool, d::Bool, st::Statements) = new(s, d, nothing, st)
 end
 
 @auto_hash_equals struct SubGraph <: Statement
-    id::Nullable{ID}
+    id::Union{ID, Nothing}
     stmts::Statements
-    SubGraph(id::ID, s::Statements) = new(Nullable(id), s)
-    SubGraph(s::Statements) = new(Nullable{ID}(), s)
+    SubGraph(id::ID, s::Statements) = new(id, s)
+    SubGraph(s::Statements) = new(nothing, s)
 end
 
 @auto_hash_equals struct Port
-    id::Nullable{ID}
-    point::Nullable{AbstractString}
-    Port(id::ID, p::AbstractString) = new(Nullable(id), Nullable(p))
-    Port(id::ID) = new(id, Nullable{ID}())
-    Port(p::AbstractString) = new(Nullable{ID}(), Nullable(p))
+    id::Union{ID, Nothing}
+    point::Union{AbstractString, Nothing}
+    Port(id::ID, p::Union{AbstractString, Nothing}=nothing) = new(id, p)
+    Port(p::AbstractString) = new(nothing, p)
 end
 
 @auto_hash_equals struct NodeID
     id::ID
-    port::Nullable{Port}
-    NodeID(id::ID, p::Port) = new(id, Nullable(p))
-    NodeID(id::ID) = new(id, Nullable{Port}())
+    port::Union{Port, Nothing}
+    NodeID(id::ID, p::Union{Port, Nothing}=nothing) = new(id, p)
 end
 
 @auto_hash_equals struct Node <: Statement

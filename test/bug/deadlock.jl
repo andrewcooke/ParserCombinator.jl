@@ -1,17 +1,17 @@
 
 using AutoHashEquals
 
-abstract Graph
+abstract type Graph end
 
-@auto_hash_equals type Node<:Graph
+@auto_hash_equals struct Node<:Graph
     label::AbstractString
     children::Vector{Graph}
     Node(label, children...) = new(label, Graph[children...])
 end
 
-type Cycle<:Graph
-    node::Nullable{Graph}
-    Cycle() = new(Nullable{Graph}())
+mutable struct Cycle<:Graph
+    node::Union{Graph, Nothing}
+    Cycle() = new(nothing)
 end
 
 function gprint(known::Set{Graph}, n::Node)
@@ -35,13 +35,13 @@ function gprint(known::Set{Graph}, n::Node)
 end
 
 function gprint(known::Set{Graph}, c::Cycle)
-    if isnull(c.node)
+    if c.node === nothing
         Task(() -> produce("?"))
     elseif c in known
         Task(() -> produce("..."))
     else
         push!(known, c)
-        t = gprint(known, get(c.node))
+        t = gprint(known, c.node)
         delete!(known, c)
         t
     end
@@ -54,7 +54,7 @@ function Base.print(io::Base.IO, g::Graph)
 end
 
 x = Cycle()
-g = Node("a", 
+g = Node("a",
          Node("b"),
          Node("c",
               x,

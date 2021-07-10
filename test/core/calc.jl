@@ -9,16 +9,16 @@
     val = E"(" + sum + E")" | PFloat64()
 
     neg = Delayed()             # allow multiple negations (eg ---3)
-    neg.matcher = Nullable{Matcher}(val | (E"-" + neg > Neg))
-    
+    neg.matcher = val | (E"-" + neg > Neg)
+
     mul = E"*" + neg
     div = E"/" + neg > Inv
     prd = neg + (mul | div)[0:end] |> Prd
-    
+
     add = E"+" + prd
     sub = E"-" + prd > Neg
-    sum.matcher = Nullable{Matcher}(prd + (add | sub)[0:end] |> Sum)
-    
+    sum.matcher = (prd + (add | sub)[0:end] |> Sum)
+
     all = sum + Eos()
 
 end
@@ -26,22 +26,22 @@ end
 println(all)
 
 @test val.name == :val
-@test typeof(val) == Alt
+@test val isa Alt
 @test length(val.matchers) == 2
 @test neg.name == :neg
-@test typeof(neg) == Delayed
-@test typeof(get(neg.matcher)) == Alt
-@test length(get(neg.matcher).matchers) == 3  # flattening
+@test neg isa Delayed
+@test neg.matcher isa Alt
+@test length(neg.matcher.matchers) == 3  # flattening
 @test prd.name == :prd
-@test typeof(prd) == Transform
-@test typeof(prd.matcher) == Seq
+@test prd isa Transform
+@test prd.matcher isa Seq
 @test length(prd.matcher.matchers) == 2
-@test typeof(prd.matcher.matchers[2]) == Depth
+@test prd.matcher.matchers[2] isa Depth
 @test sum.name == :sum
-@test typeof(sum) == Delayed
-@test typeof(get(sum.matcher).matcher) == Seq
-@test length(get(sum.matcher).matcher.matchers) == 2
-@test typeof(get(sum.matcher).matcher.matchers[2]) == Depth
+@test sum isa Delayed
+@test sum.matcher.matcher isa Seq
+@test length(sum.matcher.matcher.matchers) == 2
+@test sum.matcher.matcher.matchers[2] isa Depth
 
 parse_dbg("1+2*3/4", Trace(all))
 
@@ -57,7 +57,7 @@ for (src, val) in [
     println("$src = $val")
 end
 
-for (src, ast, val) in 
+for (src, ast, val) in
     [
      ("1.0", Sum([Prd([1.0])]), 1.0)
      ("-1.0", Sum([Prd([-1.0])]), -1.0)
@@ -121,7 +121,7 @@ p = Sum(Any[Prd(Any[-9.0]),
             Neg(Prd(Any[7.0,Inv(0.0),Inv(2.0),Inv(Sum(Any[Prd(Any[Neg(Sum(Any[Prd(Any[0.0])]))])])),3.0])),
             Neg(Prd(Any[7.0,Inv(Neg(Sum(Any[Prd(Any[9.0]),Prd(Any[5.0])])))])),
             Prd(Any[5.0]),
-            Neg(Prd(Any[7.0]))]) 
+            Neg(Prd(Any[7.0]))])
 
 a = eval(Meta.parse("-9.0-7.0/0.0/2.0/(-(0.0))*3.0-7.0/-(9.0+5.0)+5.0-7.0"))
 b = parse_one("-9.0-7.0/0.0/2.0/(-(0.0))*3.0-7.0/-(9.0+5.0)+5.0-7.0", all)[1]

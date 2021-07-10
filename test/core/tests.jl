@@ -3,7 +3,7 @@
 @test parse_one("", Epsilon()) == []
 @test parse_one("", Insert("foo")) == ["foo"]
 @test parse_one("", Drop(Insert("foo"))) == []
-@test_throws ParserException parse_one("x", Equal("a")) 
+@test_throws ParserException parse_one("x", Equal("a"))
 @test parse_one("a", Equal("a")) == ["a"]
 @test parse_one("aa", Equal("a")) == ["a"]
 @test_throws ParserException parse_one("a", Repeat(Equal("a"), 2, 2))
@@ -48,7 +48,7 @@
 @test parse_one("abc", And(Equal("a"), Not(Lookahead(Equal("c"))), Equal("b"))) == Any[["a"], [], ["b"]]
 @test parse_one("1.2", PFloat64()) == [1.2]
 m1 = Delayed()
-m1.matcher = Nullable{ParserCombinator.Matcher}(Seq(Dot(), Opt(m1)))
+m1.matcher = Seq(Dot(), Opt(m1))
 @test parse_one("abc", m1) == ['a', 'b', 'c']
 @test collect(parse_all("abc", Repeat(Fail(); flatten=false))) == Any[[]]
 @test collect(parse_all("abc", Repeat(Fail(); flatten=false, greedy=false))) == Any[[]]
@@ -69,7 +69,7 @@ for i in 1:10
         s = repeat("a", n)
         m = match(r, s)
         println("$lo $hi $s $r")
-        if m == nothing
+        if m === nothing
             @test_throws ParserException parse_one(s, Repeat(Equal("a"), lo, hi; greedy=greedy))
         else
             @test length(m.match) == length(parse_one(s, Repeat(Equal("a"), lo, hi; greedy=greedy)))
@@ -86,18 +86,18 @@ end
 for backtrack in (true, false)
 
     @test map(x -> [length(x[1]), length(x[2])],
-              collect(parse_all("aaa", 
+              collect(parse_all("aaa",
                                 Seq((Repeat(Equal("a"), 0, 3; backtrack=backtrack) > tuple),
-                                    (Repeat(Equal("a"), 0, 3; backtrack=backtrack) > tuple))))) == 
+                                    (Repeat(Equal("a"), 0, 3; backtrack=backtrack) > tuple))))) ==
     Array[[3,0],
           [2,1],[2,0],
           [1,2],[1,1],[1,0],
           [0,3],[0,2],[0,1],[0,0]]
 
     @test map(x -> [length(x[1]), length(x[2])],
-              collect(parse_all("aaa", 
+              collect(parse_all("aaa",
                                 Seq((Repeat(Equal("a"), 0, 3; backtrack=backtrack, greedy=false) > tuple),
-                                    (Repeat(Equal("a"), 0, 3; backtrack=backtrack, greedy=false) > tuple))))) == 
+                                    (Repeat(Equal("a"), 0, 3; backtrack=backtrack, greedy=false) > tuple))))) ==
     Array[[0,0],[0,1],[0,2],[0,3],
           [1,0],[1,1],[1,2],
           [2,0],[2,1],

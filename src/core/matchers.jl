@@ -12,14 +12,14 @@ execute(k::Config, m::Matcher, s::Dirty, i) = FAILURE
 
 # many matchers delegate to a child, making only slight modifications.
 # we can describe the default behaviour just once, here.
-# child matchers then need to implement (1) state creation (typically on 
+# child matchers then need to implement (1) state creation (typically on
 # response) and (2) anything unusual (ie what the matcher actually does)
 
 # assume this has a matcher field
-abstract type Delegate<:Matcher end
+abstract type Delegate <: Matcher end
 
 # assume this has a state field
-abstract type DelegateState<:State end
+abstract type DelegateState <: State end
 
 execute(k::Config, m::Delegate, s::Clean, i) = Execute(m, s, m.matcher, CLEAN, i)
 
@@ -31,25 +31,28 @@ failure(k::Config, m::Delegate, s) = FAILURE
 
 # various weird things for completeness
 
-@auto_hash_equals mutable struct Epsilon<:Matcher
+@auto_hash_equals mutable struct Epsilon <: Matcher
     name::Symbol
+
     Epsilon() = new(:Epsilon)
 end
 
 execute(k::Config, m::Epsilon, s::Clean, i) = Success(DIRTY, i, EMPTY)
 
 
-@auto_hash_equals mutable struct Insert<:Matcher
+@auto_hash_equals mutable struct Insert <: Matcher
     name::Symbol
     text
+
     Insert(text) = new(:Insert, text)
 end
 
 execute(k::Config, m::Insert, s::Clean, i) = Success(DIRTY, i, Any[m.text])
 
 
-@auto_hash_equals mutable struct Dot<:Matcher
+@auto_hash_equals mutable struct Dot <: Matcher
     name::Symbol
+
     Dot() = new(:Dot)
 end
 
@@ -63,8 +66,9 @@ function execute(k::Config, m::Dot, s::Clean, i)
 end
 
 
-@auto_hash_equals mutable struct Fail<:Matcher
+@auto_hash_equals mutable struct Fail <: Matcher
     name::Symbol
+
     Fail() = new(:Fail)
 end
 
@@ -74,9 +78,10 @@ execute(k::Config, m::Fail, s::Clean, i) = FAILURE
 
 # evaluate the sub-matcher, but replace the result with EMPTY
 
-@auto_hash_equals mutable struct Drop<:Delegate
+@auto_hash_equals mutable struct Drop <: Delegate
     name::Symbol
     matcher::Matcher
+
     Drop(matcher) = new(:Drop, matcher)
 end
 
@@ -90,9 +95,10 @@ success(k::Config, m::Drop, s, t, i, r::Value) = Success(DropState(t), i, EMPTY)
 
 # exact match
 
-@auto_hash_equals mutable struct Equal<:Matcher
+@auto_hash_equals mutable struct Equal <: Matcher
     name::Symbol
     string
+
     Equal(string) = new(:Equal, string)
 end
 
@@ -126,11 +132,11 @@ end
 # of all possible states (limited by the maximum number of matches),
 # yielding when we have a result within the lo/hi range.
 
-abstract type Repeat_<:Matcher end   # _ to avoid conflict with function in 0.3
+abstract type Repeat <: Matcher end
 
 ALL = typemax(Int)
 
-abstract type RepeatState<:State end
+abstract type RepeatState <: State end
 
 function Repeat(m::Matcher, lo, hi; flatten=true, greedy=true, backtrack=true)
     if greedy
@@ -142,11 +148,11 @@ end
 Repeat(m::Matcher, lo; flatten=true, greedy=true, backtrack=true) = Repeat(m, lo, lo; flatten=flatten, greedy=greedy, backtrack=backtrack)
 Repeat(m::Matcher; flatten=true, greedy=true, backtrack=true) = Repeat(m, 0, ALL; flatten=flatten, greedy=greedy, backtrack=backtrack)
 
-print_field(m::Repeat_, ::Type{Val{:lo}}) = "lo=$(m.lo)"
-print_field(m::Repeat_, ::Type{Val{:hi}}) = "hi=$(m.hi)"
-print_field(m::Repeat_, ::Type{Val{:flatten}}) = "flatten=$(m.flatten)"
+print_field(m::Repeat, ::Type{Val{:lo}}) = "lo=$(m.lo)"
+print_field(m::Repeat, ::Type{Val{:hi}}) = "hi=$(m.hi)"
+print_field(m::Repeat, ::Type{Val{:flatten}}) = "flatten=$(m.flatten)"
 
-function repeat_success(m::Repeat_, results::Vector{Value})
+function repeat_success(m::Repeat, results::Vector{Value})
     if m.flatten
         flatten(results)
     else
@@ -156,33 +162,34 @@ end
 
 # depth-first (greedy) state and logic
 
-@auto_hash_equals mutable struct Depth<:Repeat_
+@auto_hash_equals mutable struct Depth <: Repeat
     name::Symbol
     matcher::Matcher
     lo::Integer
     hi::Integer
     flatten::Bool
+
     Depth(m, lo, hi; flatten=true) = new(:Depth, m, lo, hi, flatten)
 end
 
 # greedy matching is effectively depth first traversal of a tree where:
-# * performing an additional match is moving down to a new level 
+# * performing an additional match is moving down to a new level
 # * performaing an alternate match (backtrack+match) moves across
 # the traversal requires a stack.  the DepthState instances below all
-# store that stack - actually three of them.  the results stack is 
+# store that stack - actually three of them.  the results stack is
 # unusual / neat in that it is also what we need to return.
 
 # unfortunately, things are a little more complex, because it's not just
 # DFS, but also post-order.  which means there's some extra messing around
 # so that the node ordering is correct.
 
-abstract type DepthState<:RepeatState end
+abstract type DepthState <: RepeatState end
 
 # an arbitrary iter to pass to a state where it's not needed (typically from
 # failure)
 arbitrary(s::DepthState) = s.iters[1]
 
-@auto_hash_equals struct DepthSlurp{I}<:DepthState
+@auto_hash_equals struct DepthSlurp{I} <: DepthState
     # there's a mismatch in lengths here because the empty results is
     # associated with an iter and state
     results::Vector{Value} # accumulated.  starts []
@@ -191,13 +198,13 @@ arbitrary(s::DepthState) = s.iters[1]
                            # since [] at i is returned last.
 end
 
-@auto_hash_equals struct DepthYield{I}<:DepthState
+@auto_hash_equals struct DepthYield{I} <: DepthState
     results::Vector{Value}
     iters::Vector{I}
     states::Vector{State}
 end
 
-@auto_hash_equals struct DepthBacktrack{I}<:DepthState
+@auto_hash_equals struct DepthBacktrack{I} <: DepthState
     results::Vector{Value}
     iters::Vector{I}
     states::Vector{State}
@@ -273,23 +280,24 @@ end
 
 # breadth-first specific state and logic
 
-@auto_hash_equals mutable struct Breadth<:Repeat_
+@auto_hash_equals mutable struct Breadth <: Repeat
     name::Symbol
     matcher::Matcher
     lo::Integer
     hi::Integer
     flatten::Bool
+
     Breadth(m, lo, hi; flatten=true) = new(:Breadth, m, lo, hi, flatten)
 end
 
 # minimal matching is effectively breadth first traversal of a tree where:
-# * performing an additional match is moving down to a new level 
+# * performing an additional match is moving down to a new level
 # * performaing an alternate match (backtrack+match) moves across
 # the traversal requires a queue.  unfortunately, unlike with greedy,
 # that means we need to store the entire result for each node.
 
 # on the other hand, because the results are pre-order, the logic is simpler
-# than for the greedy match (wikipedia calls this "level order" so my 
+# than for the greedy match (wikipedia calls this "level order" so my
 # terminology may be wrong).
 
 @auto_hash_equals struct Entry{I}
@@ -298,16 +306,16 @@ end
     results::Vector{Value}
 end
 
-abstract type BreadthState<:RepeatState end
+abstract type BreadthState <: RepeatState end
 
 arbitrary(s::BreadthState) = s.start
 
-@auto_hash_equals struct BreadthGrow{I}<:BreadthState
+@auto_hash_equals struct BreadthGrow{I} <: BreadthState
     start::I  # initial iter
     queue::Vector{Entry{I}}  # this has to be immutable for caching
 end
 
-@auto_hash_equals struct BreadthYield{I}<:BreadthState
+@auto_hash_equals struct BreadthYield{I} <: BreadthState
     start::I  # initial iter
     queue::Vector{Entry{I}}  # this has to be immutable for caching
 end
@@ -354,16 +362,17 @@ end
 # largest first (greedy) repetition without backtracking of child
 # matchers
 
-@auto_hash_equals mutable struct Depth!<:Repeat_
+@auto_hash_equals mutable struct Depth! <: Repeat
     name::Symbol
     matcher::Matcher
     lo::Integer
     hi::Integer
     flatten::Bool
+
     Depth!(m, lo, hi; flatten=true) = new(:Depth!, m, lo, hi, flatten)
 end
 
-mutable struct DepthSlurp!{I}<:RepeatState
+mutable struct DepthSlurp!{I} <: RepeatState
     result::Vector{Value}
     iters::Vector{I}
 end
@@ -371,7 +380,7 @@ hash(::DepthSlurp!, h::UInt) = throw(CacheException())
 
 arbitrary(s::DepthSlurp!) = s.iters[1]
 
-@auto_hash_equals struct DepthYield!{I}<:RepeatState
+@auto_hash_equals struct DepthYield!{I} <: RepeatState
     result::Vector{Value}
     iters::Vector{I}
 end
@@ -406,16 +415,17 @@ end
 # smallest first (non-greedy) repetition without backtracking of child
 # matchers
 
-@auto_hash_equals mutable struct Breadth!<:Repeat_
+@auto_hash_equals mutable struct Breadth! <: Repeat
     name::Symbol
     matcher::Matcher
     lo::Integer
     hi::Integer
     flatten::Bool
+
     Breadth!(m, lo, hi; flatten=true) = new(:Breadth!, m, lo, hi, flatten)
 end
 
-@auto_hash_equals struct BreadthState!{I}<:RepeatState
+@auto_hash_equals struct BreadthState!{I} <: RepeatState
     result::Vector{Value}
     iter::I
 end
@@ -450,13 +460,15 @@ failure(k::Config, m::Breadth!, s::BreadthState!) = FAILURE
 
 # match all in a sequence with backtracking
 
-# there are two nearly identical matchers here - the only difference is 
+# there are two nearly identical matchers here - the only difference is
 # whether results are merged (Seq/+) or not (And/&).
 
-# we need two different types so that we can define + and & appropriately.  
+# we need two different types so that we can define + and & appropriately.
 # to make the user API more conssistent we also define Series (similar to
 # Repeat) that takes a flatten argument.  finally, both are so similar
 # that they can share the same state.
+
+abstract type Series <: Matcher end
 
 function Series(m::Matcher...; flatten=true, backtrack=true)
     if flatten
@@ -466,31 +478,30 @@ function Series(m::Matcher...; flatten=true, backtrack=true)
     end
 end
 
-abstract type Series_<:Matcher end
-
-
 # first, the backtracking version
 
-@auto_hash_equals mutable struct Seq<:Series_
+@auto_hash_equals mutable struct Seq <: Series
     name::Symbol
     matchers::Vector{Matcher}
-    Seq(m::Matcher...) = new(:Seq, [m...])
-    Seq(m::Vector{Matcher}) = new(:Seq, m)
+
+    Seq(matchers::Vector{Matcher}) = new(:Seq, matchers)
+    Seq(matchers::Matcher...) = Seq(Matcher[matchers...])
 end
 
 serial_success(m::Seq, results::Vector{Value}) = flatten(results)
 
-@auto_hash_equals mutable struct And<:Series_
+@auto_hash_equals mutable struct And <: Series
     name::Symbol
     matchers::Vector{Matcher}
-    And(m::Matcher...) = new(:And, Matcher[m...])
-    And(m::Vector{Matcher}) = new(:And, m)
+
+    And(matchers::Vector{Matcher}) = new(:And, matchers)
+    And(matchers::Matcher...) = And(Matcher[matchers...])
 end
 
 # copy to get type right (Array{Value,1} -> Array{Any,1})
 serial_success(m::And, results::Vector{Value}) = Any[results...]
 
-@auto_hash_equals struct SeriesState{I}<:State
+@auto_hash_equals struct SeriesState{I} <: State
     results::Vector{Value}
     iters::Vector{I}
     states::Vector{State}
@@ -498,7 +509,7 @@ end
 
 # when first called, call first matcher
 
-function execute(k::Config, m::Series_, s::Clean, i) 
+function execute(k::Config, m::Series, s::Clean, i)
     if length(m.matchers) == 0
         Success(DIRTY, i, EMPTY)
     else
@@ -509,7 +520,7 @@ end
 # if the final matcher matched then return what we have.  otherwise, evaluate
 # the next.
 
-function success(k::Config, m::Series_, s::SeriesState, t, i, r::Value)
+function success(k::Config, m::Series, s::SeriesState, t, i, r::Value)
     n = length(s.iters)
     results = Value[s.results..., r]
     iters = vcat(s.iters, i)
@@ -523,7 +534,7 @@ end
 
 # if the first matcher failed, fail.  otherwise backtrack
 
-function failure(k::Config, m::Series_, s::SeriesState)
+function failure(k::Config, m::Series, s::SeriesState)
     n = length(s.iters)
     if n == 1
         FAILURE
@@ -534,7 +545,7 @@ end
 
 # try to advance the current match
 
-function execute(k::Config, m::Series_, s::SeriesState, i)
+function execute(k::Config, m::Series, s::SeriesState, i)
     @assert length(s.states) == length(m.matchers)
     Execute(m, SeriesState(s.results[1:end-1], s.iters[1:end-1], s.states[1:end-1]), m.matchers[end], s.states[end], s.iters[end-1])
 end
@@ -542,27 +553,29 @@ end
 
 # next, the non-backtracking version
 
-abstract type Series!<:Matcher end
+abstract type Series! <: Matcher end
 
-@auto_hash_equals mutable struct Seq!<:Series!
+@auto_hash_equals mutable struct Seq! <: Series!
     name::Symbol
     matchers::Vector{Matcher}
-    Seq!(m::Matcher...) = new(:Seq!, Matcher[m...])
-    Seq!(m::Vector{Matcher}) = new(:Seq!, m)
+
+    Seq!(matchers::Vector{Matcher}) = new(:Seq!, matchers)
+    Seq!(matchers::Matcher...) = Seq!(Matcher[matchers...])
 end
 
 serial_success(m::Seq!, results::Vector{Value}) = flatten(results)
 
-@auto_hash_equals mutable struct And!<:Series!
+@auto_hash_equals mutable struct And! <: Series!
     name::Symbol
     matchers::Vector{Matcher}
-    And!(m::Matcher...) = new(:And!, Matcher[m...])
-    ANd!(m::Vector{Matcher}) = new(:And!, m)
+
+    And!(matchers::Vector{Matcher}) = new(:And!, matchers)
+    And!(matchers::Matcher...) = And!(Matcher[matchers...])
 end
 
 serial_success(m::And!, results::Vector{Value}) = Any[results...]
 
-@auto_hash_equals struct SeriesState!<:State
+@auto_hash_equals struct SeriesState! <: State
     results::Vector{Value}
     i  # index into current alternative
 end
@@ -583,24 +596,20 @@ failure(k::Config, m::Series!, s::SeriesState!) = FAILURE
 
 
 # alternatives (these need to be separate matchers so that | works ok)
-
-function Alternatives(m::Matcher...; backtrack=true)
-    backtrack ? Alt(m...) : Alt!(m...)
-end
-
-abstract type Alternatives_<:Matcher end
-
+abstract type Alternatives <: Matcher end
+Alternatives(m::Matcher...; backtrack=true) = backtrack ? Alt(m...) : Alt!(m...)
 
 # first, the backtracking version
 
-@auto_hash_equals mutable struct Alt<:Alternatives_
+@auto_hash_equals mutable struct Alt <: Alternatives
     name::Symbol
     matchers::Vector{Matcher}
-    Alt(matchers::Matcher...) = new(:Alt, Matcher[matchers...])
-    Alt(matchers::Vector{Matcher}) = new(:Alt, matchers)    
+
+    Alt(matchers::Vector{Matcher}) = new(:Alt, matchers)
+    Alt(matchers::Matcher...) = Alt(Matcher[matchers...])
 end
 
-@auto_hash_equals struct AltState{I}<:State
+@auto_hash_equals struct AltState{I} <: State
     state::State
     iter::I
     i::Int  # index into current alternative
@@ -635,14 +644,15 @@ end
 # it does not re-match children again, but does try other
 # alternatives)
 
-@auto_hash_equals mutable struct Alt!<:Alternatives_
+@auto_hash_equals mutable struct Alt! <: Alternatives
     name::Symbol
     matchers::Vector{Matcher}
-    Alt!(matchers::Matcher...) = new(:Alt!, Matcher[matchers...])
-    Alt!(matchers::Vector{Matcher}) = new(:Alt!, matchers)    
+
+    Alt!(matchers::Vector{Matcher}) = new(:Alt!, matchers)
+    Alt!(matchers::Matcher...) = Alt!(Matcher[matchers...])
 end
 
-@auto_hash_equals struct AltState!{I}<:State
+@auto_hash_equals struct AltState!{I} <: State
     iter::I
     i::Int  # index into current alternative
 end
@@ -664,15 +674,16 @@ failure(k::Config, m::Alt!, s::AltState!) = execute(k, m, AltState!(s.iter, s.i)
 
 # evaluate the child, but discard values and do not advance the iter
 
-@auto_hash_equals mutable struct Lookahead<:Delegate
+@auto_hash_equals mutable struct Lookahead <: Delegate
     name::Symbol
     matcher::Matcher
+
     Lookahead(matcher) = new(:Lookahead, matcher)
 end
 
 always_print(::Delegate) = true
 
-@auto_hash_equals struct LookaheadState<:DelegateState
+@auto_hash_equals struct LookaheadState <: DelegateState
     state::State
     iter
 end
@@ -686,13 +697,14 @@ success(k::Config, m::Lookahead, s, t, i, r::Value) = Success(LookaheadState(t, 
 # if the child matches, fail; if the child fails return EMPTY
 # repeated calls fail (the internal matcher is not backtracked).
 
-@auto_hash_equals mutable struct Not<:Matcher
+@auto_hash_equals mutable struct Not <: Matcher
     name::Symbol
     matcher::Matcher
+
     Not(matcher) = new(:Not, matcher)
 end
 
-@auto_hash_equals struct NotState<:State
+@auto_hash_equals struct NotState <: State
     iter
 end
 
@@ -708,7 +720,7 @@ failure(k::Config, m::Not, s::NotState) = Success(s, s.iter, EMPTY)
 
 # match a regular expression.
 
-# because Regex match against strings, this matcher works only against 
+# because Regex match against strings, this matcher works only against
 # string sources.
 
 # for efficiency, we need to know the offset where the match finishes.
@@ -717,14 +729,15 @@ failure(k::Config, m::Not, s::NotState) = Success(s, s.iter, EMPTY)
 
 # we also prepend ^ to anchor the match
 
-@auto_hash_equals mutable struct Pattern<:Matcher
+@auto_hash_equals mutable struct Pattern <: Matcher
     name::Symbol
     text::AbstractString
     regex::Regex
     groups::Tuple
-    Pattern(r::Regex, group::Int...) = new(:Pattern, r.pattern, Regex("^(?:" * r.pattern * ")(.??)"), group)
+
     Pattern(s::AbstractString, group::Int...) = new(:Pattern, s, Regex("^(?:" * s * ")(.??)"), group)
-    Pattern(s::AbstractString, flags::AbstractString, group::Int...) = new(:Pattern. s, Regex("^(?:" * s * ")(.??)", flags), group)
+    Pattern(s::AbstractString, flags::AbstractString, group::Int...) = new(:Pattern, s, Regex("^(?:" * s * ")(.??)", flags), group)
+    Pattern(r::Regex, group::Int...) = Pattern(r.pattern, group...)
 end
 
 print_field(m::Pattern, ::Type{Val{:text}}) = "text=\"$(m.text)\""
@@ -747,23 +760,24 @@ end
 
 # support loops
 
-mutable struct Delayed<:Matcher
+mutable struct Delayed <: Matcher
     name::Symbol
-    matcher::Nullable{Matcher}
-    Delayed() = new(:Delayed, Nullable{Matcher}())
+    matcher::Union{Matcher, Nothing}
+
+    Delayed() = new(:Delayed, nothing)
 end
 
 function print_matcher(m::Delayed, known::Set{Matcher})
     function producer(c::Channel)
         tag = "$(m.name)"
-        if (isnull(m.matcher))
+        if m.matcher === nothing
             put!(c, "$(tag) OPEN")
         elseif m in known
             put!(c, "$(tag)...")
         else
             put!(c, "$(tag)")
             push!(known, m)
-            for (i, line) in enumerate(print_matcher(get(m.matcher), known))
+            for (i, line) in enumerate(print_matcher(m.matcher, known))
                 put!(c, i == 1 ? "`-$(line)" : "  $(line)")
             end
         end
@@ -776,10 +790,10 @@ function execute(k::Config, m::Delayed, s::Dirty, i)
 end
 
 function execute(k::Config, m::Delayed, s::State, i)
-    if isnull(m.matcher)
+    if m.matcher === nothing
         error("set Delayed matcher")
     else
-        execute(k, get(m.matcher), s, i)
+        execute(k, m.matcher, s, i)
     end
 end
 
@@ -787,7 +801,7 @@ end
 
 # end of stream / string
 
-@auto_hash_equals mutable struct Eos<:Matcher
+@auto_hash_equals mutable struct Eos <: Matcher
     name::Symbol
     Eos() = new(:Eos)
 end
@@ -803,14 +817,15 @@ end
 
 # this is general, but usually not much use with backtracking
 
-mutable struct ParserError{I}<:Exception
+mutable struct ParserError{I} <: Exception
     msg::AbstractString
     iter::I
 end
 
-@auto_hash_equals mutable struct Error<:Matcher
+@auto_hash_equals mutable struct Error <: Matcher
     name::Symbol
     msg::AbstractString
+
     Error(msg::AbstractString) = new(:Error, msg)
 end
 

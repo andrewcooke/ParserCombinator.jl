@@ -2,7 +2,6 @@
 module GML
 
 using ...ParserCombinator
-using Nullables
 
 export parse_raw, parse_dict, GMLError
 
@@ -62,10 +61,10 @@ function mk_parser(string_input)
         list    = Delayed()
         sublist = Seq!(open, list, Alt!(close, expect("]")))
         value   = Alt!(real, int, str, sublist, expect("value"))
-        element = Seq!(key, value)                            > tuple
-        
-        list.matcher = Nullable{Matcher}(element[0:end,:!]    > vcat)
-        
+        element = Seq!(key, value)          > tuple
+
+        list.matcher = element[0:end,:!]    > vcat
+
         # first line comment must be explicit (no previous linefeed)
         Seq!(comment, spc, list, Alt!(Seq!(spc, Eos()), expect("key")))
 
@@ -79,7 +78,7 @@ function parse_raw(s; debug=false)
     try
         (debug ? parse_one_dbg : parse_one)(s, Trace(parser); debug=debug)
     catch x
-        if (debug) 
+        if (debug)
             Base.show_backtrace(stdout, catch_backtrace())
         end
         rethrow()
