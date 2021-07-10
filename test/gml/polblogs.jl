@@ -14,7 +14,6 @@
 #io = open("gml/polblogs.gml")
 #@time parse_id_dict(io; debug=false)
 
-println("polblogs")
 s = open(s -> read(s, String), "gml/polblogs.gml")
 x = parse_dict(s; debug=false)
 @test length(x[:graph][1][:edge]) == 19090

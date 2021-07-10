@@ -29,8 +29,8 @@ function run_type(n)
     println("types: $count")
 end
 
-type A end
-type B end
+struct A end
+struct B end
 
 function random_type()
     if rand(1:2) == 1

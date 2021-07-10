@@ -31,6 +31,4 @@ end
 slow(3)
 #slow(7)  # not for travis!
 
-println("slow ok")
-
 end

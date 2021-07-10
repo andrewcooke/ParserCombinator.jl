@@ -28,6 +28,4 @@ line = Trace(p"(.|\n)+"[0:end] + Eos())
 @test parse_one("abc\n", line) == ["abc\n"]
 @test parse_one(LineSource("abc\n"), line) == ["abc\n"]
 
-println("sources ok")
-
 end

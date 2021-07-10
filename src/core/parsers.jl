@@ -149,7 +149,7 @@ function producer(c::Channel, k::Config, m::Matcher; debug=false)
                 end
             end
         end
-        
+
     catch x
         if (debug)
             println("debug was set, so showing error from inside task")
@@ -165,7 +165,7 @@ end
 
 # helper functions to generate the parsers from the above
 
-# these assume that any config construct takes a single source argument 
+# these assume that any config construct takes a single source argument
 # plus optional keyword args
 
 function make(config, source::S, matcher; debug=false, kargs...) where {S}
@@ -181,8 +181,17 @@ function make_all(config; kargs_make...)
 end
 
 function once(channel)
-    for result in channel
-        return result
+    try
+        for result in channel
+            return result
+        end
+    catch ex
+        # unwrap exception
+        if VERSION >= v"1.1"
+            ex isa TaskFailedException ? throw(first(first(Base.catch_stack(ex.task)))) : rethrow()
+        else
+            rethrow()
+        end
     end
     throw(ParserException("cannot parse"))
 end

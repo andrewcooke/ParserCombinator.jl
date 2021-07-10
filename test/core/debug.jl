@@ -22,6 +22,4 @@ debug, task = make(Debug, "123abc", grammar; delegate=NoCache)
 @test_throws ParserException once(task)
 @test debug.max_iter == 4
 
-println("debug ok")
-
 end

@@ -55,6 +55,4 @@ end
 # and we can see that Case calls Pattern, as expected; that the Pattern
 # returns foo; and that Case transforms that to Foo.
 
-println("case ok")
-
 end

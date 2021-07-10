@@ -1,10 +1,6 @@
 [![Build status](https://github.com/andrewcooke/ParserCombinator.jl/workflows/CI/badge.svg)](https://github.com/andrewcooke/ParserCombinator.jl/actions?query=workflow%3ACI+branch%3Amaster)
 [![Codecov](https://codecov.io/gh/andrewcooke/ParserCombinator.jl/branch/master/graph/badge.svg)](https://codecov.io/gh/andrewcooke/ParserCombinator.jl)
 
-[![ParserCombinator](http://pkg.julialang.org/badges/ParserCombinator_0.3.svg)](http://pkg.julialang.org/?pkg=ParserCombinator&ver=0.3)
-[![ParserCombinator](http://pkg.julialang.org/badges/ParserCombinator_0.4.svg)](http://pkg.julialang.org/?pkg=ParserCombinator&ver=0.4)
-[![ParserCombinator](http://pkg.julialang.org/badges/ParserCombinator_0.5.svg)](http://pkg.julialang.org/?pkg=ParserCombinator&ver=0.5)
-
 
 # ParserCombinator
 
