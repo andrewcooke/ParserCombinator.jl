@@ -1,5 +1,5 @@
-[![Build Status](https://travis-ci.org/andrewcooke/ParserCombinator.jl.png)](https://travis-ci.org/andrewcooke/ParserCombinator.jl)
-[![Coverage Status](https://coveralls.io/repos/andrewcooke/ParserCombinator.jl/badge.svg)](https://coveralls.io/r/andrewcooke/ParserCombinator.jl)
+[![Build status](https://github.com/andrewcooke/ParserCombinator.jl/workflows/CI/badge.svg)](https://github.com/andrewcooke/ParserCombinator.jl/actions?query=workflow%3ACI+branch%3Amaster)
+[![Codecov](https://codecov.io/gh/andrewcooke/ParserCombinator.jl/branch/master/graph/badge.svg)](https://codecov.io/gh/andrewcooke/ParserCombinator.jl)
 
 [![ParserCombinator](http://pkg.julialang.org/badges/ParserCombinator_0.3.svg)](http://pkg.julialang.org/?pkg=ParserCombinator&ver=0.3)
 [![ParserCombinator](http://pkg.julialang.org/badges/ParserCombinator_0.4.svg)](http://pkg.julialang.org/?pkg=ParserCombinator&ver=0.4)
@@ -271,7 +271,7 @@ flattening lists was useful above.
 ```julia
 julia> parse_one("abc", And(Drop(Equal("a")), Equal("b")))
 2-element Array{Any,1}:
- Any[]   
+ Any[]
  Any["b"]
 
 julia> parse_one("abc", Seq(Drop(Equal("a")), Equal("b")))
@@ -363,7 +363,7 @@ julia> parse_one("abc", Repeat(p".", 2))
 julia> collect(parse_all("abc", Repeat(p".", 2, 3)))
 2-element Array{Any,1}:
  Any["a","b","c"]
- Any["a","b"]    
+ Any["a","b"]
 
 julia> parse_one("abc", Repeat(p".", 2; flatten=false))
 2-element Array{Any,1}:
@@ -373,15 +373,15 @@ julia> parse_one("abc", Repeat(p".", 2; flatten=false))
 julia> collect(parse_all("abc", Repeat(p".", 0, 3)))
 4-element Array{Any,1}:
  Any["a","b","c"]
- Any["a","b"]    
- Any["a"]        
- Any[]           
+ Any["a","b"]
+ Any["a"]
+ Any[]
 
 julia> collect(parse_all("abc", Repeat(p".", 0, 3; greedy=false)))
 4-element Array{Any,1}:
- Any[]           
- Any["a"]        
- Any["a","b"]    
+ Any[]
+ Any["a"]
+ Any["a","b"]
  Any["a","b","c"]
 ```
 
@@ -419,15 +419,15 @@ There are also some well-known special cases:
 julia> collect(parse_all("abc", Plus(p".")))
 3-element Array{Any,1}:
  Any["a","b","c"]
- Any["a","b"]    
- Any["a"]        
+ Any["a","b"]
+ Any["a"]
 
 julia> collect(parse_all("abc", Star(p".")))
 4-element Array{Any,1}:
  Any["a","b","c"]
- Any["a","b"]    
- Any["a"]        
- Any[]           
+ Any["a","b"]
+ Any["a"]
+ Any[]
 ```
 
 #### Full Match
@@ -485,12 +485,12 @@ something works a certain way.
 ```julia
 julia> parse_one("12c", Lookahead(p"\d") + PInt() + Dot())
 2-element Array{Any,1}:
- 12   
+ 12
    'c'
 
 julia> parse_one("12c", Not(Lookahead(p"[a-z]")) + PInt() + Dot())
 2-element Array{Any,1}:
- 12   
+ 12
    'c'
 ```
 
@@ -597,7 +597,7 @@ character of the first line.
 
 Finally, note that this is implemented at the source level, by restricting
 what text is visible to the matchers.  Matchers that *could* backtrack will
-still make the attempt.  So you should also [disable backtracking in the 
+still make the attempt.  So you should also [disable backtracking in the
 matchers](#backtracking), where you do not need it, for an efficient grammar.
 
 #### Spaces - Pre And Post-Fixes
@@ -728,15 +728,15 @@ matchers you care about):
 
     neg = Delayed()             # allow multiple negations (eg ---3)
     neg.matcher = val | (E"-" + neg > Neg)
-    
+
     mul = E"*" + neg
     div = E"/" + neg > Inv
     prd = neg + (mul | div)[0:end] |> Prd
-    
+
     add = E"+" + prd
     sub = E"-" + prd > Neg
     sum.matcher = prd + (add | sub)[0:end] |> Sum
-    
+
     all = sum + Eos()
 end
 
@@ -1273,4 +1273,3 @@ patch.
 1.1.0 - 2015-06-07 - Fixed calc example; debug mode; much rewriting.
 
 1.0.0 - ~2015-06-03 - More or less feature complete.
-
