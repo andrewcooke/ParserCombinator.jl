@@ -8,6 +8,4 @@ end
 @test a.name == :a
 @test b.name == :b
 
-println("names ok")
-
 end

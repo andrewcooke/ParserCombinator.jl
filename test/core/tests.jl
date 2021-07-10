@@ -68,7 +68,6 @@ for i in 1:10
         n = rand(0:4)
         s = repeat("a", n)
         m = match(r, s)
-        println("$lo $hi $s $r")
         if m === nothing
             @test_throws ParserException parse_one(s, Repeat(Equal("a"), lo, hi; greedy=greedy))
         else
@@ -103,7 +102,5 @@ for backtrack in (true, false)
           [2,0],[2,1],
           [3,0]]
 end
-
-println("tests ok")
 
 end

@@ -1,7 +1,6 @@
 
 @testset "celegansneural" begin
 
-println("celegansneural")
 s = open(s -> read(s, String), "gml/celegansneural.gml")
 parse_dict(s; debug=false)
 @time x = parse_dict(s; debug=false)

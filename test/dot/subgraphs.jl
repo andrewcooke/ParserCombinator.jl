@@ -44,6 +44,4 @@ graph {
 @test nodes(d) == Set(["a", "b", "c", "d"])
 @test edges(d) == Set([("a","b"),("a","c"),("a","d"),("b","c"),("b","d"),("c","d")])
 
-println("subgraphs ok")
-
 end

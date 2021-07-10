@@ -54,7 +54,6 @@ for (src, val) in [
                    ]
 #    @test_approx_eq calc(parse_dbg(src, Trace(all))[1]) val
     @test calc(parse_one(src, Trace(all))[1]) ≈ val
-    println("$src = $val")
 end
 
 for (src, ast, val) in
@@ -167,7 +166,5 @@ for i in 1:20
         @test_throws Exception calc(parse_one(expr, all)[1])
     end
 end
-
-println("calc ok")
 
 end

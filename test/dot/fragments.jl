@@ -64,6 +64,4 @@ Edge(EdgeNode[NodeID(StringID("a")), NodeID(StringID("b"))],
 @test parse_one("graph [a=b]", D.attr_stmt)[1] ==
 GraphAttributes(Attribute[Attribute(StringID("a"), StringID("b"))])
 
-println("fragments ok")
-
 end

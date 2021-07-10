@@ -80,6 +80,4 @@ d1, d2 = d
 @test nodes(d2) == Set(["a", "b", "c", "d", "e"])
 @test edges(d2) == Set([("a","e"),("c","d"),("c","e"),("b","c"),("a","c"),("a","b")])
 
-println("examples ok")
-
 end

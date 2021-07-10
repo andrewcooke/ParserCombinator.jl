@@ -1,7 +1,6 @@
 
 @testset "10k-49963" begin
 
-println("10k-49963")
 s = open(s -> read(s, String), "gml/10k-49963.gml")
 parse_raw(s; debug=false)
 @time parse_raw(s; debug=false)

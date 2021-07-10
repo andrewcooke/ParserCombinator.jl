@@ -57,10 +57,6 @@ for (src, v) in [
                    ]
 #    @test calc(parse_dbg(src, Trace(all))[1]) ≈ v
     @test calc(parse_one(src, Trace(all))[1]) ≈ v
-    println("$src = $v")
 end
-
-
-println("fix ok")
 
 end
