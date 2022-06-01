@@ -222,23 +222,23 @@ end
 
 # set of all nodes
 # expand both nodes and edges, then use sets to de-duplicate
-nodes(g::Graph) = union(map(nodes, g.stmts)...)
+nodes(g::Graph) = reduce(union, map(nodes, g.stmts))
 nodes(s::Statement) = Set()
-nodes(s::SubGraph) = union(map(nodes, s.stmts)...)
+nodes(s::SubGraph) = reduce(union, map(nodes, s.stmts))
 nodes(n::Node) = nodes(n.id)
 nodes(n::NodeID) = Set([n.id.id])
-nodes(e::Edge) = union(map(nodes, e.nodes)...)
+nodes(e::Edge) = reduce(union, map(nodes, e.nodes))
 
 # set of all node pairs that correspond to edges
-fix_directed(g::Graph, e) = g.directed ? Set(e) : Set([tuple(sort([p...])...) for p in e])
-edges(g::Graph) = fix_directed(g, vcat(map(edges_, g.stmts)...))
+fix_directed(g::Graph, e) = g.directed ? Set(e) : Set([Tuple(sort(collect(p))) for p in e])
+edges(g::Graph) = fix_directed(g, reduce(vcat, map(edges_, g.stmts)))
 edges_(s::Statement) = []
-edges_(s::SubGraph) = vcat(map(edges_, s.stmts)...)
+edges_(s::SubGraph) = reduce(vcat, map(edges_, s.stmts))
 pair(n1::NodeID, n2::NodeID) = [(n1.id.id, n2.id.id)]
 pair(n::NodeID, s::SubGraph) = vcat([(n.id.id, x) for x in nodes(s)], edges_(s))
 pair(s::SubGraph, n::NodeID) = vcat([(x, n.id.id) for x in nodes(s)], edges_(s))
 pair(s1::SubGraph, s2::SubGraph) =
     vcat(vec([(x, y) for x in nodes(s1), y in nodes(s2)]), edges_(s1), edges_(s2))
-edges_(e::Edge) = vcat([pair(a, b) for (a, b) in zip(e.nodes[1:end-1], e.nodes[2:end])]...)
+edges_(e::Edge) = reduce(vcat, [pair(a, b) for (a, b) in zip(e.nodes[1:end-1], e.nodes[2:end])])
 
 end
