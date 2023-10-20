@@ -47,6 +47,9 @@
 @test_throws ParserException parse_one("abc", And(Equal("a"), Lookahead(Equal("c")), Equal("b")))
 @test parse_one("abc", And(Equal("a"), Not(Lookahead(Equal("c"))), Equal("b"))) == Any[["a"], [], ["b"]]
 @test parse_one("1.2", PFloat64()) == [1.2]
+@test parse_one("-9.0E01", PFloat64())[1] ≈ -90.0
+@test parse_one("-9.0E-01", PFloat32())[1] ≈ -0.9
+@test parse_one("-9.0e0", PFloat16())[1] ≈ -9.0
 m1 = Delayed()
 m1.matcher = Seq(Dot(), Opt(m1))
 @test parse_one("abc", m1) == ['a', 'b', 'c']

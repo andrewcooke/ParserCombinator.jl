@@ -16,8 +16,9 @@ PInt8() = Parse(p"-?\d+", Int8)
 PInt16() = Parse(p"-?\d+", Int16)
 PInt32() = Parse(p"-?\d+", Int32)
 PInt64() = Parse(p"-?\d+", Int64)
-PFloat32() = Parse(p"-?(\d*\.?\d+|\d+\.\d*)([eE]\d+)?", Float32)
-PFloat64() = Parse(p"-?(\d*\.?\d+|\d+\.\d*)([eE]\d+)?", Float64)
+PFloat16() = Parse(p"-?(\d*\.?\d+|\d+\.\d*)([eE]-?\d+)?", Float16)
+PFloat32() = Parse(p"-?(\d*\.?\d+|\d+\.\d*)([eE]-?\d+)?", Float32)
+PFloat64() = Parse(p"-?(\d*\.?\d+|\d+\.\d*)([eE]-?\d+)?", Float64)
 
 Word() = p"\w+"
 Space() = p"\s+"
