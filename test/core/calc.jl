@@ -75,7 +75,7 @@ end
 # some regression tests
 @test calc(parse_one("-5.0/7.0+5.0-5.0", all)[1]) ≈ -0.7142857142857144
 @test eval(Meta.parse("-5.0/7.0+5.0-5.0")) ≈ -0.7142857142857144
-@test calc(parse_one("(0.0-9.0)", all)[1]) ≈ -9.0
+@test calc(parse_one("(0.0-9.0e-1)", all)[1]) ≈ -0.9
 @test calc(parse_one("((0.0-9.0))", all)[1]) ≈ -9.0
 @test calc(parse_one("-((0.0-9.0))", all)[1]) ≈ 9.0
 @test calc(parse_one("(-6.0/5.0)", all)[1]) ≈ -1.2
